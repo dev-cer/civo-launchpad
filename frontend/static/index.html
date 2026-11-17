@@ -2300,11 +2300,18 @@ async function renderCertWorkshop(){
   const lead = cert==='Completion' ? 'All six missions verified on your own Civo cluster.'
     : cert==='Participation' ? 'M0–M2 verified. Finish M3, M4 and the Final before 23:59 WIB today to upgrade to the Certificate of Completion.'
     : 'Pass M0, M1 and M2 for the Certificate of Participation; all six missions for the Certificate of Completion. Missions still count until 23:59 WIB today.';
+  let cm=null;
+  if (!S.demo && cert){ try{ const r=await fetch('/api/cert/me',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:S.reg.email,token:S.reg.token||''})}); if(r.ok) cm=await r.json() }catch(e){} }
+  const certBox = cm && cm.url
+    ? `<h3 style="margin-top:0">Your certificate is ready 🎉</h3><p style="color:var(--muted);margin:0 0 14px">Signed by Civo Indonesia with a QR code — anyone who scans it lands on the public verification page. Certificate ID <b class="mono" style="color:var(--text)">${esc(cm.id)}</b>.</p>
+       <p style="margin:0;display:flex;gap:10px;flex-wrap:wrap"><a class="btn primary" href="${esc(cm.url)}" target="_blank" rel="noopener">🏅 Open my certificate (PDF)</a><a class="btn" href="${esc(cm.verify_url)}" target="_blank" rel="noopener">✓ Verification page</a></p>`
+    : cert
+    ? `<h3 style="margin-top:0">Your certificate unlocks when the race ends</h3><p style="color:var(--muted);margin:0">It appears right here, with your name and a QR code for verification, as soon as the facilitator closes the race (about 11:25). A link is also e-mailed to <b style="color:var(--text)">${esc(S.reg.email)}</b>.</p>`
+    : `<h3 style="margin-top:0">How certificates work</h3><p style="color:var(--muted);margin:0">Missions are verified on your own cluster by Launchpad — nothing to upload. Your certificate appears on this page with your name and a QR code for verification once the race ends.</p>`;
   $('#app').innerHTML=`<section class="hub"><div class="eb">Beyond the Container · Certificate</div><h1>${head}</h1>
     <p class="lead">${lead}</p>
     <div style="display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 18px">${chips}</div>
-    <div class="box" style="max-width:720px"><h3 style="margin-top:0">${cert?'Your signed certificate is on its way':'How certificates work'}</h3>
-      <p style="color:var(--muted);margin:0">Certificates are signed by Civo Indonesia and <b style="color:var(--text)">e-mailed to ${esc(S.reg.email)}</b> within 3 working days after the workshop. Missions are verified on your cluster by Launchpad — nothing to upload.</p></div>
+    <div class="box" style="max-width:720px">${certBox}</div>
     <p style="margin-top:18px"><button class="btn primary" onclick="go('ev/beyond-scaling')">Back to missions</button> <button class="btn" onclick="window.open(LINKS.academy,'_blank','noopener')">Keep learning in the Academy ↗</button></p></section>`;
   window.scrollTo(0,0);
 }

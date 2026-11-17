@@ -139,3 +139,19 @@ Progress tiap edisi disimpan terpisah (`localStorage` key `civo-hackspace-<edisi
 - Frontend: konstanta `WINDOW` per edisi; jika backend ada, waktu & jendela diambil dari `GET /api/window` (anti jam laptop salah).
 - Backend: env `EVENT_OPEN` / `EVENT_CLOSE` (RFC3339). Di luar jendela `POST /api/register` dan self-submit leaderboard → 403. `Authorization: Bearer $ADMIN_TOKEN` tetap bisa (dry-run fasilitator, official score).
 - Dry-run fasilitator di browser: buka URL dengan `?preview=1` (matikan: `?preview=0`). Hanya membuka tampilan; backend tetap mengunci.
+
+## Certificates (QR-verified)
+
+After the facilitator stops the race (or the event window closes), every participant who passed M0–M2
+(Participation) or all six missions (Completion) gets a certificate with their registered name:
+
+| Path | What |
+|---|---|
+| `POST /api/cert/me` `{email, token}` | Certificate type, ID and links for the signed-in participant |
+| `GET /cert/<ID>` | A4 landscape certificate → **Download PDF** (browser print), Add to LinkedIn |
+| `GET /verify/<ID>` | Public verification page — the QR code on the certificate points here |
+
+Certificate IDs (`BTC-2026-XXXX-XXXX`) are derived from `CERT_SECRET` (Secret `launchpad-cert`, created once by
+`deploy-launchpad.ps1`). Do not rotate it after the event, or every QR code stops verifying. The signature is the QR
+code plus the signer's printed name — no handwritten signature image is stored anywhere.
+`GET /api/race/export` now adds `certificate_id` and `certificate_url` columns for the thank-you e-mail.

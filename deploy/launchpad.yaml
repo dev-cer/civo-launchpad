@@ -2,7 +2,8 @@
 #   __HOST__  launchpad.<traefik-LB-IP>.sslip.io      __EMAIL__  ACME contact for Let's Encrypt
 #   __IMAGE__ ghcr.io/<owner>/civo-launchpad:workshop-latest
 #   __OPEN__ / __CLOSE__  event window (RFC3339). Simulation: now .. now+1 day. Event: 26 Nov 10:00 .. 23:59 WIB.
-# Secrets created by the script (never committed): launchpad-admin (ADMIN_TOKEN),
+# Secrets created by the script (never committed): launchpad-admin (ADMIN_TOKEN), launchpad-cert (CERT_SECRET,
+# created once and kept: it fixes every Certificate ID / QR code, so never rotate it after the event),
 # optional workshop-seats + workshop-kubeconfigs (backup seats from provision-workshop.ps1).
 apiVersion: v1
 kind: Namespace
@@ -75,6 +76,7 @@ spec:
             - { name: EVENT_CLOSE, value: "__CLOSE__" }
           envFrom:
             - secretRef: { name: launchpad-admin }
+            - secretRef: { name: launchpad-cert, optional: true }
             - secretRef: { name: workshop-seats, optional: true }
           readinessProbe:
             httpGet: { path: /healthz, port: http }

@@ -28,10 +28,11 @@
 //! State akun in-memory (dipulihkan dari JSONL) -> backend WAJIB 1 replica.
 
 mod race;
+mod cert;
 use axum::{
-    extract::{Query, State},
+    extract::{Path, Query, State},
     http::{header, HeaderMap, StatusCode},
-    response::IntoResponse,
+    response::{Html, IntoResponse},
     routing::{get, post},
     Json, Router,
 };
@@ -130,6 +131,8 @@ struct AppState {
     race: Mutex<race::RaceData>,
     race_file: String,
     last_check: Mutex<std::collections::HashMap<String, u64>>,
+    /// Kunci penurunan Credential ID sertifikat (Secret launchpad-cert). Fallback: ADMIN_TOKEN.
+    cert_secret: String,
 }
 
 /// Parse "YYYY-MM-DDTHH:MM[:SS]+HH:MM" (RFC3339 sederhana) ke unix detik, tanpa dependency tambahan.
@@ -336,6 +339,9 @@ async fn main() {
         }),
         race_file: env::var("RACE_FILE").unwrap_or_else(|_| "/data/race.json".to_string()),
         last_check: Mutex::new(std::collections::HashMap::new()),
+        cert_secret: env::var("CERT_SECRET").ok().filter(|v| !v.trim().is_empty())
+            .or_else(|| env::var("ADMIN_TOKEN").ok().filter(|v| !v.trim().is_empty()))
+            .unwrap_or_else(|| "launchpad-dev".to_string()),
         window: match (env::var("EVENT_OPEN").ok().and_then(|v| parse_ts(&v)), env::var("EVENT_CLOSE").ok().and_then(|v| parse_ts(&v))) {
             (Some(o), Some(c)) => Some((o, c)),
             _ => None,
@@ -370,6 +376,9 @@ async fn main() {
         .route("/api/race/export", get(race_export))
         .route("/api/admin/race", post(admin_race))
         .route("/api/cluster/connect", post(connect_cluster))
+        .route("/api/cert/me", post(cert_me))
+        .route("/cert/:id", get(cert_page))
+        .route("/verify/:id", get(verify_page))
         .fallback_service(ServeDir::new(static_dir))
         .layer(CorsLayer::permissive())
         .with_state(state);
@@ -571,13 +580,14 @@ async fn race_me(State(state): State<Arc<AppState>>, Json(req): Json<RaceMeReque
 
 /// CSV untuk marketing: siapa berhak sertifikat apa, plus peringkat race saat ditutup.
 async fn race_export(State(state): State<Arc<AppState>>, headers: HeaderMap) -> impl IntoResponse {
+    let base = base_url(&headers);
     if !is_admin(&state, &headers) { return (StatusCode::UNAUTHORIZED, [(header::CONTENT_TYPE, "text/plain")], "Admin token required.\n".to_string()); }
     let regs = state.regs.lock().await;
     let d = state.race.lock().await;
     let start = d.start.unwrap_or(0);
     let board = race::board(&d);
     let csv = |v: &str| format!("\"{}\"", v.replace('"', "\"\""));
-    let mut out = String::from("certificate,name,email,company,role,civo_account,missions_passed,missions_in_race,race_rank,race_time_seconds,passed_after_race\n");
+    let mut out = String::from("certificate,name,email,company,role,civo_account,missions_passed,missions_in_race,race_rank,race_time_seconds,passed_after_race,certificate_id,certificate_url\n");
     let mut rows: Vec<(u8, String)> = vec![];
     for r in regs.iter().filter(|r| !r.event.to_lowercase().contains("academy") && r.event != "rehearsal") {
         let all = d.done.get(&r.email).map(|(_, v)| v.clone()).unwrap_or_default();
@@ -587,12 +597,78 @@ async fn race_export(State(state): State<Arc<AppState>>, headers: HeaderMap) -> 
         let time = ranked.iter().map(|m| m.1).max().map(|t| t.saturating_sub(start));
         let late: Vec<String> = all.iter().filter(|m| !ranked.contains(m)).map(|m| m.0.clone()).collect();
         let order = match cert { "Completion" => 0, "Participation" => 1, _ => 2 };
-        rows.push((order, format!("{},{},{},{},{},{},{},{},{},{},{}\n", csv(cert), csv(&r.name), csv(&r.email), csv(&r.company), csv(&r.role), csv(&r.civo_account),
-            all.len(), ranked.len(), rank.map(|x| x.to_string()).unwrap_or_default(), time.map(|x| x.to_string()).unwrap_or_default(), csv(&late.join(" ")))));
+        let (cid, curl) = if cert.is_empty() { (String::new(), String::new()) } else { let i = cert::cert_id(&state.cert_secret, &r.email); (i.clone(), format!("{base}/cert/{i}")) };
+        rows.push((order, format!("{},{},{},{},{},{},{},{},{},{},{},{},{}\n", csv(cert), csv(&r.name), csv(&r.email), csv(&r.company), csv(&r.role), csv(&r.civo_account),
+            all.len(), ranked.len(), rank.map(|x| x.to_string()).unwrap_or_default(), time.map(|x| x.to_string()).unwrap_or_default(), csv(&late.join(" ")), csv(&cid), csv(&curl))));
     }
     rows.sort_by(|a, b| a.0.cmp(&b.0));
     for (_, l) in rows { out.push_str(&l); }
     (StatusCode::OK, [(header::CONTENT_TYPE, "text/csv; charset=utf-8")], out)
+}
+
+/// Alamat publik untuk link sertifikat & QR: PUBLIC_URL, atau https://<Host> dari request.
+fn base_url(headers: &HeaderMap) -> String {
+    if let Ok(u) = env::var("PUBLIC_URL") { if !u.trim().is_empty() { return u.trim().trim_end_matches('/').to_string(); } }
+    let host = headers.get("x-forwarded-host").or_else(|| headers.get(header::HOST)).and_then(|v| v.to_str().ok()).unwrap_or("localhost:8080");
+    let host: String = host.chars().filter(|c| c.is_ascii_alphanumeric() || ".-:".contains(*c)).collect();
+    let local = host.starts_with("localhost") || host.starts_with("127.");
+    format!("{}://{host}", if local { "http" } else { "https" })
+}
+
+/// Sertifikat terbit setelah race di-stop atau jendela event ditutup.
+async fn cert_released(state: &AppState) -> bool {
+    state.race.lock().await.stop.is_some() || window_state(state.window) == "closed"
+}
+
+/// Cari pemegang sertifikat dari Credential ID: (jenis, nama, jumlah misi lulus).
+async fn cert_lookup(state: &AppState, id: &str) -> Option<(&'static str, String, usize)> {
+    if !cert_released(state).await { return None; }
+    let id = cert::normalize_id(id);
+    let regs = state.regs.lock().await;
+    let r = regs.iter().filter(|r| !r.event.to_lowercase().contains("academy"))
+        .find(|r| cert::cert_id(&state.cert_secret, &r.email) == id)?.clone();
+    drop(regs);
+    let d = state.race.lock().await;
+    let all = d.done.get(&r.email).map(|(_, v)| v.clone()).unwrap_or_default();
+    let kind = race::certificate(&all);
+    if kind.is_empty() { None } else { Some((kind, r.name, all.len())) }
+}
+
+async fn cert_me(State(state): State<Arc<AppState>>, headers: HeaderMap, Json(req): Json<RaceMeRequest>) -> impl IntoResponse {
+    let email = clean(&req.email, 120).to_lowercase();
+    let tok = clean(&req.token, 64);
+    {
+        let regs = state.regs.lock().await;
+        match regs.iter().find(|r| r.email == email) {
+            Some(r) if !r.token.is_empty() && r.token == tok => {}
+            _ => return err(StatusCode::FORBIDDEN, "Sign in to Launchpad again with your registration details."),
+        }
+    }
+    let released = cert_released(&state).await;
+    let kind = { let d = state.race.lock().await; race::certificate(&d.done.get(&email).map(|(_, v)| v.clone()).unwrap_or_default()) };
+    let id = cert::cert_id(&state.cert_secret, &email);
+    let base = base_url(&headers);
+    let ready = released && !kind.is_empty();
+    (StatusCode::OK, Json(serde_json::json!({ "status": "success", "certificate": kind, "released": released,
+        "id": if ready { Some(id.clone()) } else { None },
+        "url": if ready { Some(format!("{base}/cert/{id}")) } else { None },
+        "verify_url": if ready { Some(format!("{base}/verify/{id}")) } else { None } })))
+}
+
+async fn cert_page(State(state): State<Arc<AppState>>, headers: HeaderMap, Path(id): Path<String>) -> impl IntoResponse {
+    let id = cert::normalize_id(&id);
+    match cert_lookup(&state, &id).await {
+        Some((kind, name, _)) => (StatusCode::OK, Html(cert::page(kind, &name, &id, &format!("{}/verify/{id}", base_url(&headers))))),
+        None => (StatusCode::NOT_FOUND, Html(cert::verify_page(&id, None, ""))),
+    }
+}
+
+async fn verify_page(State(state): State<Arc<AppState>>, headers: HeaderMap, Path(id): Path<String>) -> impl IntoResponse {
+    let id = cert::normalize_id(&id);
+    let found = cert_lookup(&state, &id).await;
+    let url = format!("{}/cert/{id}", base_url(&headers));
+    let code = if found.is_some() { StatusCode::OK } else { StatusCode::NOT_FOUND };
+    (code, Html(cert::verify_page(&id, found.as_ref().map(|(k, n, m)| (*k, n.as_str(), *m)), &url)))
 }
 
 fn err(code: StatusCode, msg: &str) -> (StatusCode, Json<serde_json::Value>) {
