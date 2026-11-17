@@ -663,7 +663,7 @@ function renderGate(g){
   const t = g==='before'
     ? { eb:'Launchpad opens soon', h:`Opens ${WINDOW.day}`, sub:`Doors open at ${WINDOW.start} when the ${EDITION==='workshop'?'workshop':'webinar'} starts, and stay open until 23:59 WIB the same day.`,
         big:`<b id="gatecount">${fmtLeft(WINDOW.o-nowMs())}</b><span>until doors open</span>`,
-        cta: EDITION==='workshop' ? `<p class="hint">Before you come: <b>sign up for your own Civo account</b> at dashboard.civo.com (card required, not prepaid/virtual) — you need it to register, and your USD 250 credit lands there. You create your own cluster in the race; bring a laptop with <code>civo</code> CLI, <code>kubectl</code> and <code>git</code> installed, and your Civo API key.</p><a class="btn primary" href="${REG_FORM}" target="_blank" rel="noopener">Not registered? Register now ↗</a>`
+        cta: EDITION==='workshop' ? `<p class="hint">Before you come: <b>sign up for your own Civo account</b> at dashboard.civo.com (card required, not prepaid/virtual) — you need it to register, and your $250 credit lands there. You create your own cluster in the race; bring a laptop with <code>civo</code> CLI, <code>kubectl</code> and <code>git</code> installed, and your Civo API key.</p><a class="btn primary" href="${REG_FORM}" target="_blank" rel="noopener">Not registered? Register now ↗</a>`
              : `<p class="hint">Join the live session on Zoom, then come back here for the take-home journey.</p><a class="btn primary" href="${REG_FORM}" target="_blank" rel="noopener">Not registered? Register now ↗</a>` }
     : { eb:'Launchpad closed', h:'Thanks for sailing with us', sub:`This Launchpad was open on ${WINDOW.day}, from ${WINDOW.start} until 23:59 WIB. Your progress stays in this browser.`,
         big:`<b>${LABS.filter(labDone).length}/${LABS.length}</b><span>labs you completed</span>`,
@@ -711,12 +711,12 @@ const MODULES = [
 const LABS = [
 /* ---------------- INTRO ---------------- */
 { id:'signup', mod:'intro', title:'Your Own Civo Account (pre-work)', dur:'10 min', level:'Beginner',
-  intro:`<b>Required before the workshop.</b> You register for Launchpad with the email or username of <b>your own Civo account</b>, so sign up first. In the race you <b>create your cluster on this account</b> (M0) and pay for it from your <b>USD 250 credit</b>. Account blocked on the day? A facilitator can give you a backup seat.
-  <div class="note info"><b>What you need:</b> an email address, a phone number for verification, and a <b>credit or debit card</b>. Prepaid and virtual cards are not accepted. New accounts with a card get <b>USD 250 introductory credit</b>, valid until the end of the month after it is applied.</div>
+  intro:`<b>Required before the workshop.</b> You register for Launchpad with the email or username of <b>your own Civo account</b>, so sign up first. In the race you <b>create your cluster on this account</b> (M0) and pay for it from your <b>$250 credit</b>. Account blocked on the day? A facilitator can give you a backup seat.
+  <div class="note info"><b>What you need:</b> an email address, a phone number for verification, and a <b>credit or debit card</b>. Prepaid and virtual cards are not accepted. New accounts with a card get <b>$250 introductory credit</b>, valid until the end of the month after it is applied.</div>
   <div class="note">Verification can take a few minutes, sometimes a manual review — do it at least one day before. One account per person.</div>`,
   tasks:[
     { t:'Create your account', d:'Sign up, confirm the email link, verify your phone number, then add your card on the Billing page.', cmd:'open https://dashboard.civo.com/signup', re:/^open \S*civo\.com\S*signup\S*$/, out:'Opening dashboard.civo.com/signup …\n  1. Choose a username and password\n  2. Click the confirmation link in your email\n  3. Verify your phone number\n  4. Billing → add a credit/debit card (not prepaid/virtual)\n<span class="ok">✓ Account created and verified</span>', fx:()=>{S.res.account=true} },
-    { t:'Check your USD 250 credit', d:'Billing shows your credit balance and its expiry date.', cmd:'open https://dashboard.civo.com/billing', re:/^open \S*civo\.com\S*billing\S*$/, need:'account', needMsg:'Create your account first.', out:'Credit balance   USD 250.00\nExpires          end of next month\n<span class="ok">✓ Usage is taken from your credit first</span>' },
+    { t:'Check your $250 credit', d:'Billing shows your credit balance and its expiry date.', cmd:'open https://dashboard.civo.com/billing', re:/^open \S*civo\.com\S*billing\S*$/, need:'account', needMsg:'Create your account first.', out:'Credit balance   $250.00\nExpires          end of next month\n<span class="ok">✓ Usage is taken from your credit first</span>' },
     { t:'Create your API key', d:'Account name (top right) → Profile → Security → API keys → create a key. Copy it: you paste it into the CLI in the next lab. Treat it like a password.', cmd:'open https://dashboard.civo.com/profile', re:/^open \S*civo\.com\S*$/, need:'account', needMsg:'Create your account first.', out:'Profile → Security → API keys\n<span class="ok">✓ API key copied — keep it private, never paste it in chat or on screen</span>' },
   ],
   quiz:{ q:'Your colleague shares a laptop and wants to use your API key for their own lab. What should you do?', o:['Share it, keys are reusable','Let them sign up for their own account — an API key gives full access to your account and billing','Paste it in the workshop chat','Email it to the facilitator'], a:1, why:'A Civo API key can create, change and delete everything in your account. Each participant uses their own account, own key and own credit.' } },
@@ -730,7 +730,7 @@ const LABS = [
     { t:'List the nodes', d:'Three workers, all Ready. The control plane is managed by Civo.', cmd:'kubectl get nodes', re:/^kubectl get (nodes|no)( -o wide)?$/, need:'active', needMsg:'Point kubectl at your kubeconfig first.', out:()=>nodesOut() },
     { t:'Check the default apps', d:'metrics-server is what the HPA reads in M3.', cmd:'kubectl get deploy -n kube-system', re:/^kubectl get (deploy|deployment|deployments) -n kube-system$/, need:'active', out:'NAME                     READY   UP-TO-DATE   AVAILABLE   AGE\ncoredns                  1/1     1            1           40m\nlocal-path-provisioner   1/1     1            1           40m\nmetrics-server           1/1     1            1           40m\n<span class="ok">✓ metrics-server is running</span>' },
   ],
-  quiz:{ q:'Why does the team pre-provision the workshop clusters instead of each participant creating one?', o:['Civo cannot create clusters during an event','Every seat starts from the same ready cluster in seconds, so the two hours go to HA and scaling, not to waiting and account verification','Pre-provisioned clusters are bigger','So participants never need their own Civo account'], a:1, why:'Pre-provisioning removes the slowest, least predictable step from the room. Your own Civo account still matters: it is how you register, receive your USD 250 credit and continue with the bonus missions after the workshop.' } }] : []),
+  quiz:{ q:'Why does the team pre-provision the workshop clusters instead of each participant creating one?', o:['Civo cannot create clusters during an event','Every seat starts from the same ready cluster in seconds, so the two hours go to HA and scaling, not to waiting and account verification','Pre-provisioned clusters are bigger','So participants never need their own Civo account'], a:1, why:'Pre-provisioning removes the slowest, least predictable step from the room. Your own Civo account still matters: it is how you register, receive your $250 credit and continue with the bonus missions after the workshop.' } }] : []),
 
 ...(EDITION==='workshop' ? [{ id:'link', mod:'intro', title:'Connect Your Cluster to Launchpad', dur:'3 min', level:'Beginner',
   intro:`Launchpad checks your missions <b>on your real cluster</b>. Export the cluster's kubeconfig from the Civo CLI and upload it with the <b>Connect my cluster</b> button on the missions page.
@@ -990,7 +990,7 @@ resource "civo_kubernetes_cluster" "lab" {
   quiz:{ q:'How does a pod request a GPU in Kubernetes?', o:['annotation gpu=true','resources.limits nvidia.com/gpu: 1','nodeName: gpu','privileged: true'], a:1, why:'The device plugin exposes GPUs as the extended resource <code>nvidia.com/gpu</code>, requested via limits.' } },
 
 { id:'cleanup', mod:'ai', title:'Cleanup', dur:'5 min', level:'Beginner',
-  intro:`${EDITION==='workshop' ? 'Your cluster runs on <b>your own Civo account</b> and is billed per hour from your USD 250 credit. Keep it for the bonus missions (B1–B4) if you like — and delete it when you are done so the credit lasts. Launchpad deletes your uploaded kubeconfig at 23:59 WIB. (Backup seat? The team deletes that cluster for you.)' : 'Delete everything so the pool account is ready for the next session and billing stops.'}`,
+  intro:`${EDITION==='workshop' ? 'Your cluster runs on <b>your own Civo account</b> and is billed per hour from your $250 credit. Keep it for the bonus missions (B1–B4) if you like — and delete it when you are done so the credit lasts. Launchpad deletes your uploaded kubeconfig at 23:59 WIB. (Backup seat? The team deletes that cluster for you.)' : 'Delete everything so the pool account is ready for the next session and billing stops.'}`,
   tasks:[
     ...(EDITION==='workshop' ? [
     { t:'Remove the load test', cmd:'kubectl delete namespace loadtest', re:/^kubectl delete (namespace|ns) loadtest$/, need:'active', out:'namespace "loadtest" deleted' },
@@ -1147,12 +1147,12 @@ const JOURNEYS = {
     {k:'Register', t:'Before Thu 19 Nov', d:'Seat confirmed via the Civo form', reg:true, until:'2026-11-19T10:00'},
     {k:'Live webinar', t:'19 Nov · 10:00 WIB · Zoom', d:'45 min talk &amp; live demo, 15 min Q&amp;A, doorprizes', until:'2026-11-19T11:30'},
     {k:'Take-home labs', t:'S1–S4 · until 23:59 WIB', d:'Rebuild the demo on your own lab', prog:true},
-    {k:'Claim credits', t:'USD 250 Civo credits*', d:'Run it for real on Civo Jakarta region (JKT1)'},
+    {k:'Claim credits', t:'$250 Civo credits*', d:'Run it for real on Civo Jakarta region (JKT1)'},
     {k:'Go hands-on', t:'Thu 26 Nov · Beyond the Container', d:'In-person workshop · limited seats', link:'REG'},
   ],
   'beyond-scaling': [
     {k:'Register', t:'Before Thu 26 Nov', d:'Seat confirmed via the Civo form', reg:true, until:'2026-11-26T09:00'},
-    {k:'Sign up to Civo', t:'Required · before 26 Nov', d:'Your own account, card verified, USD 250 credit ready — you register with it', until:'2026-11-26T09:30'},
+    {k:'Sign up to Civo', t:'Required · before 26 Nov', d:'Your own account, card verified, $250 credit ready — you register with it', until:'2026-11-26T09:30'},
     {k:'Check-in', t:'09:30 · laptop check', d:'Register in Launchpad; civo CLI, kubectl, git and your API key ready', until:'2026-11-26T10:05'},
     {k:'Talk', t:'10:05 · Beyond the Container', d:'Highly available &amp; scalable apps on Kubernetes', until:'2026-11-26T10:20'},
     {k:'Mission race', t:'10:20–11:20 · M0 → Final', d:'Fastest to finish wins, checked live on your cluster', until:'2026-11-26T11:25', prog:true},
@@ -1191,7 +1191,7 @@ function renderWebinarTrack(){
       <div class="clock"><b>${Math.round(evPct(ev)*100)}%</b><span>of the take-home track complete</span></div></div>
     ${journeyHTML(ev)}
     <div class="trk">${cards}</div>
-    <div class="box"><h3>Want the real thing?</h3><p style="color:var(--muted);font-size:14px;margin:0 0 12px">Join <b style="color:var(--text)">Beyond the Container</b> — the in-person workshop on Thu 26 Nov, 10:00–12:00 WIB: build highly available, scalable apps on your own Civo cluster and take on the Flash Sale 12.12 challenge. Pizza, a certificate and USD 250 Civo credits. Limited seats.</p>
+    <div class="box"><h3>Want the real thing?</h3><p style="color:var(--muted);font-size:14px;margin:0 0 12px">Join <b style="color:var(--text)">Beyond the Container</b> — the in-person workshop on Thu 26 Nov, 10:00–12:00 WIB: build highly available, scalable apps on your own Civo cluster and take on the Flash Sale 12.12 challenge. Pizza, a certificate and $250 Civo credits. Limited seats.</p>
       <button class="btn primary" onclick="window.open(REG_FORM,'_blank','noopener')">Register for 26 Nov →</button> <button class="btn" onclick="window.open(LINKS.academy,'_blank','noopener')">Explore all 22 labs in the Academy ↗</button></div>
   </div>`;
   window.scrollTo(0,0);
@@ -2155,7 +2155,7 @@ function renderEvent(){
     <div class="top"><div><div class="eb">Civo Workshop · Thu 26 Nov 2026 · 10:00–12:00 WIB</div><h1>Beyond the Container</h1><p style="font-size:17px;margin:8px 0 0">Running Highly Available &amp; Scalable Applications with Kubernetes</p>
       <p style="color:var(--muted);margin:10px 0 0;max-width:620px">${S.own||!S.reg ? 'You build everything on <b style="color:var(--text)">your own Civo account</b> in the Jakarta region (JKT1) — starting with the cluster itself.' : `You are on backup seat <b class="mono" style="color:var(--text)">${esc(S.clusterName||'—')}</b>, prepared by the Civo Indonesia team.`} ${EDITION==='workshop'?'<b style="color:var(--text)">It is a race:</b> when the facilitator starts the clock, complete M0 → Final in order. Press <b style="color:var(--text)">Check on my cluster</b> on each mission — Launchpad verifies your real cluster and records your time. Fastest to finish wins.':'Connect in M0, then one mission at a time. The clock below follows the room.'}</p>
       ${S.reg ? (S.own ? `<p style="margin:10px 0 0">${S.linked?'<span class="mono" style="color:var(--green,#00ff6f)">✓ Your cluster is connected</span> &nbsp;':''}<button class="btn ${S.linked?'':'primary'}" onclick="openConnect()">${S.linked?'Reconnect':'🔗 Connect my cluster'}</button></p>` : (!S.demo?`<p style="margin:10px 0 0"><button class="btn primary" onclick="downloadKubeconfig()">⬇ Download kubeconfig (backup seat)</button></p>`:'')) : ''}
-      <div class="benefits" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px"><span class="pill" style="border:1.5px solid var(--text);border-radius:999px;padding:6px 14px;font-weight:700">🍕 Pizza on us</span><span class="pill" style="border:1.5px solid var(--text);border-radius:999px;padding:6px 14px;font-weight:700">🏅 Certificate</span><span class="pill" style="border:1.5px solid var(--text);border-radius:999px;padding:6px 14px;font-weight:700">🎁 USD 250 Civo credits</span></div></div>
+      <div class="benefits" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px"><span class="pill" style="border:1.5px solid var(--text);border-radius:999px;padding:6px 14px;font-weight:700">🍕 Pizza on us</span><span class="pill" style="border:1.5px solid var(--text);border-radius:999px;padding:6px 14px;font-weight:700">🏅 Certificate</span><span class="pill" style="background:#00ff6f;color:#000;border:1.5px solid #00ff6f;border-radius:999px;padding:6px 14px;font-weight:800">💰 $250 Free Civo Cloud Credits</span></div></div>
       <div class="clock"><b id="mclock">${c.big}</b><span id="mclocks">${c.sub}</span></div></div>
     ${journeyHTML(evById('beyond-scaling'))}
     <div class="tl">${cards}</div>
@@ -2175,7 +2175,7 @@ const ENTER_COPY = {
     chips:[['Live webinar · Thu 19 Nov','10:00–11:30 WIB · Zoom'],['Take-home journey','9 labs · open until 23:59 WIB']],
     bub:'Hi, I’m Captain Helm! Enter your name and email — your lab is ready in seconds.' },
   workshop:{ lead:'<b>Beyond the Container: Running Highly Available &amp; Scalable Applications with Kubernetes</b> — on your own Civo account in the Jakarta region (JKT1): create your cluster, then race through six missions, verified live on your cluster. Fastest to finish wins.',
-    chips:[['Workshop · Thu 26 Nov','10:00–12:00 WIB · in person'],['Mission race M0 → Final','Pizza · certificate · USD 250 credits']],
+    chips:[['Workshop · Thu 26 Nov','10:00–12:00 WIB · in person'],['Mission race M0 → Final','Pizza · certificate · $250 credits']],
     bub:'Hi, I’m Captain Helm — register with your Civo account. In the race you launch your own cluster in Jakarta!' },
   academy:{ lead:'The <b>Civo Kubernetes Academy</b> for partners and customers: 22 hands-on labs with a live terminal and dashboard — from your first cluster to GitOps, security and GPU.',
     chips:[['8 modules · 22 labs','Self-paced, EKS Workshop flow'],['Partner enablement','Academy cohorts &amp; resellers']],
