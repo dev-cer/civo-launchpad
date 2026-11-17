@@ -44,11 +44,24 @@ pub fn short_name(n: &str) -> String {
     match it.last() { Some(l) => format!("{first} {}.", l.chars().next().unwrap_or(' ').to_uppercase()), None => first.to_string() }
 }
 
+/// Sertifikat: Completion = M0..Final lulus (sampai event ditutup), Participation = M0..M2 lulus.
+pub fn certificate(passed: &[(String, u64)]) -> &'static str {
+    let has = |m: &str| passed.iter().any(|x| x.0 == m);
+    if MISSIONS.iter().all(|m| has(m)) { "Completion" } else if ["M0", "M1", "M2"].iter().all(|m| has(m)) { "Participation" } else { "" }
+}
+
+/// Lulus misi yang dihitung untuk leaderboard: hanya sampai race ditutup (stop). Setelah itu tetap
+/// tercatat untuk sertifikat, tetapi tidak mengubah peringkat.
+pub fn ranked(d: &RaceData, ms: &[(String, u64)]) -> Vec<(String, u64)> {
+    ms.iter().filter(|m| d.stop.map(|s| m.1 <= s).unwrap_or(true)).cloned().collect()
+}
+
 /// Leaderboard: misi terbanyak, lalu waktu (detik sejak start) misi terakhir yang lulus, lalu nama.
 pub fn board(d: &RaceData) -> Vec<serde_json::Value> {
     let start = d.start.unwrap_or(0);
     let mut rows: Vec<(usize, u64, String, Vec<(String, u64)>)> = d.done.values()
-        .map(|(name, ms)| (ms.len(), ms.iter().map(|m| m.1).max().unwrap_or(0).saturating_sub(start), name.clone(), ms.clone()))
+        .map(|(name, all)| { let ms = ranked(d, all); (ms.len(), ms.iter().map(|m| m.1).max().unwrap_or(0).saturating_sub(start), name.clone(), ms) })
+        .filter(|r| r.0 > 0)
         .collect();
     rows.sort_by(|a, b| b.0.cmp(&a.0).then(a.1.cmp(&b.1)).then(a.2.cmp(&b.2)));
     rows.into_iter().enumerate().map(|(i, (n, t, name, ms))| serde_json::json!({

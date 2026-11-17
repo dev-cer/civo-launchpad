@@ -1156,7 +1156,7 @@ const JOURNEYS = {
     {k:'Check-in', t:'09:30 · laptop check', d:'Register in Launchpad; civo CLI, kubectl, git and your API key ready', until:'2026-11-26T10:05'},
     {k:'Talk', t:'10:05 · Beyond the Container', d:'Highly available &amp; scalable apps on Kubernetes', until:'2026-11-26T10:20'},
     {k:'Mission race', t:'10:20–11:20 · M0 → Final', d:'Fastest to finish wins, checked live on your cluster', until:'2026-11-26T11:25', prog:true},
-    {k:'Certificates', t:'11:25 · winners &amp; recap', d:'Leaderboard, certificates, pizza 🍕', until:'2026-11-26T12:00'},
+    {k:'Winners', t:'11:25 · top 3 &amp; recap', d:'Mission Control, prizes, pizza 🍕 — certificates by e-mail', until:'2026-11-26T12:00'},
     {k:'Keep learning', t:'Civo Kubernetes Academy', d:'All labs, self-paced', link:'ACADEMY'},
   ]};
 function journeyHTML(ev){
@@ -2098,7 +2098,7 @@ function closeSkip(){ const m=$('#skipm'); m&&m.remove() }
 function missionClock(){
   if (EDITION==='workshop'){
     if (RACE.state==='running'){ const t=Math.max(0,Math.floor(Date.now()/1000+RACE.skew-RACE.start)); return {cur:-1,big:'⏱ '+fmtT(t),sub:`race running · ${Object.keys(RACE.mine).length}/${MISSIONS.length} missions passed`} }
-    if (RACE.state==='finished') return {cur:MISSIONS.length,big:'Race over',sub:'See the leaderboard'};
+    if (RACE.state==='finished') return {cur:-1,big:'Race over',sub:'Board frozen · missions still count for your certificate until 23:59 WIB'};
     const d=wib('10:20')-Date.now(); if (d>0){ const dd=Math.floor(d/864e5), hh=Math.floor(d%864e5/36e5), mm=Math.floor(d%36e5/6e4), ss=Math.floor(d%6e4/1e3);
       return {cur:-1,big:dd>0?`${dd}d ${hh}h`:hh>0?`${hh}h ${mm}m`:`${mm}:${String(ss).padStart(2,'0')}`,sub:'until the race starts · Thu 26 Nov, 10:20 WIB'} }
     return {cur:-1,big:'Ready…',sub:'waiting for the facilitator’s start signal'};
@@ -2131,7 +2131,8 @@ async function raceCheck(mid){
       if (j.passed){ if (j.elapsed!=null) RACE.mine[mid]=j.elapsed; else if (RACE.mine[mid]==null) RACE.mine[mid]=0; saveRace() }
       out.innerHTML = j.already ? '<div>✅ Already passed — on to the next mission!</div>'
         : (j.checks||[]).map(c=>`<div>${c.ok?'✅':'❌'} <span>${esc(c.name)}</span></div>${c.ok?'':`<div class="h">${esc(c.hint)}</div>`}`).join('')
-          + (j.passed?`<div><b>🏁 ${mid} passed${j.elapsed!=null?' at +'+fmtT(j.elapsed):''}</b></div>`:'');
+          + (j.passed?`<div><b>🏁 ${mid} passed${j.elapsed!=null?' at +'+fmtT(j.elapsed):''}</b>${j.late?' · counts toward your certificate (race board closed at 11:20)':''}</div>`:'')
+          + (j.certificate?`<div>🏅 Certificate earned so far: <b>${j.certificate}</b> — <a href="#certificate">details</a></div>`:'');
       if (j.passed){ confetti&&confetti(); btn.textContent='✓ Passed · check again'; }
     }
   }catch(e){ out.innerHTML='<div>⚠️ Could not reach Launchpad — check your Wi-Fi.</div>' }
@@ -2159,8 +2160,8 @@ function renderEvent(){
       <div class="clock"><b id="mclock">${c.big}</b><span id="mclocks">${c.sub}</span></div></div>
     ${journeyHTML(evById('beyond-scaling'))}
     <div class="tl">${cards}</div>
-    <div class="box"><h3>🏅 Certificate of completion</h3><p style="color:var(--muted);font-size:14px;margin:0 0 12px">Finish the M0–Final labs to unlock your personal certificate (${certDone()}/${certLabs().length} labs done). Cleanup does not count. Workshop clusters are deleted at 23:59 WIB.</p>
-      <button class="btn primary" onclick="go('certificate')">Open my certificate →</button></div>
+    <div class="box"><h3>🏅 Certificates</h3><p style="color:var(--muted);font-size:14px;margin:0 0 12px"><b style="color:var(--text)">Completion</b>: all six missions passed. <b style="color:var(--text)">Participation</b>: M0–M2 passed. Missions keep counting until 23:59 WIB; signed certificates are e-mailed by Civo Indonesia within 3 working days.</p>
+      <button class="btn primary" onclick="go('certificate')">My certificate status →</button></div>
     <div class="box"><h3>Schedule</h3><div style="color:var(--muted);font-size:14px;line-height:1.8">Before 26 Nov: sign up for your own Civo account (required to register) · 09:30 Check-in: register in Launchpad, Wi-Fi &amp; kubectl check · 10:00 Opening · 10:05 Talk &amp; a 3-minute demo of a mission check · <b style="color:var(--text)">10:20 Race starts: M0 → Final</b> · 11:20 Race closes · 11:25 Winners &amp; certificates · 11:40 Q&amp;A &amp; pizza 🍕 · 12:00 Close</div></div>
     ${!take.length ? `<div class="box"><h3>After the workshop</h3><p style="color:var(--muted);font-size:14px;margin:0 0 12px">Keep going at your own pace in the <b style="color:var(--text)">Civo Kubernetes Academy</b> — 22 labs from GitOps and Terraform to GPU node pools and NetworkPolicy.</p>
       <button class="btn primary" onclick="window.open(LINKS.academy,'_blank','noopener')">Open the Academy ↗</button></div>` : `<div class="box"><h3>Take-home labs</h3><p style="color:var(--muted);font-size:14px;margin:0 0 12px">Not part of today’s clock — your Launchpad access stays open after the event.</p>
@@ -2286,9 +2287,31 @@ async function submitConnect(){
 }
 const certLabs = () => MISSIONS.flatMap(m=>m.labs);
 const certDone = () => certLabs().map(id=>LABS.find(l=>l.id===id)).filter(l=>l&&labDone(l)).length;
+async function renderCertWorkshop(){
+  const first=esc(S.reg.name.split(' ')[0]);
+  $('#app').innerHTML=`<section class="hub"><div class="eb">Certificate</div><h1>Checking your missions…</h1></section>`;
+  let me=null;
+  if (!S.demo){ try{ const r=await fetch('/api/race/me',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:S.reg.email,token:S.reg.token||''})}); if(r.ok) me=await r.json() }catch(e){} }
+  const passed = me ? me.passed_missions : Object.keys(RACE.mine||{});
+  const cert = me ? me.certificate : (MISSIONS.every(m=>passed.includes(m.id)) ? 'Completion' : ['M0','M1','M2'].every(x=>passed.includes(x)) ? 'Participation' : '');
+  const chips = MISSIONS.map(m=>`<span class="pill" style="display:inline-flex;gap:6px;align-items:center;border-radius:999px;padding:6px 12px;font-size:13px;font-weight:700;${passed.includes(m.id)?'background:#00ff6f;color:#000':'border:1.5px dashed var(--muted);color:var(--muted)'}">${passed.includes(m.id)?'✓ ':''}${m.id} ${m.name}</span>`).join('');
+  const head = cert==='Completion' ? `🏅 You earned the Certificate of Completion, ${first}!`
+    : cert==='Participation' ? `🎓 You earned the Certificate of Participation, ${first}!` : `Not yet, ${first} — keep going!`;
+  const lead = cert==='Completion' ? 'All six missions verified on your own Civo cluster.'
+    : cert==='Participation' ? 'M0–M2 verified. Finish M3, M4 and the Final before 23:59 WIB today to upgrade to the Certificate of Completion.'
+    : 'Pass M0, M1 and M2 for the Certificate of Participation; all six missions for the Certificate of Completion. Missions still count until 23:59 WIB today.';
+  $('#app').innerHTML=`<section class="hub"><div class="eb">Beyond the Container · Certificate</div><h1>${head}</h1>
+    <p class="lead">${lead}</p>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 18px">${chips}</div>
+    <div class="box" style="max-width:720px"><h3 style="margin-top:0">${cert?'Your signed certificate is on its way':'How certificates work'}</h3>
+      <p style="color:var(--muted);margin:0">Certificates are signed by Civo Indonesia and <b style="color:var(--text)">e-mailed to ${esc(S.reg.email)}</b> within 3 working days after the workshop. Missions are verified on your cluster by Launchpad — nothing to upload.</p></div>
+    <p style="margin-top:18px"><button class="btn primary" onclick="go('ev/beyond-scaling')">Back to missions</button> <button class="btn" onclick="window.open(LINKS.academy,'_blank','noopener')">Keep learning in the Academy ↗</button></p></section>`;
+  window.scrollTo(0,0);
+}
 function renderCert(){
   CUR=null; markNav('event'); clearInterval(TICK);
   if (!S.reg) return go('enter');
+  if (EDITION==='workshop') return renderCertWorkshop();
   const total=certLabs().length, done=certDone(), ok=done>=total;
   const missing=certLabs().map(id=>LABS.find(l=>l.id===id)).filter(l=>l&&!labDone(l));
   $('#app').innerHTML = ok ? `<style>@media print{header,.toast,.noprint{display:none!important} body{background:#fff} .cert{box-shadow:none;margin:0}}</style>

@@ -366,6 +366,8 @@ async fn main() {
         .route("/api/leaderboard", get(get_leaderboard).post(post_score))
         .route("/api/race", get(get_race))
         .route("/api/race/check", post(race_check))
+        .route("/api/race/me", post(race_me))
+        .route("/api/race/export", get(race_export))
         .route("/api/admin/race", post(admin_race))
         .route("/api/cluster/connect", post(connect_cluster))
         .fallback_service(ServeDir::new(static_dir))
@@ -428,7 +430,9 @@ async fn race_check(State(state): State<Arc<AppState>>, Json(req): Json<RaceChec
         let d = state.race.lock().await;
         let t = now();
         match (d.start, d.stop) {
-            (_, Some(_)) => return err(StatusCode::CONFLICT, "The race is over — see the leaderboard."),
+            // Setelah race ditutup, cek tetap diterima sampai event ditutup: dihitung untuk sertifikat, bukan peringkat.
+            (_, Some(_)) if window_state(state.window) == "closed" => return err(StatusCode::CONFLICT, "The event has closed — missions can no longer be checked."),
+            (Some(_), Some(_)) => {}
             (Some(s), None) if t >= s => {}
             _ => return err(StatusCode::CONFLICT, "The race has not started yet. Wait for the facilitator's signal."),
         }
@@ -437,7 +441,8 @@ async fn race_check(State(state): State<Arc<AppState>>, Json(req): Json<RaceChec
             return err(StatusCode::CONFLICT, &format!("Finish {prev} first — missions count in order."));
         }
         if done.iter().any(|x| x == mission) {
-            return (StatusCode::OK, Json(serde_json::json!({ "status": "success", "passed": true, "already": true, "mission": mission, "players": race::board(&d) })));
+            let mine = d.done.get(&email).map(|(_, v)| v.clone()).unwrap_or_default();
+            return (StatusCode::OK, Json(serde_json::json!({ "status": "success", "passed": true, "already": true, "mission": mission, "players": race::board(&d), "certificate": race::certificate(&mine), "passed_missions": mine.iter().map(|m| m.0.clone()).collect::<Vec<_>>() })));
         }
     }
     {
@@ -458,14 +463,17 @@ async fn race_check(State(state): State<Arc<AppState>>, Json(req): Json<RaceChec
     let passed = checks.iter().all(|c| c.ok);
     let mut d = state.race.lock().await;
     let mut at = None;
-    if passed && d.stop.is_none() {
+    let late = d.stop.is_some();
+    if passed {
         let t = now();
         let e = d.done.entry(email.clone()).or_insert((name.clone(), vec![]));
         if !e.1.iter().any(|x| x.0 == mission) { e.1.push((mission.to_string(), t)); }
         at = Some(t.saturating_sub(d.start.unwrap_or(t)));
         race::save(&state.race_file, &d);
     }
-    (StatusCode::OK, Json(serde_json::json!({ "status": "success", "passed": passed, "mission": mission, "elapsed": at, "checks": checks, "players": race::board(&d) })))
+    let mine = d.done.get(&email).map(|(_, v)| v.clone()).unwrap_or_default();
+    (StatusCode::OK, Json(serde_json::json!({ "status": "success", "passed": passed, "mission": mission, "elapsed": if late { None } else { at }, "late": late,
+        "checks": checks, "players": race::board(&d), "certificate": race::certificate(&mine), "passed_missions": mine.iter().map(|m| m.0.clone()).collect::<Vec<_>>() })))
 }
 
 fn own_kc_dir() -> String { env::var("OWN_KUBECONFIG_DIR").unwrap_or_else(|_| "/data/own-kubeconfigs".to_string()) }
@@ -535,6 +543,56 @@ async fn connect_cluster(State(state): State<Arc<AppState>>, Json(req): Json<Con
     }
     let _ = std::fs::rename(&tmp, &path);
     (StatusCode::OK, Json(serde_json::json!({ "status": "success", "connected": true, "checks": checks })))
+}
+
+#[derive(Deserialize)]
+struct RaceMeRequest { email: String, #[serde(default)] token: String }
+
+/// Status misi & sertifikat milik peserta sendiri (untuk halaman sertifikat di Launchpad).
+async fn race_me(State(state): State<Arc<AppState>>, Json(req): Json<RaceMeRequest>) -> impl IntoResponse {
+    let email = clean(&req.email, 120).to_lowercase();
+    let tok = clean(&req.token, 64);
+    {
+        let regs = state.regs.lock().await;
+        match regs.iter().find(|r| r.email == email) {
+            Some(r) if !r.token.is_empty() && r.token == tok => {}
+            _ => return err(StatusCode::FORBIDDEN, "Sign in to Launchpad again with your registration details."),
+        }
+    }
+    let d = state.race.lock().await;
+    let mine = d.done.get(&email).map(|(_, v)| v.clone()).unwrap_or_default();
+    let ranked = race::ranked(&d, &mine);
+    let start = d.start.unwrap_or(0);
+    (StatusCode::OK, Json(serde_json::json!({ "status": "success", "certificate": race::certificate(&mine),
+        "passed_missions": mine.iter().map(|m| m.0.clone()).collect::<Vec<_>>(),
+        "race_missions": ranked.len(), "race_elapsed": ranked.iter().map(|m| m.1).max().map(|t| t.saturating_sub(start)),
+        "race": match (d.start, d.stop) { (_, Some(_)) => "finished", (Some(_), None) => "running", _ => "waiting" } })))
+}
+
+/// CSV untuk marketing: siapa berhak sertifikat apa, plus peringkat race saat ditutup.
+async fn race_export(State(state): State<Arc<AppState>>, headers: HeaderMap) -> impl IntoResponse {
+    if !is_admin(&state, &headers) { return (StatusCode::UNAUTHORIZED, [(header::CONTENT_TYPE, "text/plain")], "Admin token required.\n".to_string()); }
+    let regs = state.regs.lock().await;
+    let d = state.race.lock().await;
+    let start = d.start.unwrap_or(0);
+    let board = race::board(&d);
+    let csv = |v: &str| format!("\"{}\"", v.replace('"', "\"\""));
+    let mut out = String::from("certificate,name,email,company,role,civo_account,missions_passed,missions_in_race,race_rank,race_time_seconds,passed_after_race\n");
+    let mut rows: Vec<(u8, String)> = vec![];
+    for r in regs.iter().filter(|r| !r.event.to_lowercase().contains("academy") && r.event != "rehearsal") {
+        let all = d.done.get(&r.email).map(|(_, v)| v.clone()).unwrap_or_default();
+        let ranked = race::ranked(&d, &all);
+        let cert = race::certificate(&all);
+        let rank = board.iter().find(|b| b["name"] == race::short_name(&r.name) && b["missions"] == ranked.len()).and_then(|b| b["rank"].as_u64());
+        let time = ranked.iter().map(|m| m.1).max().map(|t| t.saturating_sub(start));
+        let late: Vec<String> = all.iter().filter(|m| !ranked.contains(m)).map(|m| m.0.clone()).collect();
+        let order = match cert { "Completion" => 0, "Participation" => 1, _ => 2 };
+        rows.push((order, format!("{},{},{},{},{},{},{},{},{},{},{}\n", csv(cert), csv(&r.name), csv(&r.email), csv(&r.company), csv(&r.role), csv(&r.civo_account),
+            all.len(), ranked.len(), rank.map(|x| x.to_string()).unwrap_or_default(), time.map(|x| x.to_string()).unwrap_or_default(), csv(&late.join(" ")))));
+    }
+    rows.sort_by(|a, b| a.0.cmp(&b.0));
+    for (_, l) in rows { out.push_str(&l); }
+    (StatusCode::OK, [(header::CONTENT_TYPE, "text/csv; charset=utf-8")], out)
 }
 
 fn err(code: StatusCode, msg: &str) -> (StatusCode, Json<serde_json::Value>) {
