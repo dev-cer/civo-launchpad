@@ -1,0 +1,23 @@
+# Civo Launchpad — one image: Rust API + the workshop UI (dist/<edition>) + kubectl for mission checks.
+# Build context = repository root:  docker build -f Dockerfile.launchpad --build-arg EDITION=workshop .
+FROM rust:1-bookworm AS builder
+WORKDIR /usr/src/app
+COPY backend/Cargo.toml backend/Cargo.lock ./
+COPY backend/src ./src
+RUN cargo build --release --locked
+ARG KUBECTL_VERSION=v1.31.4
+RUN curl -fsSLo /usr/local/bin/kubectl https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl \
+ && chmod +x /usr/local/bin/kubectl
+
+FROM debian:bookworm-slim
+ARG EDITION=workshop
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates && rm -rf /var/lib/apt/lists/* \
+ && useradd --uid 10001 --no-create-home --shell /usr/sbin/nologin app
+WORKDIR /app
+COPY --from=builder /usr/src/app/target/release/civo-workshop-backend /app/launchpad
+COPY --from=builder /usr/local/bin/kubectl /usr/local/bin/kubectl
+COPY dist/${EDITION}/ /app/static/
+USER 10001
+ENV PORT=8080 STATIC_DIR=/app/static
+EXPOSE 8080
+CMD ["/app/launchpad"]

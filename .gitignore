@@ -1,0 +1,5 @@
+backend/target/
+dist/
+out/
+*.kubeconfig
+kubeconfig*.yaml

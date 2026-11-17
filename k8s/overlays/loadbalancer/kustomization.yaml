@@ -1,0 +1,18 @@
+# Alternatif tanpa Ingress: expose frontend via Civo Load Balancer (dikenakan biaya LB).
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../base
+patches:
+  - target: { kind: Service, name: workshop-frontend }
+    patch: |-
+      - op: replace
+        path: /spec/type
+        value: LoadBalancer
+  - target: { kind: Ingress, name: workshop }
+    patch: |-
+      $patch: delete
+      apiVersion: networking.k8s.io/v1
+      kind: Ingress
+      metadata:
+        name: workshop

@@ -1,0 +1,13 @@
+# Local dev: frontend (nginx) + backend (Rust) — sama seperti topologi di Kubernetes
+services:
+  workshop-backend:
+    build: ./backend
+    environment:
+      WORKSHOP_ACCOUNTS: "user-01:civo-apikey-x9q2m,user-02:civo-apikey-r4v8p,user-03:civo-apikey-k7b1z"
+    restart: always
+  workshop-frontend:
+    build: ./frontend
+    ports:
+      - "80:8080"
+    depends_on: [workshop-backend]
+    restart: always

@@ -1,0 +1,24 @@
+# Produksi: civo.arupa.id + TLS otomatis (cert-manager + Let's Encrypt).
+# Prasyarat: civo kubernetes applications add cert-manager --cluster <cluster>
+#            DNS A record civo.arupa.id -> IP Ingress/LB klaster (civo kubernetes show <cluster>)
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../base
+  - cluster-issuer.yaml
+patches:
+  - target: { kind: Ingress, name: workshop }
+    patch: |-
+      - op: replace
+        path: /spec/rules/0/host
+        value: civo.arupa.id
+      - op: add
+        path: /metadata/annotations
+        value:
+          cert-manager.io/cluster-issuer: letsencrypt-prod
+          traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+      - op: add
+        path: /spec/tls
+        value:
+          - hosts: [civo.arupa.id]
+            secretName: civo-arupa-id-tls

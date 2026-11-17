@@ -1,0 +1,15 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: civo-workshop
+resources:
+  - namespace.yaml
+  - backend-secret.yaml
+  - backend.yaml
+  - frontend.yaml
+  - networkpolicy.yaml
+  - ingress.yaml
+images:
+  - name: ghcr.io/dev-cer/civo-workshop-backend
+    newTag: "0.1.0"
+  - name: ghcr.io/dev-cer/civo-workshop-frontend
+    newTag: "0.1.0"

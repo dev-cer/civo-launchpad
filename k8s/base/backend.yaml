@@ -1,0 +1,102 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: workshop-backend
+  namespace: civo-workshop
+  labels: &labels
+    app.kubernetes.io/name: workshop-backend
+    app.kubernetes.io/component: backend
+    app.kubernetes.io/part-of: civo-launchpad
+spec:
+  # State akun disimpan in-memory -> HARUS 1 replica & Recreate,
+  # kalau tidak, dua pod akan membagikan API key yang sama ke dua peserta.
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: workshop-backend
+  template:
+    metadata:
+      labels: *labels
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        fsGroup: 10001
+        seccompProfile: { type: RuntimeDefault }
+      containers:
+        - name: backend
+          image: ghcr.io/dev-cer/civo-workshop-backend:0.1.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - { name: http, containerPort: 8080 }
+          env:
+            - { name: PORT, value: "8080" }
+            - { name: REGISTRATIONS_FILE, value: /data/registrations.jsonl }
+            # Event window (workshop edition): lab opens when the event starts, closes 23:59 WIB.
+            # Remove both for the Academy edition (always open). Admin token bypasses the window.
+            # 26 Nov: cluster disiapkan panitia (CLUSTER_POOL). Peserta wajib register dengan kode akses
+            # dari kartu check-in + akun Civo miliknya, lalu menerima kubeconfig. Tidak ada API key dibagikan.
+            - { name: CLUSTER_POOL, value: "1" }
+            - { name: KUBECONFIG_DIR, value: /kubeconfigs }
+            # Race "paling cepat menyelesaikan misi": hasil disimpan di PVC; mulai/stop oleh fasilitator
+            # via POST /api/admin/race {"action":"start"} (Bearer ADMIN_TOKEN)
+            - { name: RACE_FILE, value: /data/race.json }
+            - { name: RACE_P95_MS, value: "1500" }
+            - { name: EVENT_OPEN, value: "2026-11-26T10:00:00+07:00" }
+            - { name: EVENT_CLOSE, value: "2026-11-26T23:59:59+07:00" }
+          envFrom:
+            - secretRef: { name: workshop-accounts }
+            # SEATS="kode:cluster,..." dibuat oleh scripts/provision-workshop-pool (tidak di-commit)
+            - secretRef: { name: workshop-seats, optional: true }
+          readinessProbe:
+            httpGet: { path: /healthz, port: http }
+            periodSeconds: 5
+          livenessProbe:
+            httpGet: { path: /healthz, port: http }
+            initialDelaySeconds: 5
+            periodSeconds: 15
+          resources:
+            requests: { cpu: 50m, memory: 32Mi }
+            limits: { cpu: 250m, memory: 128Mi }
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: { drop: ["ALL"] }
+          volumeMounts:
+            - { name: data, mountPath: /data }
+            - { name: kubeconfigs, mountPath: /kubeconfigs, readOnly: true }
+      volumes:
+        - name: data
+          persistentVolumeClaim: { claimName: workshop-data }
+        # Satu file <cluster>.yaml per kursi; dibuat oleh scripts/provision-workshop-pool (tidak di-commit)
+        - name: kubeconfigs
+          secret: { secretName: workshop-kubeconfigs, optional: true, defaultMode: 0440 }
+---
+# Data registrasi peserta (JSONL) — memulihkan assignment akun setelah restart & sumber export lead.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: workshop-data
+  namespace: civo-workshop
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: civo-volume
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: workshop-backend
+  namespace: civo-workshop
+  labels:
+    app.kubernetes.io/name: workshop-backend
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: workshop-backend
+  ports:
+    - { name: http, port: 8080, targetPort: http }

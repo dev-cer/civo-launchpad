@@ -1,0 +1,18 @@
+# Backend hanya boleh diakses dari pod frontend (butuh CNI yang enforce NetworkPolicy, mis. Cilium).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: backend-allow-frontend-only
+  namespace: civo-workshop
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: workshop-backend
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: workshop-frontend
+      ports:
+        - { protocol: TCP, port: 8080 }

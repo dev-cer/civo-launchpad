@@ -1,0 +1,5 @@
+# ---- Frontend (static UI + reverse proxy /api -> backend) ----
+FROM nginxinc/nginx-unprivileged:1.27-alpine
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY static/ /usr/share/nginx/html/
+EXPOSE 8080
