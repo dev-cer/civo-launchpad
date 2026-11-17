@@ -542,7 +542,9 @@ fn err(code: StatusCode, msg: &str) -> (StatusCode, Json<serde_json::Value>) {
 }
 
 async fn register(State(state): State<Arc<AppState>>, headers: HeaderMap, Json(req): Json<RegisterRequest>) -> impl IntoResponse {
-    match window_state(state.window) {
+    // Academy (/academy/) selalu buka dan tidak memakai kursi/kode workshop: hanya mencatat lead.
+    let academy = req.event.to_lowercase().contains("academy");
+    match if academy { "open" } else { window_state(state.window) } {
         "before" if !is_admin(&state, &headers) => return err(StatusCode::FORBIDDEN, "Launchpad is not open yet — it opens when the event starts."),
         "closed" if !is_admin(&state, &headers) => return err(StatusCode::FORBIDDEN, "This Launchpad closed at 23:59 WIB on event day."),
         _ => {}
@@ -565,6 +567,12 @@ async fn register(State(state): State<Arc<AppState>>, headers: HeaderMap, Json(r
 
     // Email yang sama (mis. ganti browser) mendapat akun yang sama.
     let code = clean(&req.access_code, 40).to_lowercase();
+    if academy {
+        if let Some(r) = regs.iter().find(|r| r.email == email) {
+            // Sudah terdaftar (mis. peserta workshop): jangan buat registrasi baru, cukup sambut kembali.
+            return (StatusCode::OK, Json(serde_json::json!({ "status": "success", "returning": true, "api_key": null, "cluster": "", "own": true, "account_id": "own", "seat": r.seat, "name": r.name })));
+        }
+    }
     if let Some(r) = regs.iter().find(|r| r.email == email) {
         let acc = accounts.iter().find(|a| a.id == r.account_id);
         if pool_mode() {
@@ -603,11 +611,11 @@ async fn register(State(state): State<Arc<AppState>>, headers: HeaderMap, Json(r
     // OWN_ACCOUNTS=1 (workshop "Beyond the Container"): peserta memakai akun Civo sendiri,
     // backend hanya mencatat registrasi (lead) tanpa membagikan API key dari pool.
     let own_accounts = env::var("OWN_ACCOUNTS").map(|v| v == "1" || v.eq_ignore_ascii_case("true")).unwrap_or(false);
-    if pool_mode() && (!req.civo_signup || clean(&req.civo_account, 120).chars().count() < 3) {
+    if pool_mode() && !academy && (!req.civo_signup || clean(&req.civo_account, 120).chars().count() < 3) {
         return err(StatusCode::BAD_REQUEST, "Sign up for your own Civo account first (pre-work), then enter the email or username of that account.");
     }
     // 26 Nov: tanpa kode = peserta membuat cluster di akun Civo sendiri; kode = kursi cadangan panitia.
-    if own_accounts || (pool_mode() && code.is_empty()) {
+    if own_accounts || academy || (pool_mode() && code.is_empty()) {
         let reg = Registration {
             participant: clean(&req.participant, 64), name: name.clone(), email,
             company: clean(&req.company, 100), role: clean(&req.role, 60), event: clean(&req.event, 80),

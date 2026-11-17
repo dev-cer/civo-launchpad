@@ -17,6 +17,12 @@ WORKDIR /app
 COPY --from=builder /usr/src/app/target/release/civo-workshop-backend /app/launchpad
 COPY --from=builder /usr/local/bin/kubectl /usr/local/bin/kubectl
 COPY dist/${EDITION}/ /app/static/
+# The Academy rides along at /academy/ so "Keep learning" stays on the same address (s.id/civo-launchpad),
+# and links that point at the claude.ai preview artifacts are rewritten to this server.
+COPY dist/academy/ /app/static/academy/
+RUN sed -i -e "s#https://claude.ai/artifact/TKmMNxxRP4DRFFUTQE1oa4#/academy/#g" \
+           -e "s#https://claude.ai/artifact/1NQH82ep9bAV4WzELaQR1N#/#g" \
+           /app/static/index.html /app/static/academy/index.html
 USER 10001
 ENV PORT=8080 STATIC_DIR=/app/static
 EXPOSE 8080
