@@ -2302,7 +2302,13 @@ async function renderCertWorkshop(){
     : 'Pass M0, M1 and M2 for the Certificate of Participation; all six missions for the Certificate of Completion. Missions still count until 23:59 WIB today.';
   let cm=null;
   if (!S.demo && cert){ try{ const r=await fetch('/api/cert/me',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:S.reg.email,token:S.reg.token||''})}); if(r.ok) cm=await r.json() }catch(e){} }
-  const certBox = cm && cm.url
+  const viaCertifier = cm && cm.certifier;
+  const sentNow = viaCertifier && cm.sent && cm.sent.includes(cert);
+  const certBox = sentNow
+    ? `<h3 style="margin-top:0">Your certificate is in your inbox 🎉</h3><p style="color:var(--muted);margin:0">We sent your Certificate of ${esc(cert)} and digital badge to <b style="color:var(--text)">${esc(S.reg.email)}</b> through <b style="color:var(--text)">Certifier</b>. Open the e-mail to download the PDF, add it to LinkedIn, and share the verification link (it has a QR code). Not there? Check the spam or promotions folder.</p>`
+    : viaCertifier && cert
+    ? `<h3 style="margin-top:0">Your certificate is on its way</h3><p style="color:var(--muted);margin:0">When the facilitator closes the race (about 11:25), <b style="color:var(--text)">Certifier</b> e-mails your certificate and digital badge to <b style="color:var(--text)">${esc(S.reg.email)}</b> — with a PDF, a verification page with QR code, and Add to LinkedIn. Finished more missions after the race? Your upgrade is sent after 23:59 WIB.</p>`
+    : cm && cm.url
     ? `<h3 style="margin-top:0">Your certificate is ready 🎉</h3><p style="color:var(--muted);margin:0 0 14px">Signed by Civo Indonesia with a QR code — anyone who scans it lands on the public verification page. Certificate ID <b class="mono" style="color:var(--text)">${esc(cm.id)}</b>.</p>
        <p style="margin:0;display:flex;gap:10px;flex-wrap:wrap"><a class="btn primary" href="${esc(cm.url)}" target="_blank" rel="noopener">🏅 Open my certificate (PDF)</a><a class="btn" href="${esc(cm.verify_url)}" target="_blank" rel="noopener">✓ Verification page</a></p>`
     : cert

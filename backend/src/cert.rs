@@ -63,7 +63,6 @@ pub fn page(kind: &str, name: &str, id: &str, verify_url: &str) -> String {
     let logo = LOGO.replacen("<svg ", r#"<svg class="logo" "#, 1);
     let qr = qr_svg(verify_url, 92);
     let title = format!("Certificate of {kind} — {}", esc(name));
-    let short_url = verify_url.trim_start_matches("https://").trim_start_matches("http://");
     format!(r##"{HEAD}<title>{title}</title>
 <style>
 @page{{size:A4 landscape;margin:0}}
@@ -118,8 +117,7 @@ h1{{margin:0;font-family:'Newsreader',Georgia,serif;font-size:{name_size}px;font
   <div style="display:flex;flex-direction:column;gap:10px"><p style="margin:0;font-family:'Newsreader',Georgia,serif;font-size:{big_size}px;font-weight:500;line-height:.95;white-space:nowrap">{big}</p>
     <p style="margin:0;font-size:17px;line-height:1.35;font-weight:600">{small}</p></div>
   <div style="display:flex;flex-direction:column;gap:6px;font-size:14px;line-height:1.4"><p style="margin:0;font-weight:700">Thursday, 26 November 2026</p>
-    <p style="margin:0">Civo Kubernetes · Jakarta region (JKT1)</p><p style="margin:0">Civo Indonesia · PT Arupa Cloud Nusantara</p>
-    <p class="mono" style="margin:8px 0 0;font-size:11px;opacity:.75;word-break:break-all">{short_url}</p></div></div>
+    <p style="margin:0">Civo Kubernetes · Jakarta region (JKT1)</p><p style="margin:0">Civo Indonesia · PT Arupa Cloud Nusantara</p></div></div>
 </div></div>
 <script>function fit(){{var s=document.getElementById('sheet'),w=Math.min(1,(innerWidth-24)/1123);s.style.transform='scale('+w+')';s.parentNode.style.height=(794*w+28)+'px'}}addEventListener('resize',fit);fit();
 addEventListener('beforeprint',function(){{document.getElementById('sheet').style.transform='none'}});addEventListener('afterprint',fit);</script>

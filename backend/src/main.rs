@@ -29,6 +29,7 @@
 
 mod race;
 mod cert;
+mod certifier;
 use axum::{
     extract::{Path, Query, State},
     http::{header, HeaderMap, StatusCode},
@@ -133,6 +134,10 @@ struct AppState {
     last_check: Mutex<std::collections::HashMap<String, u64>>,
     /// Kunci penurunan Credential ID sertifikat (Secret launchpad-cert). Fallback: ADMIN_TOKEN.
     cert_secret: String,
+    /// Certifier (opsional): sertifikat resmi dikirim lewat certifier.io.
+    certifier: Option<certifier::Config>,
+    ledger: Mutex<certifier::Ledger>,
+    http: reqwest::Client,
 }
 
 /// Parse "YYYY-MM-DDTHH:MM[:SS]+HH:MM" (RFC3339 sederhana) ke unix detik, tanpa dependency tambahan.
@@ -342,12 +347,26 @@ async fn main() {
         cert_secret: env::var("CERT_SECRET").ok().filter(|v| !v.trim().is_empty())
             .or_else(|| env::var("ADMIN_TOKEN").ok().filter(|v| !v.trim().is_empty()))
             .unwrap_or_else(|| "launchpad-dev".to_string()),
+        certifier: certifier::Config::from_env(),
+        ledger: Mutex::new(certifier::Config::from_env().map(|c| certifier::load(&c.file)).unwrap_or_default()),
+        http: reqwest::Client::builder().timeout(std::time::Duration::from_secs(30)).build().unwrap(),
         window: match (env::var("EVENT_OPEN").ok().and_then(|v| parse_ts(&v)), env::var("EVENT_CLOSE").ok().and_then(|v| parse_ts(&v))) {
             (Some(o), Some(c)) => Some((o, c)),
             _ => None,
         },
     });
     if let Some((o, c)) = state.window { println!("Event window: {o} .. {c} (unix)"); }
+    match &state.certifier { Some(c) => println!("Certifier: on ({})", c.api), None => println!("Certifier: off (built-in certificates at /cert/<ID>)") }
+    // Setelah event ditutup: kirim sekali lagi lewat Certifier (peserta yang lulus misi setelah race ditutup).
+    if let (Some((_, close)), true) = (state.window, state.certifier.is_some()) {
+        let st = state.clone();
+        tokio::spawn(async move {
+            loop {
+                if now() > close + 60 { let r = certifier_issue(&st, None, false).await; println!("Certifier after close: {r}"); break; }
+                tokio::time::sleep(std::time::Duration::from_secs(300)).await;
+            }
+        });
+    }
 
     // Hapus kubeconfig cluster peserta otomatis setelah event ditutup (23:59 WIB).
     if let Some((_, close)) = state.window {
@@ -377,6 +396,7 @@ async fn main() {
         .route("/api/admin/race", post(admin_race))
         .route("/api/cluster/connect", post(connect_cluster))
         .route("/api/cert/me", post(cert_me))
+        .route("/api/admin/certifier", post(admin_certifier))
         .route("/cert/:id", get(cert_page))
         .route("/verify/:id", get(verify_page))
         .fallback_service(ServeDir::new(static_dir))
@@ -582,12 +602,13 @@ async fn race_me(State(state): State<Arc<AppState>>, Json(req): Json<RaceMeReque
 async fn race_export(State(state): State<Arc<AppState>>, headers: HeaderMap) -> impl IntoResponse {
     let base = base_url(&headers);
     if !is_admin(&state, &headers) { return (StatusCode::UNAUTHORIZED, [(header::CONTENT_TYPE, "text/plain")], "Admin token required.\n".to_string()); }
+    let ledger = state.ledger.lock().await.clone();
     let regs = state.regs.lock().await;
     let d = state.race.lock().await;
     let start = d.start.unwrap_or(0);
     let board = race::board(&d);
     let csv = |v: &str| format!("\"{}\"", v.replace('"', "\"\""));
-    let mut out = String::from("certificate,name,email,company,role,civo_account,missions_passed,missions_in_race,race_rank,race_time_seconds,passed_after_race,certificate_id,certificate_url\n");
+    let mut out = String::from("certificate,name,email,company,role,civo_account,missions_passed,missions_in_race,race_rank,race_time_seconds,passed_after_race,certificate_id,certificate_url,certifier_sent\n");
     let mut rows: Vec<(u8, String)> = vec![];
     for r in regs.iter().filter(|r| !r.event.to_lowercase().contains("academy") && r.event != "rehearsal") {
         let all = d.done.get(&r.email).map(|(_, v)| v.clone()).unwrap_or_default();
@@ -597,9 +618,10 @@ async fn race_export(State(state): State<Arc<AppState>>, headers: HeaderMap) -> 
         let time = ranked.iter().map(|m| m.1).max().map(|t| t.saturating_sub(start));
         let late: Vec<String> = all.iter().filter(|m| !ranked.contains(m)).map(|m| m.0.clone()).collect();
         let order = match cert { "Completion" => 0, "Participation" => 1, _ => 2 };
+        let sent = ledger.get(&r.email).map(|v| v.iter().map(|i| i.kind.clone()).collect::<Vec<_>>().join(" ")).unwrap_or_default();
         let (cid, curl) = if cert.is_empty() { (String::new(), String::new()) } else { let i = cert::cert_id(&state.cert_secret, &r.email); (i.clone(), format!("{base}/cert/{i}")) };
-        rows.push((order, format!("{},{},{},{},{},{},{},{},{},{},{},{},{}\n", csv(cert), csv(&r.name), csv(&r.email), csv(&r.company), csv(&r.role), csv(&r.civo_account),
-            all.len(), ranked.len(), rank.map(|x| x.to_string()).unwrap_or_default(), time.map(|x| x.to_string()).unwrap_or_default(), csv(&late.join(" ")), csv(&cid), csv(&curl))));
+        rows.push((order, format!("{},{},{},{},{},{},{},{},{},{},{},{},{},{}\n", csv(cert), csv(&r.name), csv(&r.email), csv(&r.company), csv(&r.role), csv(&r.civo_account),
+            all.len(), ranked.len(), rank.map(|x| x.to_string()).unwrap_or_default(), time.map(|x| x.to_string()).unwrap_or_default(), csv(&late.join(" ")), csv(&cid), csv(&curl), csv(&sent))));
     }
     rows.sort_by(|a, b| a.0.cmp(&b.0));
     for (_, l) in rows { out.push_str(&l); }
@@ -648,8 +670,11 @@ async fn cert_me(State(state): State<Arc<AppState>>, headers: HeaderMap, Json(re
     let kind = { let d = state.race.lock().await; race::certificate(&d.done.get(&email).map(|(_, v)| v.clone()).unwrap_or_default()) };
     let id = cert::cert_id(&state.cert_secret, &email);
     let base = base_url(&headers);
-    let ready = released && !kind.is_empty();
+    let sent: Vec<String> = state.ledger.lock().await.get(&email).map(|v| v.iter().map(|i| i.kind.clone()).collect()).unwrap_or_default();
+    // Dengan Certifier, sertifikat resmi hanya yang dikirim Certifier (hindari dua sertifikat dengan QR berbeda).
+    let ready = released && !kind.is_empty() && state.certifier.is_none();
     (StatusCode::OK, Json(serde_json::json!({ "status": "success", "certificate": kind, "released": released,
+        "certifier": state.certifier.is_some(), "sent": sent,
         "id": if ready { Some(id.clone()) } else { None },
         "url": if ready { Some(format!("{base}/cert/{id}")) } else { None },
         "verify_url": if ready { Some(format!("{base}/verify/{id}")) } else { None } })))
@@ -669,6 +694,66 @@ async fn verify_page(State(state): State<Arc<AppState>>, headers: HeaderMap, Pat
     let url = format!("{}/cert/{id}", base_url(&headers));
     let code = if found.is_some() { StatusCode::OK } else { StatusCode::NOT_FOUND };
     (code, Html(cert::verify_page(&id, found.as_ref().map(|(k, n, m)| (*k, n.as_str(), *m)), &url)))
+}
+
+#[derive(Deserialize)]
+struct CertifierAdminRequest { action: String, #[serde(default)] email: String, #[serde(default)] dry_run: bool }
+
+/// POST /api/admin/certifier {action:"status"} atau {action:"issue", dry_run?, email?}
+/// issue = kirim sertifikat lewat Certifier ke semua yang berhak dan belum dikirimi (butuh race sudah di-stop).
+/// email = hanya satu peserta (termasuk peserta rehearsal) — untuk uji coba ke e-mail sendiri.
+async fn admin_certifier(State(state): State<Arc<AppState>>, headers: HeaderMap, Json(req): Json<CertifierAdminRequest>) -> impl IntoResponse {
+    if !is_admin(&state, &headers) { return err(StatusCode::UNAUTHORIZED, "Admin token required."); }
+    let Some(cfg) = &state.certifier else { return err(StatusCode::BAD_REQUEST, "Certifier is not configured (Secret launchpad-certifier)."); };
+    match req.action.as_str() {
+        "status" => {
+            let l = state.ledger.lock().await;
+            let n: usize = l.values().map(|v| v.len()).sum();
+            (StatusCode::OK, Json(serde_json::json!({ "status": "success", "api": cfg.api, "released": cert_released(&state).await, "credentials_sent": n, "recipients": l.len() })))
+        }
+        "issue" => {
+            if !cert_released(&state).await { return err(StatusCode::CONFLICT, "Stop the race first: certificates are released after the race ends."); }
+            let only = Some(clean(&req.email, 120).to_lowercase()).filter(|e| !e.is_empty());
+            (StatusCode::OK, Json(certifier_issue(&state, only, req.dry_run).await))
+        }
+        _ => err(StatusCode::BAD_REQUEST, "action must be status or issue"),
+    }
+}
+
+async fn certifier_issue(state: &AppState, only: Option<String>, dry_run: bool) -> serde_json::Value {
+    let Some(cfg) = state.certifier.clone() else { return serde_json::json!({ "status": "error", "message": "Certifier off" }) };
+    // Siapa berhak apa, dan belum dikirimi.
+    let todo: Vec<(String, String, &'static str)> = {
+        let regs = state.regs.lock().await;
+        let d = state.race.lock().await;
+        let l = state.ledger.lock().await;
+        let mut seen = std::collections::HashSet::new();
+        regs.iter().rev()
+            .filter(|r| !r.event.to_lowercase().contains("academy"))
+            .filter(|r| match &only { Some(e) => &r.email == e, None => r.event != "rehearsal" })
+            .filter(|r| seen.insert(r.email.clone()))
+            .filter_map(|r| {
+                let kind = race::certificate(&d.done.get(&r.email).map(|(_, v)| v.clone()).unwrap_or_default());
+                if kind.is_empty() || certifier::has(&l, &r.email, kind) || (kind == "Participation" && certifier::has(&l, &r.email, "Completion")) { None }
+                else { Some((r.name.clone(), r.email.clone(), kind)) }
+            }).collect()
+    };
+    let planned: Vec<serde_json::Value> = todo.iter().map(|(n, e, k)| serde_json::json!({ "name": n, "email": e, "certificate": k })).collect();
+    if dry_run { return serde_json::json!({ "status": "success", "dry_run": true, "to_send": planned }); }
+    let (mut sent, mut failed) = (vec![], vec![]);
+    for (name, email, kind) in todo {
+        match certifier::issue(&state.http, &cfg, kind, &name, &email).await {
+            Ok(i) => {
+                let mut l = state.ledger.lock().await;
+                l.entry(email.clone()).or_default().push(i);
+                certifier::save(&cfg.file, &l);
+                sent.push(serde_json::json!({ "email": email, "certificate": kind }));
+            }
+            Err(e) => failed.push(serde_json::json!({ "email": email, "certificate": kind, "error": e })),
+        }
+        tokio::time::sleep(std::time::Duration::from_millis(250)).await;
+    }
+    serde_json::json!({ "status": if failed.is_empty() { "success" } else { "partial" }, "sent": sent, "failed": failed })
 }
 
 fn err(code: StatusCode, msg: &str) -> (StatusCode, Json<serde_json::Value>) {

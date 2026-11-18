@@ -77,6 +77,7 @@ spec:
           envFrom:
             - secretRef: { name: launchpad-admin }
             - secretRef: { name: launchpad-cert, optional: true }
+            - secretRef: { name: launchpad-certifier, optional: true }
             - secretRef: { name: workshop-seats, optional: true }
           readinessProbe:
             httpGet: { path: /healthz, port: http }

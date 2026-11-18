@@ -155,3 +155,15 @@ Certificate IDs (`BTC-2026-XXXX-XXXX`) are derived from `CERT_SECRET` (Secret `l
 `deploy-launchpad.ps1`). Do not rotate it after the event, or every QR code stops verifying. The signature is the QR
 code plus the signer's printed name — no handwritten signature image is stored anywhere.
 `GET /api/race/export` now adds `certificate_id` and `certificate_url` columns for the thank-you e-mail.
+
+### Certifier (optional)
+
+With Secret `launchpad-certifier` (`CERTIFIER_TOKEN`, `CERTIFIER_GROUP_COMPLETION`, `CERTIFIER_GROUP_PARTICIPATION`),
+official certificates are sent by Certifier (`POST /v1/credentials/create-issue-send`) instead of `/cert/<ID>`:
+
+| Path | What |
+|---|---|
+| `POST /api/admin/certifier` `{action:"status"}` | Credentials sent so far |
+| `POST /api/admin/certifier` `{action:"issue", dry_run?, email?}` | Send to everyone eligible and not yet sent (race must be stopped). Idempotent; upgrades Participation → Completion |
+
+Sent credentials are recorded in `/data/certifier.json`. One automatic pass runs one minute after `EVENT_CLOSE`.
