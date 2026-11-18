@@ -4,7 +4,11 @@
 set -u
 export HOME=/home/learner
 mkdir -p "$HOME/.kube"
-[ -d "$HOME/beyond-the-container" ] || cp -r /opt/beyond-the-container "$HOME/beyond-the-container"
+# Latest workshop repo at start (falls back to the copy baked into the image).
+if [ ! -d "$HOME/beyond-the-container" ]; then
+  timeout 20 git clone -q --depth 1 https://github.com/dev-cer/beyond-the-container "$HOME/beyond-the-container" 2>/dev/null \
+    || cp -r /opt/beyond-the-container "$HOME/beyond-the-container"
+fi
 [ -f "$HOME/.bashrc" ] || cp /etc/launchpad/bashrc "$HOME/.bashrc"
 /usr/local/bin/launchpad-watch &
 exec /usr/local/bin/ttyd -W -p 7681 -b "/shell/${SHELL_ID}" -c "${TTYD_CREDENTIAL}" \

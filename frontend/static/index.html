@@ -745,7 +745,7 @@ const LABS = [
 ...(EDITION==='workshop' ? [{ id:'link', mod:'intro', title:'Connect Your Cluster to Launchpad', dur:'3 min', level:'Beginner',
   intro:`Launchpad checks your missions <b>on your real cluster</b>. One command installs the <b>Mission Agent</b> in your cluster: a tiny pod with <b>read-only</b> access that reports what Launchpad needs to see. Nothing leaves your laptop — no kubeconfig upload, no API key.
   <div class="note info">The agent can only <b>get and list</b> nodes, pods, services, deployments, HPAs and PDBs. It cannot read Secrets or ConfigMaps and cannot change anything. Load tests and HTTP checks are run by Launchpad from outside, against your External IP. Remove it any time: <code>kubectl delete ns civo-launchpad</code>.</div>
-  <div class="note">On a <b>backup seat</b> from a facilitator? Skip this lab — your cluster is already connected; use <b>Download kubeconfig</b> instead.</div>`,
+  <div class="note">Using the <b>Launchpad Shell</b> (Terminal tab)? Skip this lab: dropping your kubeconfig there installs the agent for you. On a <b>backup seat</b> from a facilitator? Skip it too — your cluster is already connected.</div>`,
   tasks:[
     { t:'Get your Connect command', d:'Opens <b>Connect my cluster</b> (also on the missions page) with a command made just for you. Do not share it.', cmd:'launchpad connect', re:/^launchpad connect\b/, need:'active', fx:()=>{openConnect()}, out:'Opening <b>Connect my cluster</b> … copy the <code>kubectl apply -f …/join/agt-….yaml</code> command' },
     { t:'Run it against your cluster', d:'Paste the command from the dialog. It creates the namespace <code>civo-launchpad</code>, a read-only ServiceAccount and the agent.', cmd:'kubectl apply -f https://s.id/civo-launchpad/join/agt-xxxx.yaml', re:/^kubectl apply -f \S+\/join\/\S+\.ya?ml$/i, need:'active', out:'namespace/civo-launchpad created\nserviceaccount/mission-agent created\nclusterrole.rbac.authorization.k8s.io/civo-launchpad-read created\nclusterrolebinding.rbac.authorization.k8s.io/civo-launchpad-read created\nsecret/mission-agent created\ndeployment.apps/mission-agent created\n<span class="ok">✓ Launchpad shows: Mission Agent connected — 3/3 nodes Ready</span>' },
@@ -755,6 +755,7 @@ const LABS = [
 
 { id:'setup', mod:'intro', title:'Environment Setup', dur:'10 min', level:'Beginner',
   intro:`${EDITION==='workshop' ? 'Connect the <code>civo</code> CLI on <b>your laptop</b> to <b>your own Civo account</b> with the API key from the previous lab, and select the Jakarta region. Install first if needed: <code>brew install civo</code> (macOS), <code>choco install civo-cli</code> (Windows) or the script from github.com/civo/cli, plus <code>kubectl</code>.' : 'Every participant receives a <b>temporary API key</b> from the workshop pool (see the chip in the top-right corner). In this lab you configure the <code>civo</code> CLI to use that key and the region chosen by your facilitator.'}
+${EDITION==='workshop' ? '<div class="note info"><b>Easiest path (recommended):</b> create the cluster in the <a href="https://dashboard.civo.com/kubernetes/new" target="_blank" rel="noopener">Civo dashboard</a> and use the <a href="#terminal">⌨️ Terminal tab</a> (Launchpad Shell) for every command — no installs, no API key, same on Windows, Mac and Linux. This lab shows the laptop-CLI way.</div>' : ''}
   <div class="note info">The terminal on the right is a simulator. You can <b>type</b> commands or click <b>Run</b> on each step. Type <code>help</code> or <code>hint</code> at any time.</div>`,
   tasks:[
     { t:'Check the Civo CLI version', d:'Make sure the CLI is installed on the lab workstation.', cmd:'civo version', re:/^civo version$/, out:()=>`Client version: v1.1.x\nBuild date:     2026-09-18\n<span class="ok">✓ civo CLI is ready</span>` },
@@ -766,7 +767,8 @@ const LABS = [
 
 { id:'getting-started', mod:'intro', title:'Your First K3s Cluster', dur:'10 min', level:'Beginner',
   intro:`Civo Kubernetes is built on <b>K3s</b> and clusters are typically active within minutes. We create a 3-node <code>g4s.kube.medium</code> cluster with the <b>Cilium</b> CNI and an auto-created firewall, then merge the kubeconfig and switch context in one go.
-  <div class="note">Flannel is being deprecated on Civo, so this workshop uses Cilium (also required for NetworkPolicy in the Security module).</div>`,
+  <div class="note">Flannel is being deprecated on Civo, so this workshop uses Cilium (also required for NetworkPolicy in the Security module).</div>
+  ${EDITION==='workshop' ? '<div class="note info"><b>Easiest path (recommended):</b> create the cluster in the <a href="https://dashboard.civo.com/kubernetes/new" target="_blank" rel="noopener">Civo dashboard</a> and use the <a href="#terminal">⌨️ Terminal tab</a> (Launchpad Shell) for every command — no installs, no API key, same on Windows, Mac and Linux. This lab shows the laptop-CLI way.</div>' : ''}`,
   tasks:[
     { t:'Create the cluster', d:'<code>--wait</code> blocks until the cluster is ACTIVE; <code>--save --merge --switch</code> handles your kubeconfig.', cmd:'civo kubernetes create civo-k8s-lab --size g4s.kube.medium --nodes 3 --cni-plugin cilium --create-firewall --wait --save --merge --switch', re:/^civo (kubernetes|k8s) create \S+/, async:true },
     { t:'List the nodes', d:'The initial node pool has 3 workers; the control plane is managed by Civo.', cmd:'kubectl get nodes', re:/^kubectl get (nodes|no)( -o wide)?$/, out:()=>nodesOut() , need:'active'},
@@ -2067,7 +2069,7 @@ function finishReg(d, res, demo, gform){
 const REG_FORM = 'https://forms.gle/3wNyicUowU2sPcu57';
 const EVENT_DAY = '2026-11-26';
 const MISSIONS = EDITION==='workshop' ? [
-  { id:'M0', name:'Launch', start:'10:20', min:10, labs:['signup','setup','getting-started','link'], goal:'Your own 3-node cluster in JKT1, connected to Launchpad.', real:'' },
+  { id:'M0', name:'Launch', start:'10:20', min:10, labs:['signup','setup','getting-started','link'], goal:'Your own 3-node cluster in JKT1 (Civo dashboard), connected to Launchpad through the ⌨️ Terminal tab.', real:'' },
   { id:'M1', name:'Deploy & Expose', start:'10:20', min:10, labs:['kustomize','exposing'], goal:'NusaMart answers on its External IP (/health = 200).', real:'' },
   { id:'M2', name:'Right-size', start:'10:20', min:10, labs:['rightsize'], goal:'Requests = limits, QoS Guaranteed, 2+ replicas ready.', real:'' },
   { id:'M3', name:'Scale', start:'10:20', min:10, labs:['hpa'], goal:'HPA (min ≥ 2, max ≥ 4) that has scaled out under k6 load.', real:'' },
