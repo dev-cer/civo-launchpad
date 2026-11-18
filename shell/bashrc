@@ -1,0 +1,33 @@
+# Civo Launchpad Shell
+export HOME=/home/learner KUBECONFIG=/home/learner/.kube/config EDITOR=nano
+alias k=kubectl
+source /usr/share/bash-completion/bash_completion 2>/dev/null
+source <(kubectl completion bash 2>/dev/null); complete -o default -F __start_kubectl k
+cd "$HOME/beyond-the-container" 2>/dev/null
+lp_status() {
+  case "$(cat "$HOME/.launchpad-status" 2>/dev/null)" in
+    connected)    printf '\001\e[32m\002● cluster\001\e[0m\002' ;;
+    connecting)   printf '\001\e[33m\002◐ connecting\001\e[0m\002' ;;
+    unreachable)  printf '\001\e[31m\002✕ cluster unreachable\001\e[0m\002' ;;
+    agent-failed) printf '\001\e[31m\002✕ agent failed\001\e[0m\002' ;;
+    *)            printf '\001\e[90m\002○ no cluster yet\001\e[0m\002' ;;
+  esac
+}
+PS1='$(lp_status) \[\e[1;32m\]civo\[\e[0m\]:\[\e[36m\]\w\[\e[0m\]\$ '
+lp_announced=""
+lp_notice() {
+  local s; s=$(cat "$HOME/.launchpad-status" 2>/dev/null)
+  if [ "$s" = "connected" ] && [ -z "$lp_announced" ]; then
+    lp_announced=1
+    printf '\n\e[32m✓ Connected to your Civo cluster and Mission Agent installed.\e[0m Try: kubectl get nodes\n'
+  fi
+}
+PROMPT_COMMAND=lp_notice
+if [ -z "${LP_WELCOMED:-}" ]; then
+  export LP_WELCOMED=1
+  printf '\e[1;32m  Civo Launchpad Shell\e[0m · Beyond the Container\n'
+  printf '  kubectl, git, k (=kubectl) and the workshop repo are ready in ~/beyond-the-container\n'
+  printf '  1. Create your cluster in the Civo dashboard (Jakarta, 3 x g4s.kube.medium)\n'
+  printf '  2. Download its kubeconfig and drop it into "Connect" in Launchpad — this shell connects by itself\n'
+  printf '  Paste: Ctrl+Shift+V (or right-click). Nothing here is kept after the workshop.\n\n'
+fi

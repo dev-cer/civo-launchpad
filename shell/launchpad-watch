@@ -1,0 +1,30 @@
+#!/bin/bash
+# Waits for the kubeconfig the participant uploads in Launchpad, installs it, then installs the
+# read-only Mission Agent in the participant's cluster. Status lines go to ~/.launchpad-status.
+set -u
+ST="$HOME/.launchpad-status"
+echo "waiting" > "$ST"
+while true; do
+  code=$(curl -s -o /tmp/lp-pull.json -w '%{http_code}' -H "Authorization: Bearer ${SHELL_TOKEN}" \
+         "${LAUNCHPAD_INTERNAL}/api/shell/pull" || echo 000)
+  if [ "$code" = "200" ]; then
+    kc=$(jq -r '.kubeconfig // empty' /tmp/lp-pull.json)
+    join=$(jq -r '.join_url // empty' /tmp/lp-pull.json)
+    rm -f /tmp/lp-pull.json
+    if [ -n "$kc" ]; then
+      umask 077
+      printf '%s\n' "$kc" > "$HOME/.kube/config"
+      echo "connecting" > "$ST"
+      if kubectl get nodes --request-timeout=15s >/dev/null 2>&1; then
+        if [ -n "$join" ] && kubectl apply -f "$join" >/tmp/lp-agent.log 2>&1; then
+          echo "connected" > "$ST"
+        else
+          echo "agent-failed" > "$ST"
+        fi
+      else
+        echo "unreachable" > "$ST"
+      fi
+    fi
+  fi
+  sleep 3
+done

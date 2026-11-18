@@ -20,6 +20,8 @@ jobs:
           - { edition: academy, file: Dockerfile.launchpad }
           # Mission Agent for participants' clusters: ghcr.io/<owner>/civo-launchpad:agent-latest
           - { edition: agent, file: Dockerfile.agent }
+          # Launchpad Shell (web terminal per participant): ghcr.io/<owner>/civo-launchpad:shell-latest
+          - { edition: shell, file: Dockerfile.shell }
     steps:
       - uses: actions/checkout@v4
       - name: Build the editions (dist/)

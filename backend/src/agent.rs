@@ -7,28 +7,8 @@
 use serde_json::Value;
 use std::time::Duration;
 
-const SA: &str = "/var/run/secrets/kubernetes.io/serviceaccount";
-const API: &str = "https://kubernetes.default.svc";
 pub const VERSION: &str = "1";
-
-struct Kube { client: reqwest::Client, token: String }
-
-impl Kube {
-    fn new() -> Result<Kube, String> {
-        let ca = std::fs::read(format!("{SA}/ca.crt")).map_err(|e| format!("no service account CA: {e}"))?;
-        let cert = reqwest::Certificate::from_pem(&ca).map_err(|e| format!("bad CA: {e}"))?;
-        let client = reqwest::Client::builder().add_root_certificate(cert).timeout(Duration::from_secs(10)).build().map_err(|e| e.to_string())?;
-        Ok(Kube { client, token: String::new() })
-    }
-    async fn get(&mut self, path: &str) -> Result<Value, String> {
-        // Token ServiceAccount diputar otomatis oleh kubelet: baca ulang setiap kali.
-        self.token = std::fs::read_to_string(format!("{SA}/token")).map_err(|e| format!("no service account token: {e}"))?.trim().to_string();
-        let r = self.client.get(format!("{API}{path}")).bearer_auth(&self.token).send().await.map_err(|e| format!("API server: {e}"))?;
-        let code = r.status();
-        if !code.is_success() { return Err(format!("{path}: HTTP {}", code.as_u16())); }
-        r.json::<Value>().await.map_err(|e| format!("{path}: {e}"))
-    }
-}
+use crate::kube::Kube;
 
 /// Buang field besar yang tidak dipakai penilaian (managedFields, last-applied-configuration).
 fn slim(mut v: Value, kind: &str) -> Value {
@@ -42,7 +22,7 @@ fn slim(mut v: Value, kind: &str) -> Value {
     v
 }
 
-async fn collect(k: &mut Kube) -> Value {
+async fn collect(k: &Kube) -> Value {
     let nodes = match k.get("/api/v1/nodes").await {
         Ok(v) => serde_json::json!({ "items": v["items"].as_array().cloned().unwrap_or_default().into_iter().map(|n| slim(n, "Node")).collect::<Vec<_>>() }),
         Err(e) => return serde_json::json!({ "agent": VERSION, "error": e }),
@@ -70,13 +50,13 @@ pub async fn run() {
     let url = std::env::var("LAUNCHPAD_URL").unwrap_or_default().trim_end_matches('/').to_string();
     let token = std::env::var("AGENT_TOKEN").unwrap_or_default();
     if url.is_empty() || token.is_empty() { eprintln!("LAUNCHPAD_URL and AGENT_TOKEN are required"); std::process::exit(2); }
-    let mut kube = match Kube::new() { Ok(k) => k, Err(e) => { eprintln!("Mission Agent must run inside Kubernetes: {e}"); std::process::exit(2); } };
+    let kube = match Kube::new() { Ok(k) => k, Err(e) => { eprintln!("Mission Agent must run inside Kubernetes: {e}"); std::process::exit(2); } };
     // Long-poll: Launchpad menahan permintaan sampai ~20 detik, atau menjawab segera saat peserta klik Check.
     let http = reqwest::Client::builder().timeout(Duration::from_secs(45)).build().unwrap();
     println!("Civo Launchpad Mission Agent v{VERSION} → {url}");
     let mut fails = 0u32;
     loop {
-        let snap = collect(&mut kube).await;
+        let snap = collect(&kube).await;
         if let Some(e) = snap["error"].as_str() { eprintln!("collect: {e}"); }
         match http.post(format!("{url}/api/agent/report")).bearer_auth(&token).json(&snap).send().await {
             Ok(r) if r.status().is_success() => {

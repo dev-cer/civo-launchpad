@@ -2,6 +2,7 @@
 #   __HOST__  launchpad.<traefik-LB-IP>.sslip.io      __EMAIL__  ACME contact for Let's Encrypt
 #   __IMAGE__ ghcr.io/<owner>/civo-launchpad:workshop-latest
 #   __OPEN__ / __CLOSE__  event window (RFC3339). Simulation: now .. now+1 day. Event: 26 Nov 10:00 .. 23:59 WIB.
+#   __SHELL_ON__ / __SHELL_MAX__  Launchpad Shell on (1/0) and how many web terminals at once (deploy -Shells)
 # Secrets created by the script (never committed): launchpad-admin (ADMIN_TOKEN), launchpad-cert (CERT_SECRET,
 # created once and kept: it fixes every Certificate ID / QR code, so never rotate it after the event),
 # optional workshop-seats + workshop-kubeconfigs (backup seats from provision-workshop.ps1).
@@ -52,7 +53,8 @@ spec:
     metadata:
       labels: *labels
     spec:
-      automountServiceAccountToken: false
+      serviceAccountName: launchpad
+      automountServiceAccountToken: true   # only used to manage Launchpad Shell pods in civo-shells
       securityContext:
         runAsNonRoot: true
         runAsUser: 10001
@@ -74,6 +76,9 @@ spec:
             - { name: RACE_P95_MS, value: "1500" }
             - { name: EVENT_OPEN, value: "__OPEN__" }
             - { name: EVENT_CLOSE, value: "__CLOSE__" }
+            - { name: SHELL_ENABLED, value: "__SHELL_ON__" }
+            - { name: SHELL_NAMESPACE, value: civo-shells }
+            - { name: SHELL_MAX, value: "__SHELL_MAX__" }
           envFrom:
             - secretRef: { name: launchpad-admin }
             - secretRef: { name: launchpad-cert, optional: true }
@@ -134,3 +139,48 @@ spec:
             pathType: Prefix
             backend:
               service: { name: launchpad, port: { number: 80 } }
+---
+# Launchpad Shell: one web-terminal pod per participant, managed by Launchpad (ServiceAccount below).
+apiVersion: v1
+kind: ServiceAccount
+metadata: { name: launchpad, namespace: civo-workshop }
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: civo-shells
+  labels: { app.kubernetes.io/part-of: civo-launchpad }
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata: { name: launchpad-shells, namespace: civo-shells }
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "create", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata: { name: launchpad-shells, namespace: civo-shells }
+roleRef: { apiGroup: rbac.authorization.k8s.io, kind: Role, name: launchpad-shells }
+subjects:
+  - { kind: ServiceAccount, name: launchpad, namespace: civo-workshop }
+---
+# Shell terminals are reachable ONLY from the Launchpad pod (no shell can open another participant's shell).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: { name: shells-only-from-launchpad, namespace: civo-shells }
+spec:
+  podSelector: { matchLabels: { app: launchpad-shell } }
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - namespaceSelector: { matchLabels: { kubernetes.io/metadata.name: civo-workshop } }
+          podSelector: { matchLabels: { app.kubernetes.io/name: launchpad } }
+      ports: [{ port: 7681, protocol: TCP }]
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata: { name: shells, namespace: civo-shells }
+spec:
+  hard: { pods: "__SHELL_QUOTA__", limits.memory: 40Gi, limits.cpu: "40" }   # SHELL_MAX + room for pods still terminating

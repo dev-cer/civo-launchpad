@@ -1,0 +1,23 @@
+# Civo Launchpad Shell — web terminal (ttyd) with kubectl, git, civo CLI and the workshop repo.
+# One pod per participant on launchpad-ops; it never holds a Civo API key, only the participant's
+# kubeconfig (uploaded in Launchpad, kept in memory) for their own workshop cluster.
+FROM debian:bookworm-slim
+ARG KUBECTL_VERSION=v1.31.4
+ARG TTYD_VERSION=1.7.7
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      bash bash-completion ca-certificates curl git jq less nano vim-tiny procps iputils-ping dnsutils \
+ && rm -rf /var/lib/apt/lists/* \
+ && curl -fsSLo /usr/local/bin/kubectl https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl \
+ && curl -fsSLo /usr/local/bin/ttyd https://github.com/tsl0922/ttyd/releases/download/${TTYD_VERSION}/ttyd.x86_64 \
+ && chmod +x /usr/local/bin/kubectl /usr/local/bin/ttyd \
+ && (curl -fsSL https://civo.com/get | sh || echo "civo CLI install skipped") \
+ && git clone --depth 1 https://github.com/dev-cer/beyond-the-container /opt/beyond-the-container \
+ && rm -rf /opt/beyond-the-container/.git \
+ && useradd --uid 10001 --home-dir /home/learner --shell /bin/bash learner
+COPY shell/entrypoint.sh shell/launchpad-watch /usr/local/bin/
+COPY shell/bashrc /etc/launchpad/bashrc
+RUN chmod +x /usr/local/bin/entrypoint.sh /usr/local/bin/launchpad-watch
+USER 10001
+WORKDIR /home/learner
+EXPOSE 7681
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

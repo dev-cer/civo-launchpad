@@ -302,6 +302,15 @@ pre.yaml{background:var(--term);border:1px solid var(--line);border-radius:8px;p
 @keyframes fadeout{to{opacity:0}}
 .confetti{position:fixed;inset:0;pointer-events:none;z-index:1000}
 .modal{position:fixed;inset:0;background:rgba(5,7,6,.8);display:grid;place-items:center;z-index:900;animation:fadein .3s;padding:20px}
+#termdock{position:fixed;top:58px;right:0;bottom:0;left:min(380px,34vw);z-index:40;background:#0b0b0b;border-left:1px solid var(--line2,#2a2a2a);display:none}
+#termdock.on{display:block} #termdock iframe{width:100%;height:100%;border:0;background:#0b0b0b}
+#termdock .ph{position:absolute;inset:0;display:grid;place-items:center;color:#9a9a9a;font-size:15px;text-align:center;padding:24px}
+.tpanel{width:min(380px,34vw);box-sizing:border-box;padding:22px 20px 40px;min-height:calc(100vh - 58px)}
+.tpanel h1{font-size:30px;margin:6px 0 10px} .tpanel ol{padding-left:18px;margin:10px 0} .tpanel li{margin:0 0 12px;line-height:1.45;font-size:14.5px}
+.tpanel .drop{border:1.5px dashed var(--muted);border-radius:12px;padding:14px;text-align:center;font-size:13.5px;color:var(--muted);cursor:pointer}
+.tpanel .drop.over{border-color:var(--green);color:var(--text)} .tpanel textarea{width:100%;min-height:80px;margin-top:8px;font:12px ui-monospace,monospace;background:transparent;color:var(--text);border:1px solid var(--line2,#2a2a2a);border-radius:8px;padding:8px;box-sizing:border-box}
+.tpanel .st{font-size:13.5px;margin:6px 0;display:flex;gap:8px;align-items:center} .dot2{width:9px;height:9px;border-radius:50%;background:#666;flex:none} .dot2.ok{background:var(--green,#00ff6f)} .dot2.wait{background:#f5c542} .dot2.bad{background:#ff6b6b}
+@media (max-width:760px){ #termdock{left:0;top:auto;height:60vh} .tpanel{width:100%} }
 .modal>.mbox{text-align:left;background:var(--panel,#111);border:1px solid var(--line2,#2a2a2a);border-radius:16px;padding:24px;width:min(640px,100%);box-shadow:0 20px 60px rgba(0,0,0,.5)}
 .mbox{background:var(--panel);border:1px solid var(--green);border-radius:16px;padding:30px 34px;text-align:center;max-width:400px;box-shadow:0 0 70px rgba(0,229,89,.22)}
 .mbox h3{font-size:26px;margin:6px 0}
@@ -1065,7 +1074,7 @@ if (ED.labs){ const keep=LABS.filter(l=>ED.labs.includes(l.id)).sort((a,b)=>ED.l
 let CUR = null;
 function go(h){ if(location.hash === '#'+h) route(); else location.hash = h }
 function route(){
-  clearInterval(TICK);
+  clearInterval(TICK); showDock(false);
   const h = location.hash.slice(1) || (!S.reg ? 'enter' : myEventRoute());
   const g = gate();
   if (g!=='open' && !(g==='closed' && EDITION==='workshop' && h.endsWith('leaderboard'))) return renderGate(g);
@@ -1082,6 +1091,7 @@ function route(){
   if (h==='leaderboard' || h==='ev/beyond-scaling/leaderboard') return renderLeaderboard();
   if (h==='ev/k8s-at-scale') return renderWebinarTrack();
   if (h==='certificate' && EDITION==='workshop') return renderCert();
+  if (h==='terminal' && EDITION==='workshop') return renderTerminal();
   if (h==='library') return renderLibrary();
   if (h.startsWith('lab-')) { const l = LABS.find(x => x.id === h.slice(4));
     if (l && !S.reg){ S.pendingLab = l.id; save(); toast('Enter Launchpad first to claim your lab'); return go('enter') }
@@ -1091,7 +1101,7 @@ function route(){
   renderHome();
 }
 const NAVGROUP = EDITION==='webinar' ? { webinar:'journey', events:'journey', library:'library' }
-  : EDITION==='workshop' ? { event:'missions', events:'missions', leaderboard:'leaderboard', library:'library' }
+  : EDITION==='workshop' ? { event:'missions', events:'missions', leaderboard:'leaderboard', library:'library', terminal:'terminal' }
   : { library:'library' };
 function markNav(mid){ const g = mid ? (NAVGROUP[mid] || (EDITION!=='academy' && MODULES.some(m=>m.id===mid) ? (EDITION==='webinar'?'journey':'missions') : mid)) : null;
   document.querySelectorAll('#modnav button').forEach(b=>b.classList.toggle('on', b.dataset.m===g)) }
@@ -1099,7 +1109,7 @@ function renderNav(){
   const ext=(href,txt)=>href?`<button onclick="window.open('${href}','_blank','noopener')" style="color:var(--green)">${txt} ↗</button>`:'';
   $('#modnav').innerHTML =
     EDITION==='webinar' ? `<button data-m="journey" onclick="go('ev/k8s-at-scale')">Your journey</button><button data-m="library" onclick="go('library')">📚 Resources</button>${ext(REG_FORM,'Join the 26 Nov workshop')}`
-  : EDITION==='workshop' ? `<button data-m="missions" onclick="go('ev/beyond-scaling')">Missions</button><button data-m="leaderboard" onclick="go('ev/beyond-scaling/leaderboard')">🏁 Mission Control</button><button data-m="library" onclick="go('library')">📚 Resources</button>${ext(LINKS.academy,'Keep learning: Academy')}`
+  : EDITION==='workshop' ? `<button data-m="missions" onclick="go('ev/beyond-scaling')">Missions</button><button data-m="terminal" onclick="go('terminal')">⌨️ Terminal</button><button data-m="leaderboard" onclick="go('ev/beyond-scaling/leaderboard')">🏁 Mission Control</button><button data-m="library" onclick="go('library')">📚 Resources</button>${ext(LINKS.academy,'Keep learning: Academy')}`
   : MODULES.map(m=>`<button data-m="${m.id}" onclick="go('mod-${m.id}')">${m.name}</button>`).join('') + `<button data-m="library" onclick="go('library')">📚 Resources</button>`;
 }
 /* ---------- events (one page per event title) ---------- */
@@ -1432,7 +1442,7 @@ function stepHTML(l,s){
   if (s.k==='task'){
     const t = l.tasks[s.i], ok = !!d.tasks[s.i];
     return `<div class="eyebrow">Task ${s.i+1} / ${l.tasks.length}</div><h3 class="sth">${t.t}</h3>${t.d?`<p class="sdesc">${t.d}</p>`:''}
-      <div class="cmd big"><code>${esc(val(t.cmd))}</code><div class="acts"><button onclick="copyCmd(${s.i},this)">Copy</button><button onclick="runTask(${s.i})">Run ▶</button></div></div>
+      <div class="cmd big"><code>${esc(val(t.cmd))}</code><div class="acts"><button onclick="copyCmd(${s.i},this)">Copy</button><button onclick="runTask(${s.i})">Run ▶</button>${EDITION==='workshop'&&S.shellUrl&&!/^launchpad /.test(val(t.cmd))?`<button onclick="shellCmd(${s.i})" title="Paste into your Launchpad Shell">⌨ Shell</button>`:''}</div></div>
       <div class="status ${ok?'ok':''}">${ok?'<b>✓</b> Validated — continue with Next →':'<span class="pulse"></span><span>Waiting for your command in the terminal… <span style="color:var(--dim)">type it yourself, click Run, or press Tab in the terminal.</span></span>'}</div>
       ${t.need?`<p class="req">Prerequisite: ${t.need==='active'?'an active civo-k8s-lab cluster (lab "Your First K3s Cluster")':'the sample app deployed (lab "Deploy the Sample App")'}</p>`:''}`;
   }
@@ -1460,7 +1470,7 @@ function overviewHTML(l){
       <div class="task ${d.tasks[i]?'done':''}" id="task-${i}">
         <div class="th"><span class="n">${d.tasks[i]?'✓':i+1}</span><span class="tt">${t.t}</span></div>
         ${t.d?`<div class="desc">${t.d}</div>`:''}
-        <div class="cmd"><code>${esc(val(t.cmd))}</code><div class="acts"><button onclick="copyCmd(${i},this)">Copy</button><button onclick="runTask(${i})">Run ▶</button></div></div>
+        <div class="cmd"><code>${esc(val(t.cmd))}</code><div class="acts"><button onclick="copyCmd(${i},this)">Copy</button><button onclick="runTask(${i})">Run ▶</button>${EDITION==='workshop'&&S.shellUrl&&!/^launchpad /.test(val(t.cmd))?`<button onclick="shellCmd(${i})" title="Paste into your Launchpad Shell">⌨ Shell</button>`:''}</div></div>
       </div>`).join('')}</div>
     <div style="margin-top:22px">${quizHTML(l)}</div>${learnHTML(l.id)}`;
 }
@@ -2320,6 +2330,70 @@ async function submitConnect(){
     if (location.hash.includes('beyond-scaling')) renderEvent();
   }catch(e){ er.textContent='Could not reach Launchpad — check your Wi-Fi.'; b.disabled=false }
 }
+// ---------- Launchpad Shell (web terminal per participant) ----------
+let SHELL={state:'none',url:null,cluster:'waiting',timer:null};
+function dock(){ let d=$('#termdock'); if(!d){ d=document.createElement('div'); d.id='termdock'; d.innerHTML='<div class="ph" id="termph">Press <b>&nbsp;Open my shell&nbsp;</b> to start your terminal.</div>'; document.body.appendChild(d) } return d }
+function showDock(on){ const d=$('#termdock'); if(d) d.classList.toggle('on', !!on) }
+function shellFrame(url){ const d=dock(); let f=d.querySelector('iframe'); if (!f || f.dataset.src!==url){ d.innerHTML=`<iframe title="Launchpad Shell" allow="clipboard-read; clipboard-write" src="${url}"></iframe>`; d.querySelector('iframe').dataset.src=url } }
+async function shellApi(path, extra){ const r=await fetch('/api/shell/'+path,{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify(Object.assign({email:S.reg.email,token:S.reg.token||''},extra||{}))}); const j=await r.json().catch(()=>({})); if(!r.ok) throw new Error(j.message||('HTTP '+r.status)); return j }
+function renderTerminal(){
+  if (!S.reg) return go('enter');
+  CUR=null; markNav('terminal'); clearInterval(TICK); dock(); showDock(true);
+  $('#app').innerHTML=`<section class="tpanel"><div class="eb">Launchpad Shell</div><h1>Your terminal</h1>
+    <p style="color:var(--muted);font-size:14px;margin:0 0 12px">A Linux shell in your browser with <code>kubectl</code>, <code>git</code> and the workshop repo — same on Windows, Mac and Linux. No Civo API key needed.</p>
+    <div class="st"><span class="dot2" id="tsd1"></span><span id="tst1">Shell: not started</span></div>
+    <div class="st"><span class="dot2" id="tsd2"></span><span id="tst2">Cluster: not connected</span></div>
+    <p style="margin:12px 0 16px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" id="tsbtn" onclick="startShell()">▶ Open my shell</button><button class="btn" id="tsend" style="display:none" onclick="endShell()">End session</button></p>
+    <ol>
+      <li><b>Create your cluster</b> in the <a href="https://dashboard.civo.com/kubernetes/new" target="_blank" rel="noopener">Civo dashboard ↗</a>: region <b>Jakarta (JKT1)</b>, <b>3 nodes</b>, size <b>g4s.kube.medium</b>, CNI <b>Cilium</b>. Wait until it is <b>Active</b> (1–2 min).</li>
+      <li><b>Download the kubeconfig</b> from the cluster page (Cluster information → Download kubeconfig).</li>
+      <li><b>Drop it here</b> — your shell connects to the cluster and installs the read-only Mission Agent by itself.
+        <div class="drop" id="kcdrop" onclick="$('#kcfile2').click()">⬇ Drop <code>civo-k8s-lab-kubeconfig</code> here, or click to choose<input type="file" id="kcfile2" style="display:none" onchange="kcFile(this.files[0])"></div>
+        <details style="margin-top:6px;font-size:13px"><summary style="cursor:pointer;color:var(--muted)">…or paste its contents</summary><textarea id="kctext" placeholder="apiVersion: v1&#10;clusters: …"></textarea><button class="btn" style="margin-top:6px" onclick="kcSend($('#kctext').value)">Connect →</button></details>
+        <p id="kcmsg" style="font-size:13px;min-height:18px;margin:6px 0 0"></p></li>
+      <li>Go to <a href="#ev/beyond-scaling">Missions</a>: commands have a <b>⌨ Shell</b> button that pastes them here. Press <b>Check on my cluster</b> after each mission.</li>
+    </ol>
+    <p style="color:var(--muted);font-size:12.5px">Paste in the terminal: <b>Ctrl+Shift+V</b> or right-click. Your shell and its kubeconfig are deleted when you press End session, after 2 idle hours, or at 23:59 WIB.</p></section>`;
+  const dz=$('#kcdrop'); ['dragenter','dragover'].forEach(e=>dz.addEventListener(e,ev=>{ev.preventDefault();dz.classList.add('over')}));
+  ['dragleave','drop'].forEach(e=>dz.addEventListener(e,ev=>{ev.preventDefault();dz.classList.remove('over')})); dz.addEventListener('drop',ev=>{ const f=ev.dataTransfer.files[0]; if(f) kcFile(f) });
+  pollShell(); window.scrollTo(0,0);
+}
+async function startShell(){
+  if (S.demo){ SHELL={state:'ready',url:null,cluster:'waiting'}; paintShell(); dock().innerHTML='<div class="ph">Demo mode — on the workshop server this opens your own Linux terminal.</div>'; return }
+  $('#tsbtn').disabled=true; $('#tst1').textContent='Shell: starting…';
+  try{ const j=await shellApi('start'); SHELL=Object.assign(SHELL,j); paintShell(); pollShell() }catch(e){ $('#tst1').textContent='Shell: '+e.message; $('#tsbtn').disabled=false }
+}
+async function endShell(){ if(!confirm('End your shell? Files in it are deleted. Your cluster is not touched.')) return; try{ await shellApi('end') }catch(e){} SHELL={state:'none',url:null,cluster:SHELL.cluster}; dock().innerHTML='<div class="ph">Shell ended. Press Open my shell to start a fresh one.</div>'; paintShell() }
+async function pollShell(){
+  clearTimeout(SHELL.timer); if (S.demo || !$('.tpanel')) return;
+  try{ const j=await shellApi('status'); SHELL=Object.assign(SHELL,j); paintShell() }catch(e){}
+  SHELL.timer=setTimeout(pollShell, SHELL.state==='ready' && SHELL.cluster==='connected' ? 10000 : 2500);
+}
+function paintShell(){
+  const s1=$('#tst1'); if(!s1) return;
+  const st=SHELL.state, c=SHELL.cluster;
+  $('#tsd1').className='dot2 '+(st==='ready'?'ok':st==='starting'?'wait':'');
+  s1.textContent = st==='ready'?'Shell: ready':st==='starting'?('Shell: starting…'+(SHELL.detail?' ('+SHELL.detail+')':'')):'Shell: not started';
+  $('#tsd2').className='dot2 '+(c==='connected'?'ok':c==='stale'?'bad':'');
+  $('#tst2').textContent = c==='connected'?'Cluster: connected (Mission Agent reporting)':c==='stale'?'Cluster: agent stopped reporting':'Cluster: not connected yet';
+  $('#tsbtn').style.display = st==='none'?'':'none'; $('#tsbtn').disabled=false; $('#tsend').style.display = st==='none'?'none':'';
+  if (st==='ready' && SHELL.url){ shellFrame(SHELL.url); S.shellUrl=SHELL.url; save() }
+  else if (st==='starting'){ const d=dock(); if(!d.querySelector('iframe')) d.innerHTML='<div class="ph">Starting your shell… (about 10–20 s)</div>' }
+  if (c==='connected' && !S.linked){ S.linked=true; save(); renderKey(); toast('✓ Cluster connected'); confetti(60) }
+}
+function kcFile(f){ if(!f) return; if (f.size>65536){ $('#kcmsg').textContent='That file is too large to be a kubeconfig.'; return } f.text().then(kcSend) }
+async function kcSend(text){
+  const m=$('#kcmsg'); if(!text||!/clusters:/.test(text)){ m.textContent='That does not look like a kubeconfig.'; return }
+  if (SHELL.state==='none'){ await startShell() }
+  m.textContent='Sending to your shell…';
+  try{ const j=await shellApi('kubeconfig',{kubeconfig:text}); m.innerHTML='<span style="color:var(--green)">✓ '+esc(j.message||'Sent')+'</span> Watch the prompt turn green.' }catch(e){ m.innerHTML='<span style="color:#ff6b6b">'+esc(e.message)+'</span>' }
+}
+function sendToShell(cmd){
+  if (!S.shellUrl){ toast('Open your shell in the Terminal tab first'); return go('terminal') }
+  go('terminal');
+  setTimeout(()=>{ try{ const w=$('#termdock iframe').contentWindow; if (w && w.term){ w.term.paste(cmd); w.term.focus(); toast('Pasted into your shell — press Enter') } else throw 0 }catch(e){ navigator.clipboard && navigator.clipboard.writeText(cmd); toast('Copied — paste into the shell with Ctrl+Shift+V') } }, 350);
+}
+function shellCmd(i){ sendToShell(val(CUR.tasks[i].cmd)) }
 const certLabs = () => MISSIONS.flatMap(m=>m.labs);
 const certDone = () => certLabs().map(id=>LABS.find(l=>l.id===id)).filter(l=>l&&labDone(l)).length;
 async function renderCertWorkshop(){

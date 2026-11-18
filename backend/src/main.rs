@@ -31,6 +31,8 @@ mod race;
 mod cert;
 mod certifier;
 mod agent;
+mod kube;
+mod shell;
 use axum::{
     extract::{Path, Query, State},
     http::{header, HeaderMap, StatusCode},
@@ -145,6 +147,8 @@ struct AppState {
     /// Snapshot terakhir dari Mission Agent per email, dan sinyal untuk membangunkan agen.
     agents: Mutex<std::collections::HashMap<String, AgentSnap>>,
     agent_wake: Mutex<std::collections::HashMap<String, Arc<tokio::sync::Notify>>>,
+    /// Launchpad Shell (terminal web per peserta), opsional.
+    shells: Arc<shell::Shells>,
 }
 
 #[derive(Clone)]
@@ -365,6 +369,7 @@ async fn main() {
         http: reqwest::Client::builder().timeout(std::time::Duration::from_secs(30)).build().unwrap(),
         agents: Mutex::new(std::collections::HashMap::new()),
         agent_wake: Mutex::new(std::collections::HashMap::new()),
+        shells: Arc::new(shell::Shells::from_env()),
         window: match (env::var("EVENT_OPEN").ok().and_then(|v| parse_ts(&v)), env::var("EVENT_CLOSE").ok().and_then(|v| parse_ts(&v))) {
             (Some(o), Some(c)) => Some((o, c)),
             _ => None,
@@ -372,6 +377,18 @@ async fn main() {
     });
     if let Some((o, c)) = state.window { println!("Event window: {o} .. {c} (unix)"); }
     match &state.certifier { Some(c) => println!("Certifier: on ({})", c.api), None => println!("Certifier: off (built-in certificates at /cert/<ID>)") }
+    if state.shells.enabled() {
+        println!("Launchpad Shell: on (namespace {}, max {}, image {})", state.shells.ns, state.shells.max, state.shells.image);
+        state.shells.restore().await;
+        let st = state.clone();
+        tokio::spawn(async move {
+            loop {
+                tokio::time::sleep(std::time::Duration::from_secs(60)).await;
+                let n = st.shells.sweep(window_state(st.window) == "closed").await;
+                if n > 0 { println!("Launchpad Shell: removed {n} idle/closed shell(s)"); }
+            }
+        });
+    } else { println!("Launchpad Shell: off"); }
     // Setelah event ditutup: kirim sekali lagi lewat Certifier (peserta yang lulus misi setelah race ditutup).
     if let (Some((_, close)), true) = (state.window, state.certifier.is_some()) {
         let st = state.clone();
@@ -416,6 +433,14 @@ async fn main() {
         .route("/api/agent/status", post(agent_status))
         .route("/api/agent/report", post(agent_report))
         .route("/join/:file", get(join_manifest))
+        .route("/api/shell/start", post(shell_start))
+        .route("/api/shell/status", post(shell_status))
+        .route("/api/shell/kubeconfig", post(shell_kubeconfig))
+        .route("/api/shell/pull", get(shell_pull))
+        .route("/api/shell/end", post(shell_end))
+        .route("/api/admin/shells", post(admin_shells))
+        .route("/shell/:sid/", get(shell_proxy_root))
+        .route("/shell/:sid/*rest", get(shell_proxy))
         .route("/cert/:id", get(cert_page))
         .route("/verify/:id", get(verify_page))
         .fallback_service(ServeDir::new(static_dir))
@@ -569,19 +594,111 @@ async fn agent_join(State(state): State<Arc<AppState>>, headers: HeaderMap, Json
     let email = clean(&req.email, 120).to_lowercase();
     let tok = clean(&req.token, 64);
     if window_state(state.window) == "closed" { return err(StatusCode::GONE, "This Launchpad closed at 23:59 WIB on event day."); }
-    let agent_token = {
-        let mut regs = state.regs.lock().await;
-        let Some(idx) = regs.iter().rposition(|r| r.email == email) else { return err(StatusCode::FORBIDDEN, "Register in Launchpad first."); };
-        if regs[idx].token.is_empty() || regs[idx].token != tok { return err(StatusCode::FORBIDDEN, "Sign in to Launchpad again with your registration details."); }
-        if regs[idx].agent_token.is_empty() {
-            regs[idx].agent_token = format!("agt-{}", uuid::Uuid::new_v4().simple());
-            append_reg(&state.reg_file, &regs[idx]);
-        }
-        regs[idx].agent_token.clone()
-    };
+    if !participant_ok(&state, &email, &tok).await { return err(StatusCode::FORBIDDEN, "Sign in to Launchpad again with your registration details."); }
+    let agent_token = ensure_agent_token(&state, &email).await;
     let url = format!("{}/join/{agent_token}.yaml", base_url(&headers));
     (StatusCode::OK, Json(serde_json::json!({ "status": "success", "url": url, "command": format!("kubectl apply -f {url}"),
         "remove": "kubectl delete ns civo-launchpad && kubectl delete clusterrole,clusterrolebinding civo-launchpad-read" })))
+}
+
+async fn participant_ok(state: &AppState, email: &str, tok: &str) -> bool {
+    state.regs.lock().await.iter().rev().find(|r| r.email == email).map(|r| !r.token.is_empty() && r.token == tok).unwrap_or(false)
+}
+
+async fn ensure_agent_token(state: &AppState, email: &str) -> String {
+    let mut regs = state.regs.lock().await;
+    let Some(idx) = regs.iter().rposition(|r| r.email == email) else { return String::new() };
+    if regs[idx].agent_token.is_empty() {
+        regs[idx].agent_token = format!("agt-{}", uuid::Uuid::new_v4().simple());
+        append_reg(&state.reg_file, &regs[idx]);
+    }
+    regs[idx].agent_token.clone()
+}
+
+async fn shell_cluster_state(state: &AppState, email: &str) -> &'static str {
+    match state.agents.lock().await.get(email) { Some(a) if now_ms().saturating_sub(a.at_ms) < 90_000 => "connected", Some(_) => "stale", None => "waiting" }
+}
+
+async fn shell_start(State(state): State<Arc<AppState>>, headers: HeaderMap, Json(req): Json<AgentJoinRequest>) -> impl IntoResponse {
+    let email = clean(&req.email, 120).to_lowercase();
+    if !participant_ok(&state, &email, &clean(&req.token, 64)).await { return err(StatusCode::FORBIDDEN, "Sign in to Launchpad again with your registration details.").into_response(); }
+    if window_state(state.window) == "closed" { return err(StatusCode::GONE, "This Launchpad closed at 23:59 WIB on event day.").into_response(); }
+    match state.shells.start(&email).await {
+        Ok(s) => {
+            let (ready, _, why) = state.shells.pod_state(&s).await;
+            let secure = base_url(&headers).starts_with("https://");
+            let body = shell::status_json(Some(&s), ready, &why, shell_cluster_state(&state, &email).await);
+            ([(header::SET_COOKIE, shell::set_cookie(&s.sid, secure))], Json(body)).into_response()
+        }
+        Err(e) => err(StatusCode::SERVICE_UNAVAILABLE, &e).into_response(),
+    }
+}
+
+async fn shell_status(State(state): State<Arc<AppState>>, headers: HeaderMap, Json(req): Json<AgentJoinRequest>) -> impl IntoResponse {
+    let email = clean(&req.email, 120).to_lowercase();
+    if !participant_ok(&state, &email, &clean(&req.token, 64)).await { return err(StatusCode::FORBIDDEN, "Sign in to Launchpad again with your registration details.").into_response(); }
+    let cluster = shell_cluster_state(&state, &email).await;
+    match state.shells.by_email(&email).await {
+        Some(s) => {
+            let (ready, _, why) = state.shells.pod_state(&s).await;
+            let secure = base_url(&headers).starts_with("https://");
+            ([(header::SET_COOKIE, shell::set_cookie(&s.sid, secure))], Json(shell::status_json(Some(&s), ready, &why, cluster))).into_response()
+        }
+        None => Json(serde_json::json!({ "status": "success", "state": "none", "cluster": cluster, "enabled": state.shells.enabled() })).into_response(),
+    }
+}
+
+#[derive(Deserialize)]
+struct ShellKubeconfigRequest { email: String, #[serde(default)] token: String, kubeconfig: String }
+
+/// Kubeconfig dari dashboard Civo → diserahkan sekali ke pod shell peserta (tidak disimpan di disk Launchpad).
+async fn shell_kubeconfig(State(state): State<Arc<AppState>>, headers: HeaderMap, Json(req): Json<ShellKubeconfigRequest>) -> impl IntoResponse {
+    let email = clean(&req.email, 120).to_lowercase();
+    if !participant_ok(&state, &email, &clean(&req.token, 64)).await { return err(StatusCode::FORBIDDEN, "Sign in to Launchpad again with your registration details."); }
+    if let Err(e) = validate_kubeconfig(&req.kubeconfig) { return err(StatusCode::BAD_REQUEST, &e); }
+    let Some(s) = state.shells.by_email(&email).await else { return err(StatusCode::CONFLICT, "Open your Launchpad Shell first (Terminal tab)."); };
+    let agent_token = ensure_agent_token(&state, &email).await;
+    let join = format!("{}/join/{agent_token}.yaml", base_url(&headers));
+    state.shells.pending.lock().await.insert(s.sid.clone(), (req.kubeconfig.clone(), join));
+    (StatusCode::OK, Json(serde_json::json!({ "status": "success", "message": "Your shell is connecting to your cluster…" })))
+}
+
+async fn shell_pull(State(state): State<Arc<AppState>>, headers: HeaderMap) -> impl IntoResponse {
+    let tok = headers.get(header::AUTHORIZATION).and_then(|v| v.to_str().ok()).and_then(|v| v.strip_prefix("Bearer ")).unwrap_or("").trim().to_string();
+    if tok.len() < 32 { return (StatusCode::UNAUTHORIZED, Json(serde_json::json!({}))); }
+    let sid = state.shells.sessions.lock().await.values().find(|s| s.shell_token == tok).map(|s| s.sid.clone());
+    let Some(sid) = sid else { return (StatusCode::UNAUTHORIZED, Json(serde_json::json!({}))); };
+    match state.shells.pending.lock().await.remove(&sid) {
+        Some((kc, join)) => (StatusCode::OK, Json(serde_json::json!({ "kubeconfig": kc, "join_url": join }))),
+        None => (StatusCode::NO_CONTENT, Json(serde_json::json!({}))),
+    }
+}
+
+async fn shell_end(State(state): State<Arc<AppState>>, Json(req): Json<AgentJoinRequest>) -> impl IntoResponse {
+    let email = clean(&req.email, 120).to_lowercase();
+    if !participant_ok(&state, &email, &clean(&req.token, 64)).await { return err(StatusCode::FORBIDDEN, "Sign in to Launchpad again with your registration details."); }
+    if let Some(s) = state.shells.by_email(&email).await { state.shells.end(&s).await; }
+    (StatusCode::OK, Json(serde_json::json!({ "status": "success" })))
+}
+
+#[derive(Deserialize)]
+struct ShellAdminRequest { action: String }
+
+async fn admin_shells(State(state): State<Arc<AppState>>, headers: HeaderMap, Json(req): Json<ShellAdminRequest>) -> impl IntoResponse {
+    if !is_admin(&state, &headers) { return err(StatusCode::UNAUTHORIZED, "Admin token required."); }
+    match req.action.as_str() {
+        "status" => (StatusCode::OK, Json(serde_json::json!({ "status": "success", "enabled": state.shells.enabled(), "sessions": state.shells.sessions.lock().await.len(), "max": state.shells.max }))),
+        "purge" => { let n = state.shells.sweep(true).await; (StatusCode::OK, Json(serde_json::json!({ "status": "success", "removed": n }))) }
+        _ => err(StatusCode::BAD_REQUEST, "action must be status or purge"),
+    }
+}
+
+async fn shell_proxy_root(State(state): State<Arc<AppState>>, Path(sid): Path<String>, headers: HeaderMap, ws: Option<axum::extract::ws::WebSocketUpgrade>) -> impl IntoResponse {
+    shell::proxy(state.shells.clone(), sid, String::new(), headers, ws).await
+}
+
+async fn shell_proxy(State(state): State<Arc<AppState>>, Path((sid, rest)): Path<(String, String)>, headers: HeaderMap, ws: Option<axum::extract::ws::WebSocketUpgrade>) -> impl IntoResponse {
+    shell::proxy(state.shells.clone(), sid, rest, headers, ws).await
 }
 
 async fn join_manifest(State(state): State<Arc<AppState>>, headers: HeaderMap, Path(file): Path<String>) -> impl IntoResponse {
