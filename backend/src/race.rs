@@ -180,7 +180,7 @@ pub async fn evaluate(snap: &Snapshot, mission: &str) -> Vec<Check> {
     let res = &ctr["resources"];
     let guaranteed_spec = q_eq(&res["requests"]["cpu"], &res["limits"]["cpu"]) && q_eq(&res["requests"]["memory"], &res["limits"]["memory"]);
     let guaranteed_pods = !pods.is_empty() && pods.iter().all(|p| p["status"]["qosClass"] == "Guaranteed");
-    c.push(ck("Requests = limits (CPU and memory)", guaranteed_spec, "kubectl set resources … --requests=cpu=500m,memory=128Mi --limits=cpu=500m,memory=128Mi"));
+    c.push(ck("Requests = limits (CPU and memory)", guaranteed_spec, "kubectl set resources … --requests=\"cpu=500m,memory=128Mi\" --limits=\"cpu=500m,memory=128Mi\""));
     c.push(ck("Running pods are QoS Guaranteed", guaranteed_pods, "Wait for the rollout to finish, then check the QOS column."));
     c.push(ck("2 or more replicas ready", ready_rep >= 2, "kubectl scale deploy/ecommerce-rust -n nusamart --replicas=2"));
     if idx == 2 { return c; }
@@ -203,7 +203,7 @@ pub async fn evaluate(snap: &Snapshot, mission: &str) -> Vec<Check> {
     c.push(ck("No node left cordoned", cordoned == 0, "kubectl uncordon <NODE> after the drain."));
     if idx == 4 { return c; }
 
-    c.push(ck("HPA minReplicas ≥ 3 (warm capacity)", min >= 3, "kubectl patch hpa ecommerce-rust -n nusamart -p '{\"spec\":{\"minReplicas\":3,\"maxReplicas\":8}}'"));
+    c.push(ck("HPA minReplicas ≥ 3 (warm capacity)", min >= 3, "kubectl delete hpa ecommerce-rust -n nusamart, then: kubectl autoscale deploy ecommerce-rust -n nusamart --cpu-percent=60 --min=3 --max=8"));
     c.push(ck("3 or more replicas ready", ready_rep >= 3, "Wait until 3 pods are Ready."));
     c.push(ck("Pods spread over 3 nodes", on_nodes.len() >= 3, "Add topologySpreadConstraints (kubernetes.io/hostname) — see bonus B2."));
     let (failed, p95) = match &ip { Some(ip) => burst(ip).await, None => (120, 0) };
