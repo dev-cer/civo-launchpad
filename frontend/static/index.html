@@ -302,6 +302,7 @@ pre.yaml{background:var(--term);border:1px solid var(--line);border-radius:8px;p
 @keyframes fadeout{to{opacity:0}}
 .confetti{position:fixed;inset:0;pointer-events:none;z-index:1000}
 .modal{position:fixed;inset:0;background:rgba(5,7,6,.8);display:grid;place-items:center;z-index:900;animation:fadein .3s;padding:20px}
+.modal>.mbox{text-align:left;background:var(--panel,#111);border:1px solid var(--line2,#2a2a2a);border-radius:16px;padding:24px;width:min(640px,100%);box-shadow:0 20px 60px rgba(0,0,0,.5)}
 .mbox{background:var(--panel);border:1px solid var(--green);border-radius:16px;padding:30px 34px;text-align:center;max-width:400px;box-shadow:0 0 70px rgba(0,229,89,.22)}
 .mbox h3{font-size:26px;margin:6px 0}
 .mbox p{color:var(--muted);line-height:1.6;margin:0 0 18px}
@@ -733,14 +734,15 @@ const LABS = [
   quiz:{ q:'Why does the team pre-provision the workshop clusters instead of each participant creating one?', o:['Civo cannot create clusters during an event','Every seat starts from the same ready cluster in seconds, so the two hours go to HA and scaling, not to waiting and account verification','Pre-provisioned clusters are bigger','So participants never need their own Civo account'], a:1, why:'Pre-provisioning removes the slowest, least predictable step from the room. Your own Civo account still matters: it is how you register, receive your $250 credit and continue with the bonus missions after the workshop.' } }] : []),
 
 ...(EDITION==='workshop' ? [{ id:'link', mod:'intro', title:'Connect Your Cluster to Launchpad', dur:'3 min', level:'Beginner',
-  intro:`Launchpad checks your missions <b>on your real cluster</b>. Export the cluster's kubeconfig from the Civo CLI and upload it with the <b>Connect my cluster</b> button on the missions page.
-  <div class="note info">Launchpad only uses the kubeconfig to <b>read</b> your cluster for mission checks. It refuses kubeconfigs that run commands or point to private addresses, and deletes every uploaded kubeconfig at 23:59 WIB today. Your Civo API key is never uploaded.</div>
+  intro:`Launchpad checks your missions <b>on your real cluster</b>. One command installs the <b>Mission Agent</b> in your cluster: a tiny pod with <b>read-only</b> access that reports what Launchpad needs to see. Nothing leaves your laptop — no kubeconfig upload, no API key.
+  <div class="note info">The agent can only <b>get and list</b> nodes, pods, services, deployments, HPAs and PDBs. It cannot read Secrets or ConfigMaps and cannot change anything. Load tests and HTTP checks are run by Launchpad from outside, against your External IP. Remove it any time: <code>kubectl delete ns civo-launchpad</code>.</div>
   <div class="note">On a <b>backup seat</b> from a facilitator? Skip this lab — your cluster is already connected; use <b>Download kubeconfig</b> instead.</div>`,
   tasks:[
-    { t:'Export the kubeconfig to a file', d:'One file for one cluster. PowerShell works the same.', cmd:'civo kubernetes config civo-k8s-lab --region JKT1 > kubeconfig-civo-k8s-lab.yaml', re:/^civo (kubernetes|k8s) config \S+( --region \S+)? > \S+\.ya?ml$/i, need:'active', out:'<span class="ok">✓ Wrote kubeconfig-civo-k8s-lab.yaml</span>' },
-    { t:'Upload it to Launchpad', d:'Opens the Connect my cluster dialog (also on the missions page).', cmd:'launchpad connect', re:/^launchpad connect\b/, need:'active', fx:()=>{openConnect()}, out:'Opening <b>Connect my cluster</b> … choose kubeconfig-civo-k8s-lab.yaml' },
+    { t:'Get your Connect command', d:'Opens <b>Connect my cluster</b> (also on the missions page) with a command made just for you. Do not share it.', cmd:'launchpad connect', re:/^launchpad connect\b/, need:'active', fx:()=>{openConnect()}, out:'Opening <b>Connect my cluster</b> … copy the <code>kubectl apply -f …/join/agt-….yaml</code> command' },
+    { t:'Run it against your cluster', d:'Paste the command from the dialog. It creates the namespace <code>civo-launchpad</code>, a read-only ServiceAccount and the agent.', cmd:'kubectl apply -f https://s.id/civo-launchpad/join/agt-xxxx.yaml', re:/^kubectl apply -f \S+\/join\/\S+\.ya?ml$/i, need:'active', out:'namespace/civo-launchpad created\nserviceaccount/mission-agent created\nclusterrole.rbac.authorization.k8s.io/civo-launchpad-read created\nclusterrolebinding.rbac.authorization.k8s.io/civo-launchpad-read created\nsecret/mission-agent created\ndeployment.apps/mission-agent created\n<span class="ok">✓ Launchpad shows: Mission Agent connected — 3/3 nodes Ready</span>' },
+    { t:'See the agent run', d:'One small pod, Running. The dialog in Launchpad turns green on its own.', cmd:'kubectl get pods -n civo-launchpad', re:/^kubectl get (pods|po|pod) -n civo-launchpad$/, need:'active', out:'NAME                             READY   STATUS    RESTARTS   AGE\nmission-agent-7f847cc765-glx44   1/1     Running   0          20s\n<span class="ok">✓ Connected</span>' },
   ],
-  quiz:{ q:'Why does Launchpad ask for a kubeconfig instead of your Civo API key?', o:['A kubeconfig is shorter','A kubeconfig only reaches this one cluster, while an API key controls your whole Civo account and billing','Civo API keys expire every hour','Launchpad cannot read API keys'], a:1, why:'Least privilege: Launchpad needs to read one cluster for a few hours, not to manage your account. The API key stays on your laptop.' } }] : []),
+  quiz:{ q:'Why does Launchpad use a read-only agent in your cluster instead of asking for your kubeconfig or API key?', o:['An agent is faster to type','No credential ever leaves your cluster, and the agent can only read the few objects the missions need — least privilege','Civo does not allow kubeconfig files','So Launchpad can deploy NusaMart for you'], a:1, why:'A kubeconfig gives cluster-admin and an API key controls your whole account. The Mission Agent uses a ServiceAccount that can only get and list nodes, pods, services, deployments, HPAs and PDBs.' } }] : []),
 
 { id:'setup', mod:'intro', title:'Environment Setup', dur:'10 min', level:'Beginner',
   intro:`${EDITION==='workshop' ? 'Connect the <code>civo</code> CLI on <b>your laptop</b> to <b>your own Civo account</b> with the API key from the previous lab, and select the Jakarta region. Install first if needed: <code>brew install civo</code> (macOS), <code>choco install civo-cli</code> (Windows) or the script from github.com/civo/cli, plus <code>kubectl</code>.' : 'Every participant receives a <b>temporary API key</b> from the workshop pool (see the chip in the top-right corner). In this lab you configure the <code>civo</code> CLI to use that key and the region chosen by your facilitator.'}
@@ -2262,26 +2264,59 @@ async function downloadKubeconfig(){
 function openConnect(){
   if (!S.reg){ toast('Register first'); return go('enter') }
   const el=document.createElement('div'); el.className='modal'; el.id='connm';
-  el.innerHTML=`<div><h3 style="margin-top:0">Connect my cluster</h3>
-    <p style="color:var(--muted);font-size:14px;margin:0 0 10px">Choose the file from <code>civo kubernetes config civo-k8s-lab --region JKT1 &gt; kubeconfig-civo-k8s-lab.yaml</code>.</p>
-    <input type="file" id="kcfile" accept=".yaml,.yml,.conf,text/yaml,text/plain" style="margin:6px 0 10px">
-    <label class="cons" style="display:flex;gap:8px;font-size:13.5px"><input type="checkbox" id="kcok"> I agree that Launchpad reads this cluster for mission checks until 23:59 WIB today, then deletes the kubeconfig.</label>
-    <p id="kcerr" style="color:#ff6b6b;font-size:13.5px;min-height:18px"></p>
-    <div style="display:flex;gap:10px;justify-content:flex-end"><button class="btn" onclick="$('#connm').remove()">Cancel</button><button class="btn primary" id="kcgo" onclick="submitConnect()">Connect →</button></div></div>`;
+  el.innerHTML=`<div class="mbox"><h3 style="margin-top:0">🔗 Connect my cluster</h3>
+    <p style="color:var(--muted);font-size:14px;margin:0 0 10px">Run this <b>one command</b> in the terminal where <code>kubectl get nodes</code> shows your 3 nodes. It installs the read-only <b>Mission Agent</b> — nothing is uploaded.</p>
+    <div style="display:flex;gap:8px;align-items:stretch"><pre id="agcmd" class="mono" style="flex:1;margin:0;white-space:pre-wrap;word-break:break-all;font-size:13px;padding:12px;border-radius:10px;background:var(--code,#0b0b0b);color:#e8e8e8">Getting your command…</pre>
+      <button class="btn" id="agcopy" onclick="copyAgentCmd()">Copy</button></div>
+    <p id="agstat" style="margin:12px 0 4px;font-size:14px;color:var(--muted)">⏳ Waiting for your Mission Agent…</p>
+    <details style="margin:10px 0 0;font-size:13.5px"><summary style="cursor:pointer;color:var(--muted)">Can't run kubectl apply? Upload a kubeconfig instead</summary>
+      <p style="color:var(--muted);margin:8px 0 6px">From <code>civo kubernetes config civo-k8s-lab --region JKT1 &gt; kubeconfig-civo-k8s-lab.yaml</code>.</p>
+      <input type="file" id="kcfile" accept=".yaml,.yml,.conf,text/yaml,text/plain" style="margin:4px 0 8px">
+      <label class="cons" style="display:flex;gap:8px"><input type="checkbox" id="kcok"> I agree that Launchpad reads this cluster for mission checks until 23:59 WIB today, then deletes the kubeconfig.</label>
+      <p id="kcerr" style="color:#ff6b6b;min-height:18px;margin:6px 0"></p>
+      <button class="btn" id="kcgo" onclick="submitConnect()">Upload kubeconfig →</button></details>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:12px"><button class="btn" onclick="closeConnect()">Close</button></div></div>`;
   document.body.appendChild(el);
+  if (S.demo){ $('#agcmd').textContent='kubectl apply -f https://s.id/civo-launchpad/join/agt-demo.yaml'; setTimeout(()=>agentConnected({nodes_ready:3,nodes_total:3}),2500); return }
+  fetch('/api/agent/join',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:S.reg.email,token:S.reg.token||''})})
+    .then(r=>r.json().then(j=>({ok:r.ok,j}))).then(({ok,j})=>{
+      if (!ok){ $('#agcmd').textContent=j.message||'Could not get your command.'; return }
+      $('#agcmd').textContent=j.command; S.agentRemove=j.remove; save(); pollAgent();
+    }).catch(()=>{ $('#agcmd').textContent='Could not reach Launchpad — check your Wi-Fi.' });
+}
+let AGPOLL=null;
+function closeConnect(){ clearTimeout(AGPOLL); const m=$('#connm'); if(m) m.remove() }
+function copyAgentCmd(){ const t=$('#agcmd').textContent; (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>{ $('#agcopy').textContent='Copied ✓' }).catch(()=>{ const r=document.createRange(); r.selectNodeContents($('#agcmd')); getSelection().removeAllRanges(); getSelection().addRange(r) }) }
+async function pollAgent(){
+  if (!$('#connm')) return;
+  try{
+    const r=await fetch('/api/agent/status',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:S.reg.email,token:S.reg.token||''})});
+    const j=await r.json();
+    if (j.connected && j.via==='agent') return agentConnected(j);
+    if (j.via==='agent' && !j.connected) $('#agstat').innerHTML='⚠️ Your agent stopped reporting. Check: <code>kubectl get pods -n civo-launchpad</code>';
+  }catch(e){}
+  AGPOLL=setTimeout(pollAgent,2000);
+}
+function agentConnected(j){
+  const st=$('#agstat'); if(!st) return;
+  const full=(j.nodes_ready||0)>=3;
+  st.innerHTML=`<b style="color:var(--green,#00c853)">✓ Mission Agent connected</b> — ${j.nodes_ready||0}/${j.nodes_total||0} nodes Ready${full?'':' (M0 needs 3 Ready nodes)'}${j.error?'<br><span style="color:#ff6b6b">'+esc(j.error)+'</span>':''}`;
+  if (!S.linked){ S.linked=true; save(); renderKey(); toast('✓ Cluster connected'); confetti(80) }
+  $('#agcopy').textContent='Done'; 
+  if (location.hash.includes('beyond-scaling')) setTimeout(()=>{ closeConnect(); renderEvent() },1800);
 }
 async function submitConnect(){
   const f=$('#kcfile').files[0], er=$('#kcerr'), b=$('#kcgo');
   if (!f){ er.textContent='Choose your kubeconfig file.'; return }
   if (!$('#kcok').checked){ er.textContent='Please accept the read access first.'; return }
-  if (S.demo){ S.linked=true; save(); $('#connm').remove(); toast('Demo mode: cluster marked as connected'); return renderKey() }
+  if (S.demo){ S.linked=true; save(); closeConnect(); toast('Demo mode: cluster marked as connected'); return renderKey() }
   b.disabled=true; er.textContent='Checking your cluster…';
   try{
     const text=await f.text();
     const r=await fetch('/api/cluster/connect',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:S.reg.email,token:S.reg.token||'',kubeconfig:text,consent:true})});
     const j=await r.json().catch(()=>({}));
     if (!r.ok){ er.textContent=j.message||'Could not connect'; b.disabled=false; return }
-    S.linked=true; save(); renderKey(); $('#connm').remove(); toast('✓ Cluster connected — 3 nodes Ready'); confetti(80);
+    S.linked=true; save(); renderKey(); closeConnect(); toast('✓ Cluster connected — 3 nodes Ready'); confetti(80);
     if (location.hash.includes('beyond-scaling')) renderEvent();
   }catch(e){ er.textContent='Could not reach Launchpad — check your Wi-Fi.'; b.disabled=false }
 }

@@ -167,3 +167,29 @@ official certificates are sent by Certifier (`POST /v1/credentials/create-issue-
 | `POST /api/admin/certifier` `{action:"issue", dry_run?, email?}` | Send to everyone eligible and not yet sent (race must be stopped). Idempotent; upgrades Participation → Completion |
 
 Sent credentials are recorded in `/data/certifier.json`. One automatic pass runs one minute after `EVENT_CLOSE`.
+
+## Mission Agent (Connect my cluster)
+
+Participants connect their own cluster with **one command** shown in Launchpad:
+
+```bash
+kubectl apply -f https://<launchpad>/join/agt-<personal-token>.yaml
+```
+
+It creates namespace `civo-launchpad` with a ServiceAccount that can only **get/list** nodes, pods, services,
+deployments, HPAs and PDBs (no Secrets, no ConfigMaps, no writes) and a 10m/16Mi pod
+(`ghcr.io/<owner>/civo-launchpad:agent-latest`, distroless). The agent long-polls Launchpad over outbound HTTPS:
+no kubeconfig or API key leaves the cluster. HTTP checks and the Final load probe still run from Launchpad
+against the External IP, so they cannot be faked from inside the cluster.
+
+| Path | What |
+|---|---|
+| `POST /api/agent/join` `{email, token}` | Personal `kubectl apply -f …` command |
+| `GET /join/<agent-token>.yaml` | The manifest (404 for unknown links, 410 after the event closes) |
+| `POST /api/agent/report` (Bearer agent token) | Agent snapshot; held up to 20 s, answered at once when the participant presses Check |
+| `POST /api/agent/status` `{email, token}` | Connected?, nodes Ready, last report |
+
+`race/check` prefers a live agent; if the agent has been silent for 90 s it falls back to an uploaded kubeconfig
+(still available under "Upload a kubeconfig instead"). After `EVENT_CLOSE` agents are told to stop.
+Remove: `kubectl delete ns civo-launchpad && kubectl delete clusterrole,clusterrolebinding civo-launchpad-read`.
+Env: `AGENT_IMAGE` (default `ghcr.io/dev-cer/civo-launchpad:agent-latest`), `AGENT_STALE_MS` (default 90000).

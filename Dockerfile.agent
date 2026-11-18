@@ -1,0 +1,13 @@
+# Civo Launchpad Mission Agent — runs in the participant's cluster with read-only RBAC.
+# Same binary as Launchpad, started with the "agent" argument. Distroless: no shell, no package manager.
+FROM rust:1-bookworm AS builder
+WORKDIR /usr/src/app
+COPY backend/Cargo.toml backend/Cargo.lock ./
+COPY backend/src ./src
+RUN cargo build --release --locked
+
+FROM gcr.io/distroless/cc-debian12:nonroot
+COPY --from=builder /usr/src/app/target/release/civo-workshop-backend /app/launchpad
+USER 10001
+ENTRYPOINT ["/app/launchpad"]
+CMD ["agent"]

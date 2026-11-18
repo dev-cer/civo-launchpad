@@ -15,7 +15,11 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        edition: [workshop, academy]
+        include:
+          - { edition: workshop, file: Dockerfile.launchpad }
+          - { edition: academy, file: Dockerfile.launchpad }
+          # Mission Agent for participants' clusters: ghcr.io/<owner>/civo-launchpad:agent-latest
+          - { edition: agent, file: Dockerfile.agent }
     steps:
       - uses: actions/checkout@v4
       - name: Build the editions (dist/)
@@ -33,7 +37,7 @@ jobs:
       - uses: docker/build-push-action@v6
         with:
           context: .
-          file: Dockerfile.launchpad
+          file: ${{ matrix.file }}
           build-args: EDITION=${{ matrix.edition }}
           push: true
           tags: |

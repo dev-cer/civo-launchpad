@@ -30,6 +30,7 @@
 mod race;
 mod cert;
 mod certifier;
+mod agent;
 use axum::{
     extract::{Path, Query, State},
     http::{header, HeaderMap, StatusCode},
@@ -116,6 +117,9 @@ struct Registration {
     /// Token rahasia peserta (uuid), dipakai untuk connect cluster & cek race.
     #[serde(default)]
     token: String,
+    /// Token Mission Agent (dipasang di cluster peserta lewat /join/<token>.yaml).
+    #[serde(default)]
+    agent_token: String,
     account_id: String,
     seat: usize,
     created_at: u64,
@@ -138,7 +142,15 @@ struct AppState {
     certifier: Option<certifier::Config>,
     ledger: Mutex<certifier::Ledger>,
     http: reqwest::Client,
+    /// Snapshot terakhir dari Mission Agent per email, dan sinyal untuk membangunkan agen.
+    agents: Mutex<std::collections::HashMap<String, AgentSnap>>,
+    agent_wake: Mutex<std::collections::HashMap<String, Arc<tokio::sync::Notify>>>,
 }
+
+#[derive(Clone)]
+struct AgentSnap { at_ms: u128, snap: race::Snapshot, error: String, nodes_ready: usize, nodes_total: usize }
+
+fn now_ms() -> u128 { SystemTime::now().duration_since(UNIX_EPOCH).map(|d| d.as_millis()).unwrap_or(0) }
 
 /// Parse "YYYY-MM-DDTHH:MM[:SS]+HH:MM" (RFC3339 sederhana) ke unix detik, tanpa dependency tambahan.
 fn parse_ts(v: &str) -> Option<u64> {
@@ -319,6 +331,7 @@ fn now() -> u64 {
 
 #[tokio::main]
 async fn main() {
+    if env::args().nth(1).as_deref() == Some("agent") { agent::run().await; return; }
     let mut accounts = load_accounts();
     let reg_file = env::var("REGISTRATIONS_FILE").ok().filter(|s| !s.is_empty());
     let regs = load_registrations(&reg_file);
@@ -350,6 +363,8 @@ async fn main() {
         certifier: certifier::Config::from_env(),
         ledger: Mutex::new(certifier::Config::from_env().map(|c| certifier::load(&c.file)).unwrap_or_default()),
         http: reqwest::Client::builder().timeout(std::time::Duration::from_secs(30)).build().unwrap(),
+        agents: Mutex::new(std::collections::HashMap::new()),
+        agent_wake: Mutex::new(std::collections::HashMap::new()),
         window: match (env::var("EVENT_OPEN").ok().and_then(|v| parse_ts(&v)), env::var("EVENT_CLOSE").ok().and_then(|v| parse_ts(&v))) {
             (Some(o), Some(c)) => Some((o, c)),
             _ => None,
@@ -397,6 +412,10 @@ async fn main() {
         .route("/api/cluster/connect", post(connect_cluster))
         .route("/api/cert/me", post(cert_me))
         .route("/api/admin/certifier", post(admin_certifier))
+        .route("/api/agent/join", post(agent_join))
+        .route("/api/agent/status", post(agent_status))
+        .route("/api/agent/report", post(agent_report))
+        .route("/join/:file", get(join_manifest))
         .route("/cert/:id", get(cert_page))
         .route("/verify/:id", get(verify_page))
         .fallback_service(ServeDir::new(static_dir))
@@ -481,14 +500,25 @@ async fn race_check(State(state): State<Arc<AppState>>, Json(req): Json<RaceChec
         if let Some(prev) = lc.get(&email) { if t < prev + cool { return err(StatusCode::TOO_MANY_REQUESTS, "Checking too often — wait a few seconds."); } }
         lc.insert(email.clone(), t);
     }
+    // Mission Agent (dipasang lewat satu perintah) didahulukan; kubeconfig tetap jadi cadangan.
+    let kc_fallback = cluster.strip_prefix("own:").map(|t| std::path::Path::new(&own_kc_path(t)).exists()).unwrap_or(false);
+    if let Some(checks) = agent_checks(&state, &email, mission, kc_fallback).await {
+        let checks = match checks { Ok(c) => c, Err(e) => return err(StatusCode::GATEWAY_TIMEOUT, &e) };
+        return finish_check(&state, &email, &name, mission, checks).await;
+    }
     let kc = match cluster.strip_prefix("own:") {
         Some(tok) => own_kc_path(tok),
         None => format!("{}/{}.yaml", env::var("KUBECONFIG_DIR").unwrap_or_else(|_| "/kubeconfigs".to_string()), cluster),
     };
     if cluster.is_empty() || !std::path::Path::new(&kc).exists() {
-        return err(StatusCode::PRECONDITION_FAILED, if cluster.starts_with("own:") { "Connect your cluster first: upload its kubeconfig in Launchpad (M0)." } else { "Your cluster is not attached to Launchpad — ask a facilitator." });
+        return err(StatusCode::PRECONDITION_FAILED, if cluster.starts_with("own:") { "Connect your cluster first: run the Connect command shown in Launchpad (M0)." } else { "Your cluster is not attached to Launchpad — ask a facilitator." });
     }
     let checks = race::verify(&kc, mission).await;
+    finish_check(&state, &email, &name, mission, checks).await
+}
+
+async fn finish_check(state: &AppState, email: &str, name: &str, mission: &'static str, checks: Vec<race::Check>) -> (StatusCode, Json<serde_json::Value>) {
+    let email = email.to_string(); let name = name.to_string();
     let passed = checks.iter().all(|c| c.ok);
     let mut d = state.race.lock().await;
     let mut at = None;
@@ -503,6 +533,97 @@ async fn race_check(State(state): State<Arc<AppState>>, Json(req): Json<RaceChec
     let mine = d.done.get(&email).map(|(_, v)| v.clone()).unwrap_or_default();
     (StatusCode::OK, Json(serde_json::json!({ "status": "success", "passed": passed, "mission": mission, "elapsed": if late { None } else { at }, "late": late,
         "checks": checks, "players": race::board(&d), "certificate": race::certificate(&mine), "passed_missions": mine.iter().map(|m| m.0.clone()).collect::<Vec<_>>() })))
+}
+
+/// Agen terhubung = melapor dalam 90 detik terakhir. None = tidak memakai agen (pakai kubeconfig).
+async fn agent_checks(state: &AppState, email: &str, mission: &str, kc_fallback: bool) -> Option<Result<Vec<race::Check>, String>> {
+    let seen = state.agents.lock().await.get(email).map(|a| a.at_ms)?;
+    let stale_ms: u128 = env::var("AGENT_STALE_MS").ok().and_then(|v| v.parse().ok()).unwrap_or(90_000);
+    if now_ms().saturating_sub(seen) > stale_ms {
+        if kc_fallback { return None; }
+        return Some(Err("Your Mission Agent has not reported for a while. Check it: kubectl get pods -n civo-launchpad (it must be Running), then try again.".into()));
+    }
+    let t0 = now_ms();
+    wake_agent(state, email).await;
+    for _ in 0..60 {
+        tokio::time::sleep(std::time::Duration::from_millis(250)).await;
+        let a = state.agents.lock().await.get(email).cloned();
+        if let Some(a) = a.filter(|a| a.at_ms > t0) {
+            if !a.error.is_empty() { return Some(Ok(vec![race::Check { name: "Reach your cluster".into(), ok: false, hint: format!("Mission Agent could not read your cluster: {}", a.error) }])); }
+            return Some(Ok(race::evaluate(&a.snap, mission).await));
+        }
+    }
+    Some(Err("Your Mission Agent did not answer in 15 seconds. Check: kubectl get pods -n civo-launchpad, then try again.".into()))
+}
+
+async fn wake_agent(state: &AppState, email: &str) {
+    let n = state.agent_wake.lock().await.entry(email.to_string()).or_insert_with(|| Arc::new(tokio::sync::Notify::new())).clone();
+    n.notify_one();
+}
+
+#[derive(Deserialize)]
+struct AgentJoinRequest { email: String, #[serde(default)] token: String }
+
+/// Perintah "Connect my cluster" untuk peserta: kubectl apply -f <launchpad>/join/<agent_token>.yaml
+async fn agent_join(State(state): State<Arc<AppState>>, headers: HeaderMap, Json(req): Json<AgentJoinRequest>) -> impl IntoResponse {
+    let email = clean(&req.email, 120).to_lowercase();
+    let tok = clean(&req.token, 64);
+    if window_state(state.window) == "closed" { return err(StatusCode::GONE, "This Launchpad closed at 23:59 WIB on event day."); }
+    let agent_token = {
+        let mut regs = state.regs.lock().await;
+        let Some(idx) = regs.iter().rposition(|r| r.email == email) else { return err(StatusCode::FORBIDDEN, "Register in Launchpad first."); };
+        if regs[idx].token.is_empty() || regs[idx].token != tok { return err(StatusCode::FORBIDDEN, "Sign in to Launchpad again with your registration details."); }
+        if regs[idx].agent_token.is_empty() {
+            regs[idx].agent_token = format!("agt-{}", uuid::Uuid::new_v4().simple());
+            append_reg(&state.reg_file, &regs[idx]);
+        }
+        regs[idx].agent_token.clone()
+    };
+    let url = format!("{}/join/{agent_token}.yaml", base_url(&headers));
+    (StatusCode::OK, Json(serde_json::json!({ "status": "success", "url": url, "command": format!("kubectl apply -f {url}"),
+        "remove": "kubectl delete ns civo-launchpad && kubectl delete clusterrole,clusterrolebinding civo-launchpad-read" })))
+}
+
+async fn join_manifest(State(state): State<Arc<AppState>>, headers: HeaderMap, Path(file): Path<String>) -> impl IntoResponse {
+    let tok: String = file.trim_end_matches(".yaml").chars().filter(|c| c.is_ascii_alphanumeric() || *c == '-').take(64).collect();
+    let ok = !tok.is_empty() && state.regs.lock().await.iter().any(|r| r.agent_token == tok);
+    if !ok { return (StatusCode::NOT_FOUND, [(header::CONTENT_TYPE, "text/plain; charset=utf-8")], "# Unknown join link. Open Launchpad, sign in and copy the Connect command again.\n".to_string()); }
+    if window_state(state.window) == "closed" { return (StatusCode::GONE, [(header::CONTENT_TYPE, "text/plain; charset=utf-8")], "# This Launchpad is closed.\n".to_string()); }
+    let image = env::var("AGENT_IMAGE").ok().filter(|v| !v.trim().is_empty()).unwrap_or_else(|| "ghcr.io/dev-cer/civo-launchpad:agent-latest".to_string());
+    (StatusCode::OK, [(header::CONTENT_TYPE, "application/yaml; charset=utf-8")], agent::manifest(&base_url(&headers), &tok, &image))
+}
+
+/// Agen melapor (snapshot) lalu menunggu sampai 20 detik: dijawab lebih cepat bila peserta klik Check.
+async fn agent_report(State(state): State<Arc<AppState>>, headers: HeaderMap, Json(body): Json<serde_json::Value>) -> impl IntoResponse {
+    let tok = headers.get(header::AUTHORIZATION).and_then(|v| v.to_str().ok()).and_then(|v| v.strip_prefix("Bearer ")).unwrap_or("").trim().to_string();
+    let email = if tok.is_empty() { None } else { state.regs.lock().await.iter().rev().find(|r| r.agent_token == tok).map(|r| r.email.clone()) };
+    let Some(email) = email else { return err(StatusCode::UNAUTHORIZED, "Unknown agent token."); };
+    if window_state(state.window) == "closed" { return (StatusCode::OK, Json(serde_json::json!({ "status": "success", "stop": true }))); }
+    let error = body["error"].as_str().unwrap_or("").to_string();
+    let nodes = body["nodes"].clone();
+    let ns_err = body["ns_error"].as_str().unwrap_or("").to_string();
+    let ns = if ns_err.is_empty() { Ok(body["ns"].clone()) } else { Err(ns_err) };
+    let list = nodes["items"].as_array().cloned().unwrap_or_default();
+    let ready = list.iter().filter(|n| n["status"]["conditions"].as_array().map(|cs| cs.iter().any(|x| x["type"] == "Ready" && x["status"] == "True")).unwrap_or(false)).count();
+    let first = !state.agents.lock().await.contains_key(&email);
+    state.agents.lock().await.insert(email.clone(), AgentSnap { at_ms: now_ms(), snap: race::Snapshot { nodes, ns }, error, nodes_ready: ready, nodes_total: list.len() });
+    if first { println!("Mission Agent connected ({} agents)", state.agents.lock().await.len()); return (StatusCode::OK, Json(serde_json::json!({ "status": "success", "collect": false }))); }
+    let n = state.agent_wake.lock().await.entry(email).or_insert_with(|| Arc::new(tokio::sync::Notify::new())).clone();
+    let woke = tokio::time::timeout(std::time::Duration::from_secs(20), n.notified()).await.is_ok();
+    (StatusCode::OK, Json(serde_json::json!({ "status": "success", "collect": woke })))
+}
+
+async fn agent_status(State(state): State<Arc<AppState>>, Json(req): Json<AgentJoinRequest>) -> impl IntoResponse {
+    let email = clean(&req.email, 120).to_lowercase();
+    let tok = clean(&req.token, 64);
+    if !state.regs.lock().await.iter().any(|r| r.email == email && !r.token.is_empty() && r.token == tok) { return err(StatusCode::FORBIDDEN, "Sign in to Launchpad again with your registration details."); }
+    let a = state.agents.lock().await.get(&email).cloned();
+    let kc = state.regs.lock().await.iter().rev().find(|r| r.email == email).map(|r| std::path::Path::new(&own_kc_path(&r.token)).exists()).unwrap_or(false);
+    match a {
+        Some(a) => { let age = (now_ms().saturating_sub(a.at_ms) / 1000) as u64;
+            (StatusCode::OK, Json(serde_json::json!({ "status": "success", "connected": age <= 90, "via": "agent", "last_seen_s": age, "nodes_ready": a.nodes_ready, "nodes_total": a.nodes_total, "error": a.error }))) }
+        None => (StatusCode::OK, Json(serde_json::json!({ "status": "success", "connected": kc, "via": if kc { "kubeconfig" } else { "" } }))),
+    }
 }
 
 fn own_kc_dir() -> String { env::var("OWN_KUBECONFIG_DIR").unwrap_or_else(|_| "/data/own-kubeconfigs".to_string()) }
@@ -842,7 +963,7 @@ async fn register(State(state): State<Arc<AppState>>, headers: HeaderMap, Json(r
             hero: clean(&req.hero, 20), platform: clean(&req.platform, 60), timeline: clean(&req.timeline, 30),
             early_access: req.early_access, wants_call: req.wants_call, phone: clean(&req.phone, 24),
             location: clean(&req.location, 60), k8s_usage: clean(&req.k8s_usage, 60), source: clean(&req.source, 120),
-            civo_account: clean(&req.civo_account, 120).to_lowercase(), token: uuid::Uuid::new_v4().to_string(), account_id: "own".to_string(), seat: regs.len() + 1, created_at: now(),
+            civo_account: clean(&req.civo_account, 120).to_lowercase(), token: uuid::Uuid::new_v4().to_string(), agent_token: String::new(), account_id: "own".to_string(), seat: regs.len() + 1, created_at: now(),
         };
         if let Some(p) = &state.reg_file {
             if let Ok(mut f) = OpenOptions::new().create(true).append(true).open(p) {
@@ -894,6 +1015,7 @@ async fn register(State(state): State<Arc<AppState>>, headers: HeaderMap, Json(r
         source: clean(&req.source, 120),
         civo_account,
         token: uuid::Uuid::new_v4().to_string(),
+        agent_token: String::new(),
         account_id: acc.id.clone(),
         seat: regs.len() + 1,
         created_at: now(),

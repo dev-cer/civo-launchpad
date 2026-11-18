@@ -120,26 +120,48 @@ fn items<'a>(list: &'a serde_json::Value, kind: &str) -> Vec<&'a serde_json::Val
 }
 fn q_eq(a: &serde_json::Value, b: &serde_json::Value) -> bool { !a.is_null() && a == b }
 
-/// Verifikasi satu misi. Misi bersifat kumulatif: M2 juga butuh kondisi M1, dst.
+/// Keadaan cluster peserta yang dibutuhkan untuk menilai misi. Diambil Launchpad lewat kubeconfig,
+/// atau dilaporkan Mission Agent yang berjalan di cluster peserta (akses baca-saja).
+#[derive(Clone)]
+pub struct Snapshot {
+    /// List Node (`items`)
+    pub nodes: serde_json::Value,
+    /// List gabungan Deployment, Service, HPA, PDB, Pod di namespace nusamart (`items[].kind` terisi)
+    pub ns: Result<serde_json::Value, String>,
+}
+
+/// Ambil snapshot lewat kubeconfig (mode lama: kubeconfig diunggah / kursi cadangan).
+pub async fn fetch(kubeconfig: &str) -> Result<Snapshot, String> {
+    let nodes = kubectl(kubeconfig, &["get", "nodes"]).await?;
+    let ns = kubectl(kubeconfig, &["-n", NS, "get", "deploy,svc,hpa,pdb,pods"]).await;
+    Ok(Snapshot { nodes, ns })
+}
+
+/// Verifikasi satu misi lewat kubeconfig.
 pub async fn verify(kubeconfig: &str, mission: &str) -> Vec<Check> {
+    match fetch(kubeconfig).await {
+        Ok(s) => evaluate(&s, mission).await,
+        Err(e) => vec![ck("Reach your cluster", false, &format!("Launchpad could not reach your cluster: {e}"))],
+    }
+}
+
+/// Nilai satu misi dari snapshot. Misi bersifat kumulatif: M2 juga butuh kondisi M1, dst.
+/// Probe HTTP dan uji beban Final selalu dijalankan dari Launchpad ke External IP (tidak bisa dipalsukan dari cluster).
+pub async fn evaluate(snap: &Snapshot, mission: &str) -> Vec<Check> {
     let mut c = vec![];
     let idx = MISSIONS.iter().position(|m| *m == mission).unwrap_or(0);
-    // Nodes (semua misi)
-    let nodes = match kubectl(kubeconfig, &["get", "nodes"]).await {
-        Ok(v) => v,
-        Err(e) => { c.push(ck("Reach your cluster", false, &format!("Launchpad could not reach your cluster: {e}"))); return c; }
-    };
+    let nodes = &snap.nodes;
     let ns = nodes["items"].as_array().cloned().unwrap_or_default();
     let ready = ns.iter().filter(|n| n["status"]["conditions"].as_array().map(|cs| cs.iter().any(|x| x["type"] == "Ready" && x["status"] == "True")).unwrap_or(false)).count();
     let cordoned = ns.iter().filter(|n| n["spec"]["unschedulable"] == true).count();
     c.push(ck("3 nodes Ready", ready >= 3, "kubectl get nodes should show 3 Ready nodes. Ask a mentor if not."));
     if idx == 0 { return c; }
 
-    let list = match kubectl(kubeconfig, &["-n", NS, "get", "deploy,svc,hpa,pdb,pods"]).await {
+    let list = match &snap.ns {
         Ok(v) => v,
         Err(e) => { c.push(ck("Namespace nusamart", false, &format!("Deploy NusaMart first (kubectl apply -k k8s/overlays/before): {e}"))); return c; }
     };
-    let dep = items(&list, "Deployment").into_iter().find(|d| d["metadata"]["name"] == APP).cloned();
+    let dep = items(list, "Deployment").into_iter().find(|d| d["metadata"]["name"] == APP).cloned();
     let Some(dep) = dep else { c.push(ck("Deployment ecommerce-rust", false, "Run: kubectl apply -k k8s/overlays/before")); return c; };
     let ready_rep = dep["status"]["readyReplicas"].as_u64().unwrap_or(0);
     let ctr = &dep["spec"]["template"]["spec"]["containers"][0];
@@ -147,14 +169,14 @@ pub async fn verify(kubeconfig: &str, mission: &str) -> Vec<Check> {
     let reco_ok = ctr["env"].as_array().map(|e| e.iter().any(|x| x["name"] == "RECO_WORK" && x["value"] == "100000")).unwrap_or(false);
     c.push(ck("Original NusaMart image and RECO_WORK", image_ok && reco_ok, "Do not change the image or RECO_WORK — re-apply k8s/overlays/before."));
     c.push(ck("At least 1 pod ready", ready_rep >= 1, "Wait for the pod to be Running and 1/1 READY (kubectl get pods -n nusamart)."));
-    let svc = items(&list, "Service").into_iter().find(|s| s["metadata"]["name"] == SVC).cloned();
+    let svc = items(list, "Service").into_iter().find(|s| s["metadata"]["name"] == SVC).cloned();
     let ip = svc.as_ref().and_then(|s| s["status"]["loadBalancer"]["ingress"][0]["ip"].as_str().map(String::from));
     c.push(ck("Load balancer has an External IP", ip.is_some(), "kubectl get svc ecommerce-rust-svc -n nusamart -w — wait for EXTERNAL-IP (1–2 min)."));
     let health = match &ip { Some(ip) => matches!(http_get(ip, "/health").await, Ok((200, _))), None => false };
     c.push(ck("Shop answers on http://<EXTERNAL-IP>/health", health, "The load balancer is not answering yet — wait a minute and check again."));
     if idx == 1 { return c; }
 
-    let pods: Vec<_> = items(&list, "Pod").into_iter().filter(|p| p["metadata"]["labels"]["app"] == APP && p["status"]["phase"] == "Running").cloned().collect();
+    let pods: Vec<_> = items(list, "Pod").into_iter().filter(|p| p["metadata"]["labels"]["app"] == APP && p["status"]["phase"] == "Running").cloned().collect();
     let res = &ctr["resources"];
     let guaranteed_spec = q_eq(&res["requests"]["cpu"], &res["limits"]["cpu"]) && q_eq(&res["requests"]["memory"], &res["limits"]["memory"]);
     let guaranteed_pods = !pods.is_empty() && pods.iter().all(|p| p["status"]["qosClass"] == "Guaranteed");
@@ -163,7 +185,7 @@ pub async fn verify(kubeconfig: &str, mission: &str) -> Vec<Check> {
     c.push(ck("2 or more replicas ready", ready_rep >= 2, "kubectl scale deploy/ecommerce-rust -n nusamart --replicas=2"));
     if idx == 2 { return c; }
 
-    let hpa = items(&list, "HorizontalPodAutoscaler").into_iter().find(|h| h["spec"]["scaleTargetRef"]["name"] == APP).cloned();
+    let hpa = items(list, "HorizontalPodAutoscaler").into_iter().find(|h| h["spec"]["scaleTargetRef"]["name"] == APP).cloned();
     let min = hpa.as_ref().and_then(|h| h["spec"]["minReplicas"].as_u64()).unwrap_or(1);
     let max = hpa.as_ref().and_then(|h| h["spec"]["maxReplicas"].as_u64()).unwrap_or(0);
     c.push(ck("HPA targets ecommerce-rust (min ≥ 2, max ≥ 4)", hpa.is_some() && min >= 2 && max >= 4, "kubectl autoscale deploy ecommerce-rust -n nusamart --cpu-percent=60 --min=2 --max=8"));
@@ -171,7 +193,7 @@ pub async fn verify(kubeconfig: &str, mission: &str) -> Vec<Check> {
     c.push(ck("HPA has scaled at least once under load", scaled, "Run the k6 load test (kubectl apply -k k6) and watch kubectl get hpa -n nusamart -w."));
     if idx == 3 { return c; }
 
-    let pdb = items(&list, "PodDisruptionBudget").into_iter().find(|p| p["spec"]["selector"]["matchLabels"]["app"] == APP).cloned();
+    let pdb = items(list, "PodDisruptionBudget").into_iter().find(|p| p["spec"]["selector"]["matchLabels"]["app"] == APP).cloned();
     let allowed = pdb.as_ref().and_then(|p| p["status"]["disruptionsAllowed"].as_u64()).unwrap_or(0);
     c.push(ck("PDB protects ecommerce-rust", pdb.is_some(), "kubectl create pdb ecommerce-rust -n nusamart --selector=app=ecommerce-rust --min-available=1"));
     c.push(ck("PDB allows a safe drain (disruptionsAllowed ≥ 1)", allowed >= 1, "Keep at least 2 ready replicas so one can be evicted safely."));
