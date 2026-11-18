@@ -205,7 +205,7 @@ pub async fn evaluate(snap: &Snapshot, mission: &str) -> Vec<Check> {
 
     c.push(ck("HPA minReplicas ≥ 3 (warm capacity)", min >= 3, "kubectl delete hpa ecommerce-rust -n nusamart, then: kubectl autoscale deploy ecommerce-rust -n nusamart --cpu-percent=60 --min=3 --max=8"));
     c.push(ck("3 or more replicas ready", ready_rep >= 3, "Wait until 3 pods are Ready."));
-    c.push(ck("Pods spread over 3 nodes", on_nodes.len() >= 3, "Add topologySpreadConstraints (kubernetes.io/hostname) — see bonus B2."));
+    c.push(ck("Pods spread over 3 nodes", on_nodes.len() >= 3, "Add topologySpreadConstraints on kubernetes.io/hostname with whenUnsatisfiable: DoNotSchedule (ScheduleAnyway is only a preference) — see bonus B2, then wait for the rollout."));
     let (failed, p95) = match &ip { Some(ip) => burst(ip).await, None => (120, 0) };
     let limit: u128 = std::env::var("RACE_P95_MS").ok().and_then(|v| v.parse().ok()).unwrap_or(1500);
     c.push(ck(&format!("Flash sale probe: 120 requests, {failed} failed, p95 {p95} ms (limit {limit} ms)"), failed == 0 && p95 <= limit, "Too slow or errors under burst: check resources, replicas and HPA."));
