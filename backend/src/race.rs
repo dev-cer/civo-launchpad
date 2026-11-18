@@ -190,7 +190,7 @@ pub async fn evaluate(snap: &Snapshot, mission: &str) -> Vec<Check> {
     let max = hpa.as_ref().and_then(|h| h["spec"]["maxReplicas"].as_u64()).unwrap_or(0);
     c.push(ck("HPA targets ecommerce-rust (min ≥ 2, max ≥ 4)", hpa.is_some() && min >= 2 && max >= 4, "kubectl autoscale deploy ecommerce-rust -n nusamart --cpu-percent=60 --min=2 --max=8"));
     let scaled = hpa.as_ref().map(|h| !h["status"]["lastScaleTime"].is_null()).unwrap_or(false);
-    c.push(ck("HPA has scaled at least once under load", scaled, "Run the k6 load test (kubectl apply -k k6) and watch kubectl get hpa -n nusamart -w."));
+    c.push(ck("HPA has scaled at least once under load", scaled, "Wait until kubectl get hpa -n nusamart shows a CPU % under TARGETS (not <unknown>), then run the load test: kubectl delete job k6-flash-sale -n loadtest --ignore-not-found; kubectl apply -k k6 — and watch kubectl get hpa -n nusamart -w until REPLICAS goes up."));
     if idx == 3 { return c; }
 
     let pdb = items(list, "PodDisruptionBudget").into_iter().find(|p| p["spec"]["selector"]["matchLabels"]["app"] == APP).cloned();
