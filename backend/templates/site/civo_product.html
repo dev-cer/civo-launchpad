@@ -1,0 +1,83 @@
+{% extends "site/base.html" %}
+{% block title %}{{ p.title }} — Civo di Indonesia · Arupa Cloud{% endblock %}
+{% block desc %}{{ p.tagline }}{% endblock %}
+{% block css %}
+.phero{position:relative;overflow:hidden;background:radial-gradient(900px 500px at 80% 0%,{{ p.glow }},transparent 60%),#0b0b0b;color:#fff;padding:76px 0 70px}
+.phero .grid{display:grid;grid-template-columns:1.1fr .9fr;gap:40px;align-items:center}@media(max-width:940px){.phero .grid{grid-template-columns:1fr}}
+.phero .logo svg{height:36px;width:auto;margin-bottom:20px}.phero .logo svg path,.phero .logo svg polygon,.phero .logo svg rect{fill:#fff}
+.phero h1{font-size:clamp(40px,5.2vw,64px);line-height:1.04;letter-spacing:-.035em;margin:12px 0 18px;font-weight:800}.phero h1 em{font-style:normal;color:{{ p.accent }}}
+.phero p.sub{font-size:19px;line-height:1.6;color:#c8ccc4;max-width:580px;margin:0 0 26px}
+.avail{display:inline-flex;align-items:center;gap:8px;border:1px solid #333;background:#141414;border-radius:999px;padding:7px 14px;font-size:13.5px;font-weight:700}.avail i{width:8px;height:8px;border-radius:50%;background:{{ p.accent }};box-shadow:0 0 10px {{ p.accent }}}
+.vis{background:#121212;border:1px solid #2a2a2a;border-radius:24px;padding:26px}
+.vis .k{font:700 12px 'JetBrains Mono',monospace;letter-spacing:.14em;color:{{ p.accent }}}
+.flow{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:16px}
+.flow button{font:inherit;color:#fff;background:#1b1b1b;border:1px solid #333;border-radius:16px;padding:18px 10px;cursor:pointer;text-align:center;transition:all .2s}
+.flow button b{display:block;font-size:20px;margin-top:6px}.flow button span{font-size:26px}
+.flow button.on{background:{{ p.accent }};color:#0b0b0b;border-color:{{ p.accent }};transform:translateY(-4px)}
+.flowtxt{margin-top:14px;color:#c8ccc4;line-height:1.6;min-height:52px;animation:rise .3s ease}
+.uc{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:26px}@media(max-width:800px){.uc{grid-template-columns:1fr}}
+.uc details{background:#fff;border:1.5px solid var(--line);border-radius:18px;padding:20px 22px;transition:border-color .15s}
+.uc details[open]{border-color:var(--ink)}.uc summary{cursor:pointer;font-weight:800;font-size:18px;list-style:none}.uc summary::-webkit-details-marker{display:none}
+.uc summary:after{content:"+";float:right;font-size:22px}.uc details[open] summary:after{content:"–"}.uc p{color:var(--mute);line-height:1.6;margin:10px 0 0}
+.road{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:26px}@media(max-width:860px){.road{grid-template-columns:1fr 1fr}}
+.road div{background:#fff;border:1px solid var(--line);border-radius:18px;padding:20px;position:relative}
+.road div.now{border-color:var(--ink);box-shadow:0 0 0 2px var(--ink) inset}
+.road .k{font:700 12px 'JetBrains Mono',monospace;color:var(--blue);letter-spacing:.1em}.road b{display:block;font-size:18px;margin:6px 0}.road p{margin:0;color:var(--mute);font-size:14.5px;line-height:1.5}
+{% endblock %}
+{% block content %}
+<section class="phero">
+  <div class="wrap grid">
+    <div>
+      <div class="logo">{{ civo|safe }}</div>
+      <span class="avail"><i></i>{{ p.avail }}</span>
+      <h1>{{ p.h1a }} <em>{{ p.h1b }}</em></h1>
+      <p class="sub">{{ p.tagline }}</p>
+      <div style="display:flex;gap:12px;flex-wrap:wrap"><a class="btn g lg" href="#kontak" style="background:{{ p.accent }}">{{ p.cta }} →</a><a class="btn o lg" href="/civo">Lihat Civo Kubernetes</a></div>
+    </div>
+    <div class="vis rv"><span class="k">{{ p.flow_title }}</span>
+      <div class="flow" id="flow">{% for f in p.flow %}<button type="button" data-t="{{ f.2 }}"><span>{{ f.0 }}</span><b>{{ f.1 }}</b></button>{% endfor %}</div>
+      <div class="flowtxt" id="flowtxt"></div></div>
+  </div>
+</section>
+
+<section class="s">
+  <div class="wrap">
+    <div class="rv"><p class="eyebrow">Kemampuan</p><h2>{{ p.feat_title }}</h2></div>
+    <div class="grid3" style="margin-top:26px">{% for f in p.features %}<div class="card rv"><h3>{{ f.0 }}</h3><p>{{ f.1 }}</p></div>{% endfor %}</div>
+  </div>
+</section>
+
+<section class="s" style="background:#fff">
+  <div class="wrap">
+    <div class="rv"><p class="eyebrow">Use case</p><h2>Cocok untuk apa?</h2><p class="lead">Klik untuk melihat detail.</p></div>
+    <div class="uc">{% for u in p.cases %}<details class="rv"{% if loop.first %} open{% endif %}><summary>{{ u.0 }}</summary><p>{{ u.1 }}</p></details>{% endfor %}</div>
+  </div>
+</section>
+
+<section class="s">
+  <div class="wrap">
+    <div class="rv"><p class="eyebrow">Langkah</p><h2>{{ p.road_title }}</h2></div>
+    <div class="road">{% for r in p.road %}<div class="rv{% if loop.first %} now{% endif %}"><span class="k">{{ r.0 }}</span><b>{{ r.1 }}</b><p>{{ r.2 }}</p></div>{% endfor %}</div>
+    <p style="color:var(--mute);font-size:14px;margin-top:14px">{{ p.note }}</p>
+  </div>
+</section>
+
+<section class="s contact" id="kontak">
+  <div class="wrap grid">
+    <div class="rv"><p class="eyebrow">{{ p.title }}</p><h2>{{ p.cta }}</h2>
+      <p class="lead">Tim Arupa akan menghubungi Anda untuk memahami kebutuhan, ketersediaan dan langkah berikutnya.</p>
+      <div class="office"><b>Jual {{ p.title }} ke pelanggan Anda?</b><br><a href="/civo/partner" style="color:var(--blue2);font-weight:700">Lihat program partner Civo →</a></div></div>
+    <div id="contact-box">{% include "site/contact.html" %}</div>
+  </div>
+</section>
+{% endblock %}
+{% block js %}
+<script>
+(function(){
+  var b=document.querySelectorAll('#flow button'), t=document.getElementById('flowtxt'), i=0, auto=null;
+  function pick(k){ i=k; b.forEach(function(x,j){x.classList.toggle('on',j===k)}); t.textContent=b[k].dataset.t; t.style.animation='none'; t.offsetHeight; t.style.animation='' }
+  b.forEach(function(x,j){ x.addEventListener('click',function(){ clearInterval(auto); pick(j) }) }); pick(0);
+  auto=setInterval(function(){ pick((i+1)%b.length) },2600);
+})();
+</script>
+{% endblock %}

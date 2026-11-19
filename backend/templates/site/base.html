@@ -81,7 +81,8 @@ label.f input:focus,label.f select:focus,label.f textarea:focus{outline:none;bor
 .contact .grid{display:grid;grid-template-columns:.8fr 1.2fr;gap:40px;align-items:start} @media(max-width:900px){.contact .grid{grid-template-columns:1fr}}
 .office{margin-top:22px;line-height:1.7;color:var(--mute)} .office b{color:var(--ink)}
 /* event strip */
-.evstrip{background:#0b0b0b;color:#fff}.evstrip .wrap{display:flex;flex-wrap:wrap;align-items:center;gap:14px;justify-content:space-between;padding-top:14px;padding-bottom:14px}
+.evstrip{background:#0b0b0b;color:#fff}.evstrip .wrap{display:flex;align-items:center;gap:14px;justify-content:space-between;padding-top:9px;padding-bottom:9px;font-size:14.5px}.evstrip .wrap>span:first-child{min-width:0}
+@media(max-width:860px){.evstrip .wrap{flex-wrap:wrap}}
 .evstrip b{color:var(--g)} .evstrip a{color:#0b0b0b}
 footer{background:var(--navy);color:#9fb0cc;padding:56px 0 34px;font-size:14.5px}
 footer .cols{display:grid;grid-template-columns:1.3fr 1fr 1fr 1fr;gap:30px} @media(max-width:800px){footer .cols{grid-template-columns:1fr 1fr}}
@@ -92,26 +93,46 @@ svg text{font-family:'Plus Jakarta Sans',system-ui,sans-serif}
 svg text[font-family^="JetBrains"]{font-family:'JetBrains Mono',ui-monospace,monospace}
 {% block css %}{% endblock %}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.rv{opacity:1;transform:none}}
+.civo-mark{display:flex;align-items:center;gap:10px;margin-left:18px;padding-left:18px;border-left:1px solid rgba(255,255,255,.18);text-decoration:none}
+.civo-mark span{font-size:10.5px;line-height:1.2;color:#9fb0cc;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+.civo-mark svg{height:22px;width:auto}.civo-mark svg path{fill:#fff}
+@media(max-width:640px){.civo-mark span{display:none}.civo-mark{margin-left:12px;padding-left:12px}}
 </style>
 </head>
 <body>
-<div class="evstrip"><div class="wrap"><span>🏁 <b>Workshop 26 Nov · Beyond the Container</b> — mission race Kubernetes di cluster Civo Anda sendiri, Jakarta.</span><a class="btn g" style="padding:8px 16px;font-size:14px" href="/register">Lihat &amp; daftar →</a></div></div>
+<div class="evstrip"><div class="wrap"><span>🏁 <b>Workshop 26 Nov · Beyond the Container</b> — mission race Kubernetes di cluster Civo Anda sendiri, Jakarta.</span><span style="display:flex;gap:8px"><a class="btn o" style="padding:8px 14px;font-size:14px;border-color:#444" href="/events">Semua event</a><a class="btn g" style="padding:8px 16px;font-size:14px" href="/register">Daftar workshop →</a></span></div></div>
 <header class="top" id="top"><div class="wrap">
   <a class="logo" href="/" aria-label="Arupa Cloud — beranda"><img src="/brand/arupa-logo-white.png" alt="Arupa" width="128" height="32"></a>
+  <a class="civo-mark" href="/civo/kubernetes" aria-label="Civo Indonesia Representative"><span>Civo Indonesia<br>Representative</span>{{ civo|safe }}</a>
   <button class="burger" type="button" aria-label="Menu" onclick="document.getElementById('top').classList.toggle('open')">☰ Menu</button>
   <nav class="nav" aria-label="Utama">
-    <a href="/#solusi" class="{% if nav == "home" %}on{% endif %}">Solusi</a>
-    <a href="/#sovereign">Sovereign Cloud</a>
+    <div class="dd {% if nav == "home" || nav == "about" %}on{% endif %}">
+      <button type="button" aria-haspopup="true" onclick="this.parentNode.classList.toggle('open')">Arupa Cloud</button>
+      <div class="menu">
+        <a href="/"><i>🏠</i><span><b>Home</b><small>Sovereign cloud &amp; technology aggregator</small></span></a>
+        <a href="/about"><i>🏢</i><span><b>About Us</b><small>Profil, perjalanan sejak 2017, sertifikasi</small></span></a>
+        <a href="/#solusi"><i>🧩</i><span><b>Solusi</b><small>Cloud, resilience, AI &amp; data, specialized</small></span></a>
+        <a href="/#sovereign"><i>🇮🇩</i><span><b>Sovereign Cloud</b><small>Zona Jakarta &amp; Cibitung</small></span></a>
+      </div>
+    </div>
     <div class="dd {% if nav == "civo" || nav == "partner" %}on{% endif %}">
       <button type="button" aria-haspopup="true" onclick="this.parentNode.classList.toggle('open')">Civo</button>
       <div class="menu">
-        <a href="/civo"><i>☸️</i><span><b>Civo Kubernetes</b><small>Kubernetes terkelola di region Jakarta</small></span></a>
-        <a href="/civo#produk"><i>☁️</i><span><b>Produk Civo</b><small>Public, Private (CivoStack) dan AI</small></span></a>
+        <a href="/civo/kubernetes"><i>☸️</i><span><b>Civo Kubernetes</b><small>Kubernetes terkelola · live di region Jakarta</small></span></a>
+        <a href="/civo/ai"><i>🧠</i><span><b>Civo AI</b><small>GPU cloud · reservasi untuk Des 2026</small></span></a>
+        <a href="/civo/private"><i>🏛️</i><span><b>Civo Private</b><small>CivoStack · private cloud single-tenant</small></span></a>
         <a href="/civo/partner"><i>🤝</i><span><b>Jadi Partner Civo</b><small>Program partner untuk MSP, SI dan ISV</small></span></a>
-        <a href="/register"><i>🏁</i><span><b>Workshop 26 Nov</b><small>Mission race Kubernetes</small></span></a>
       </div>
     </div>
-    <a href="/#cara-kerja">Cara kerja</a>
+    <div class="dd {% if nav == "events" %}on{% endif %}">
+      <button type="button" aria-haspopup="true" onclick="this.parentNode.classList.toggle('open')">Event</button>
+      <div class="menu">
+        <a href="/events"><i>🗺️</i><span><b>Semua event &amp; journey</b><small>Nov – Des 2026</small></span></a>
+        <a href="/events#webinar"><i>🎙️</i><span><b>Webinar · Kubernetes at Scale</b><small>19 Nov · selesai — lanjutkan take-home</small></span></a>
+        <a href="/register"><i>🏁</i><span><b>Workshop · Beyond the Container</b><small>26 Nov · Jakarta · pendaftaran dibuka</small></span></a>
+        <a href="/events#partner"><i>📅</i><span><b>Webinar Desember</b><small>Segera diumumkan</small></span></a>
+      </div>
+    </div>
     <a href="{% if nav == "partner" %}#daftar{% else %}#kontak{% endif %}" class="btn p cta" style="padding:10px 18px">Konsultasi gratis</a>
   </nav>
 </div></header>
@@ -125,7 +146,8 @@ svg text[font-family^="JetBrains"]{font-family:'JetBrains Mono',ui-monospace,mon
         <p style="max-width:340px;line-height:1.6;margin:0">Sovereign cloud operator dan technology aggregator untuk enterprise, pemerintah, BUMN dan mitra di Indonesia.</p>
         <div class="civo-rep"><span>Civo Indonesia Representative</span>{{ civo|safe }}</div></div>
       <div><b>Solusi</b><a href="/#solusi">Cloud Infrastructure</a><a href="/#solusi">Business Resilience</a><a href="/#solusi">AI &amp; Data</a><a href="/#solusi">Specialized</a></div>
-      <div><b>Civo</b><a href="/civo">Civo Kubernetes</a><a href="/civo#produk">Produk Civo</a><a href="/civo/partner">Program Partner</a><a href="/register">Workshop 26 Nov</a></div>
+      <div><b>Arupa Cloud</b><a href="/">Home</a><a href="/about">About Us</a><a href="/#sovereign">Sovereign Cloud</a></div>
+      <div><b>Civo &amp; event</b><a href="/civo/kubernetes">Civo Kubernetes</a><a href="/civo/ai">Civo AI</a><a href="/civo/private">Civo Private</a><a href="/civo/partner">Program Partner</a><a href="/events">Event &amp; journey</a></div>
       <div><b>Kontak</b><span>South Quarter Tower A, Lt. 9<br>Jl. R.A. Kartini Kav. 8, Cilandak Barat<br>Jakarta Selatan 12430<br>021-2789-9962</span><a href="https://www.arupa.id" target="_blank" rel="noopener">www.arupa.id ↗</a></div>
     </div>
     <div class="bottom"><span>© 2026 PT Arupa Cloud Nusantara</span><span>#ITPartnerTerpercaya</span></div>

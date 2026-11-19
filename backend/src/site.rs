@@ -72,6 +72,14 @@ pub fn router(st: Arc<SiteState>) -> Router {
         .route("/civo", get(civo_page))
         .route("/civo/", get(civo_page))
         .route("/civo/partner", get(partner_page))
+        .route("/civo/kubernetes", get(civo_page))
+        .route("/civo/ai", get(|| product_page("civo-ai")))
+        .route("/civo/private", get(|| product_page("civo-private")))
+        .route("/events", get(events_page))
+        .route("/about", get(about_page))
+        .route("/about-us", get(|| async { Redirect::permanent("/about") }))
+        .route("/events/", get(events_page))
+        .route("/event", get(|| async { Redirect::permanent("/events") }))
         .route("/partnercivo", get(|| async { Redirect::permanent("/civo/partner") }))
         .route("/partner-civo", get(|| async { Redirect::permanent("/civo/partner") }))
         .route("/site/solutions/:cat", get(panel))
@@ -146,7 +154,60 @@ const SOLUTIONS: &[Sol] = &[
 ];
 
 /// Extra interests for the consultation form (not pillars).
-const EXTRA_NEEDS: &[(&str, &str)] = &[("civo", "Civo Kubernetes"), ("partner", "Program Partner Civo"), ("workshop", "Workshop & training Kubernetes")];
+const EXTRA_NEEDS: &[(&str, &str)] = &[("civo", "Civo Kubernetes"), ("civo-ai", "Civo AI (GPU)"), ("civo-private", "Civo Private (CivoStack)"),
+    ("partner", "Program Partner Civo"), ("workshop", "Workshop & training Kubernetes"), ("event", "Undangan event berikutnya")];
+
+pub struct Prod {
+    key: &'static str, title: &'static str, h1a: &'static str, h1b: &'static str, tagline: &'static str, avail: &'static str,
+    accent: &'static str, glow: &'static str, cta: &'static str, flow_title: &'static str, flow: &'static [(&'static str, &'static str, &'static str)],
+    feat_title: &'static str, features: &'static [(&'static str, &'static str)], cases: &'static [(&'static str, &'static str)],
+    road_title: &'static str, road: &'static [(&'static str, &'static str, &'static str)], note: &'static str,
+}
+
+const PRODUCTS: &[Prod] = &[
+    Prod { key: "civo-ai", title: "Civo AI", h1a: "GPU cloud untuk", h1b: "membangun, melatih dan merilis AI.",
+        tagline: "Jalankan training dan inference AI dengan performa GPU NVIDIA yang bisa diskalakan. Kapasitas GPU untuk region Indonesia dijadwalkan Desember 2026 — reservasi dibuka sekarang.",
+        avail: "GPU region Indonesia: Desember 2026 · reservasi dibuka", accent: "#7cf3ff", glow: "rgba(124,243,255,.18)", cta: "Reservasi kapasitas GPU",
+        flow_title: "ALUR AI DI CIVO", flow: &[("🛠️", "Build", "Siapkan data dan environment di Kubernetes: notebook, pipeline dan storage S3."),
+            ("🧠", "Train", "Latih atau fine-tune model dengan GPU NVIDIA; tambah node GPU saat dibutuhkan."),
+            ("🚀", "Ship", "Sajikan model sebagai API di cluster yang sama dan skalakan sesuai trafik.")],
+        feat_title: "AI di cloud yang Anda kenal",
+        features: &[("⚡ GPU NVIDIA", "Performa GPU untuk training dan inference, bisa diskalakan sesuai kebutuhan."),
+            ("☸️ Kubernetes-native", "GPU sebagai node pool di cluster Civo — tool dan workflow yang sama."),
+            ("🇮🇩 Data di Indonesia", "Region lokal yang dioperasikan Arupa, cocok untuk data sensitif."),
+            ("📚 Siap dipelajari", "Panduan Civo Learn: Kubeflow, Ollama, fine-tuning LLM, OCR dengan GPU."),
+            ("🗄️ Storage untuk AI", "Padukan dengan Arupa Object Storage atau MinIO AIStor."),
+            ("🌐 Tanpa biaya egress", "Pindahkan data dan hasil model tanpa biaya transfer keluar.")],
+        cases: &[("LLM privat untuk dokumen internal", "Jalankan LLM open-source (misalnya dengan Ollama) di cluster Anda sendiri, sehingga dokumen tidak keluar dari Indonesia."),
+            ("Fine-tuning model", "Sesuaikan model bahasa dengan data dan istilah bisnis Anda menggunakan GPU sesuai kebutuhan."),
+            ("OCR dan computer vision", "Proses dokumen dan gambar dalam jumlah besar dengan pipeline GPU."),
+            ("Inference API", "Sajikan model sebagai layanan yang otomatis bertambah kapasitasnya saat permintaan naik.")],
+        road_title: "Dari reservasi sampai produksi",
+        road: &[("HARI INI", "Reservasi", "Ceritakan kebutuhan GPU Anda lewat form di bawah."), ("BERIKUTNYA", "Sizing", "Tim Arupa membantu memilih tipe dan jumlah GPU."),
+            ("DES 2026", "GPU live", "Kapasitas GPU tersedia di region Indonesia."), ("SETELAHNYA", "Produksi", "Workload AI berjalan dengan dukungan tim lokal.")],
+        note: "Ketersediaan, tipe GPU dan harga dikonfirmasi saat sizing. Skema GPU terpisah dari Civo Kubernetes." },
+    Prod { key: "civo-private", title: "Civo Private", h1a: "Private cloud berdaulat,", h1b: "single-tenant.",
+        tagline: "CivoStack Enterprise: software stack Civo untuk private dan edge cloud di hardware Anda, partner, atau data center — pengalaman cloud yang sama dengan Civo public, dengan kendali penuh.",
+        avail: "Tanyakan ketersediaannya", accent: "#60a5fa", glow: "rgba(96,165,250,.22)", cta: "Diskusikan private cloud",
+        flow_title: "JALANKAN DI MANA SAJA", flow: &[("🏢", "Data center Anda", "CivoStack berjalan di hardware Anda sendiri untuk kendali penuh atas data dan operasional."),
+            ("🤝", "Partner / Arupa", "Di data center partner atau Arupa, dengan operasi dan dukungan tim lokal."),
+            ("📡", "Edge", "Cloud di lokasi edge untuk latensi rendah dan data yang tetap lokal.")],
+        feat_title: "Cloud-native, tapi tetap milik Anda",
+        features: &[("🔒 Berdaulat & single-tenant", "Infrastruktur khusus untuk Anda, tanpa berbagi dengan tenant lain."),
+            ("🧱 CivoStack", "Software stack buatan Civo, dirancang dari nol dengan prinsip cloud-native."),
+            ("🧰 Pengalaman yang sama", "Dashboard, CLI, API dan Terraform seperti di Civo public."),
+            ("♻️ Modernisasi", "Jalur dari virtualisasi lama ke platform Kubernetes yang modern."),
+            ("📜 Kepatuhan", "Data dan operasional berada di lokasi yang Anda tentukan."),
+            ("🛟 Didampingi Arupa", "Assessment, migrasi dan operasional 24x7 dari tim lokal.")],
+        cases: &[("Keluar dari virtualisasi lama", "Modernisasi lingkungan yang kurang lincah ke private cloud Kubernetes-native, bertahap dan terukur."),
+            ("Sektor teregulasi", "Pemerintah, BUMN dan layanan keuangan yang mewajibkan lingkungan khusus dan dapat diaudit."),
+            ("Edge dan cabang", "Ritel, manufaktur atau lokasi jarak jauh yang membutuhkan cloud dekat dengan data."),
+            ("Hosting & MSP", "Penyedia hosting yang ingin menawarkan private cloud sendiri kepada pelanggannya.")],
+        road_title: "Langkah menuju private cloud",
+        road: &[("01", "Discover", "Assessment workload, risiko dan kepatuhan."), ("02", "Design", "Arsitektur, lokasi dan model biaya."),
+            ("03", "PoC", "Validasi workload dengan kriteria sukses."), ("04", "Operate", "Produksi dan operasional bersama tim Arupa.")],
+        note: "Arsitektur, lokasi dan kepatuhan divalidasi untuk setiap kebutuhan." },
+];
 
 const NEEDS: &[(&str, &str)] = &[
     ("modern", "Modernisasi aplikasi / Kubernetes"),
@@ -186,6 +247,18 @@ struct HomeTpl<'a> { civo: &'a str, nav: &'a str, tabs: Vec<CatTab>, sol: &'a So
 #[derive(Template)]
 #[template(path = "site/civo.html")]
 struct CivoTpl<'a> { civo: &'a str, nav: &'a str, v: Lead, errors: Vec<String>, interests: Vec<Interest> }
+
+#[derive(Template)]
+#[template(path = "site/civo_product.html")]
+struct ProdTpl<'a> { civo: &'a str, nav: &'a str, p: &'a Prod, v: Lead, errors: Vec<String>, interests: Vec<Interest> }
+
+#[derive(Template)]
+#[template(path = "site/about.html")]
+struct AboutTpl<'a> { civo: &'a str, nav: &'a str, v: Lead, errors: Vec<String>, interests: Vec<Interest> }
+
+#[derive(Template)]
+#[template(path = "site/events.html")]
+struct EventsTpl<'a> { civo: &'a str, nav: &'a str, v: Lead, errors: Vec<String>, interests: Vec<Interest> }
 
 #[derive(Template)]
 #[template(path = "site/partner.html")]
@@ -258,6 +331,21 @@ fn home(_st: &SiteState) -> Response {
 async fn civo_page() -> Response {
     let need = need_title("civo");
     render(CivoTpl { civo: crate::cert::LOGO, nav: "civo", interests: interests(&need), v: Lead { need, ..Default::default() }, errors: vec![] })
+}
+
+async fn product_page(key: &'static str) -> Response {
+    let p = PRODUCTS.iter().find(|p| p.key == key).unwrap_or(&PRODUCTS[0]);
+    let need = need_title(p.key);
+    render(ProdTpl { civo: crate::cert::LOGO, nav: "civo", p, interests: interests(&need), v: Lead { need, ..Default::default() }, errors: vec![] })
+}
+
+async fn about_page() -> Response {
+    render(AboutTpl { civo: crate::cert::LOGO, nav: "about", interests: interests(""), v: Lead::default(), errors: vec![] })
+}
+
+async fn events_page() -> Response {
+    let need = need_title("event");
+    render(EventsTpl { civo: crate::cert::LOGO, nav: "events", interests: interests(&need), v: Lead { need, ..Default::default() }, errors: vec![] })
 }
 
 async fn partner_page() -> Response {

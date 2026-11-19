@@ -1,0 +1,102 @@
+{% extends "site/base.html" %}
+{% block title %}Event Civo Indonesia — journey Nov–Des 2026 · Arupa Cloud{% endblock %}
+{% block desc %}Rangkaian event Civo Indonesia bersama Arupa: webinar Kubernetes at Scale, workshop Beyond the Container, dan webinar Desember — dari Discover Kubernetes sampai Build with Civo.{% endblock %}
+{% block css %}
+.ehero{background:radial-gradient(800px 460px at 85% 0%,rgba(0,255,111,.15),transparent 60%),radial-gradient(700px 420px at 0% 100%,rgba(10,155,232,.22),transparent 60%),var(--navy);color:#fff;padding:72px 0 64px}
+.ehero h1{font-size:clamp(38px,5vw,60px);line-height:1.05;letter-spacing:-.03em;margin:12px 0 16px;font-weight:800}.ehero h1 em{font-style:normal;color:var(--g)}
+.ehero p{color:#c3cfe3;font-size:18px;line-height:1.6;max-width:680px;margin:0}
+.story{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:34px}@media(max-width:860px){.story{grid-template-columns:1fr 1fr}}
+.story button{font:inherit;text-align:left;color:#fff;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.14);border-radius:18px;padding:18px;cursor:pointer;position:relative;transition:all .15s}
+.story button i{font:700 12px 'JetBrains Mono',monospace;font-style:normal;color:var(--cyan)}.story button b{display:block;font-size:19px;margin-top:6px}.story button small{color:#9fb0cc}
+.story button.on{background:#fff;color:var(--ink);border-color:#fff}.story button.on small{color:var(--mute)}
+.story button:not(:last-child):after{content:"→";position:absolute;right:-10px;top:50%;transform:translateY(-50%);color:var(--g);font-weight:800;z-index:1}
+.evlist{display:grid;gap:16px;margin-top:28px;position:relative}
+.ev{display:grid;grid-template-columns:150px 1fr auto;gap:22px;align-items:start;background:#fff;border:1.5px solid var(--line);border-radius:22px;padding:22px 24px;transition:opacity .25s,border-color .2s,transform .2s}
+@media(max-width:800px){.ev{grid-template-columns:1fr}}
+.ev.dim{opacity:.35}.ev:hover{border-color:var(--ink)}
+.ev .d b{display:block;font-size:30px;font-weight:800;line-height:1}.ev .d span{color:var(--mute);font-weight:600}
+.ev .k{font:700 12px 'JetBrains Mono',monospace;letter-spacing:.12em;color:var(--blue)}
+.ev h3{margin:6px 0 6px;font-size:22px}.ev p{margin:0;color:var(--mute);line-height:1.55}
+.st{display:inline-block;font-weight:800;font-size:12.5px;border-radius:999px;padding:5px 11px;white-space:nowrap}
+.st.done{background:#eef1f6;color:#5a6478}.st.open{background:var(--g);color:#0b0b0b}.st.soon{background:#fff3e6;color:#b35a00}.st.today{background:#0b0b0b;color:var(--g)}
+.ev .acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.ev .acts .btn{padding:9px 14px;font-size:14px}
+.jr{grid-column:1/-1;display:none;border-top:1px dashed var(--line);padding-top:18px;margin-top:4px}
+.ev.open .jr{display:block;animation:rise .3s ease}
+.jsteps{display:flex;gap:0;overflow-x:auto;padding-bottom:6px}
+.jsteps div{flex:1 0 150px;position:relative;padding:30px 12px 0 0}
+.jsteps div:before{content:"";position:absolute;top:10px;left:0;right:0;height:3px;background:var(--line)}
+.jsteps div:after{content:"";position:absolute;top:2px;left:0;width:19px;height:19px;border-radius:50%;background:#fff;border:3px solid var(--line)}
+.jsteps div.ok:before{background:var(--gd)}.jsteps div.ok:after{background:var(--gd);border-color:var(--gd)}
+.jsteps div.now:after{background:var(--orange);border-color:var(--orange);box-shadow:0 0 0 6px rgba(244,121,32,.2)}
+.jsteps b{display:block;font-size:15px}.jsteps span{color:var(--mute);font-size:13px;font-family:'JetBrains Mono',monospace}.jsteps small{display:block;color:var(--mute);font-size:13.5px;margin-top:4px;line-height:1.45}
+.tgl{font:inherit;font-weight:700;background:none;border:1.5px solid var(--ink);border-radius:10px;padding:9px 14px;cursor:pointer}
+{% endblock %}
+{% block content %}
+<section class="ehero">
+  <div class="wrap">
+    <p class="eyebrow" style="color:var(--g)">Civo Event Journey · Nov – Des 2026</p>
+    <h1>Dari kenal Kubernetes sampai <em>membangun di Civo.</em></h1>
+    <p>Rangkaian event Civo Indonesia bersama Arupa. Klik tahap untuk melihat event-nya, lalu buka journey tiap event.</p>
+    <div class="story" id="story">
+      <button type="button" data-s="discover"><i>01</i><b>Discover Kubernetes</b><small>Webinar &amp; komunitas</small></button>
+      <button type="button" data-s="practice"><i>02</i><b>Explore in Practice</b><small>Workshop hands-on</small></button>
+      <button type="button" data-s="partners"><i>03</i><b>Learn from Partners</b><small>Webinar bersama partner</small></button>
+      <button type="button" data-s="build"><i>04</i><b>Build with Civo</b><small>Technical deep-dive</small></button>
+    </div>
+  </div>
+</section>
+
+<section class="s" style="padding-top:56px">
+  <div class="wrap">
+    <div style="display:flex;justify-content:space-between;align-items:end;gap:16px;flex-wrap:wrap"><div><p class="eyebrow">Semua event</p><h2 style="margin:0">Jadwal &amp; journey</h2></div><button class="tgl" type="button" id="all">Tampilkan semua</button></div>
+    <div class="evlist" id="evlist"></div>
+  </div>
+</section>
+
+<section class="s contact" id="kontak">
+  <div class="wrap grid">
+    <div class="rv"><p class="eyebrow">Jangan ketinggalan</p><h2>Kabari saya event berikutnya</h2>
+      <p class="lead">Tinggalkan kontak Anda — kami kirim undangan webinar dan workshop Civo berikutnya.</p></div>
+    <div id="contact-box">{% include "site/contact.html" %}</div>
+  </div>
+</section>
+{% endblock %}
+{% block js %}
+<script>
+(function(){
+  var NOW=Date.now();
+  var E=[
+    {id:'kcd',s:'discover',d:'24',m:'Okt 2026',t:'2026-10-24T18:00:00+07:00',k:'KOMUNITAS · BANDUNG',h:'KCD Bandung 2026',p:'Booth Civo dan demo NusaMart — toko online yang tetap hidup saat flash sale di Civo Kubernetes.',
+      j:[['Booth','24 Okt','Kenalan dengan Civo Indonesia'],['Demo NusaMart','24 Okt','E-commerce di Civo Kubernetes'],['Lanjut belajar','kapan saja','Civo Kubernetes Academy']],a:[['/academy/','Civo Kubernetes Academy','d']]},
+    {id:'webinar',s:'discover',d:'19',m:'Nov 2026',t:'2026-11-19T11:30:00+07:00',today:'2026-11-19',k:'WEBINAR · ZOOM · 10:00–11:30 WIB',h:'Kubernetes at Scale: Performance, Resilience & Efficiency',p:'Strategi workload scaling, resource optimization dan resilience untuk Kubernetes yang terus tumbuh.',
+      j:[['Daftar','sebelum 19 Nov','Registrasi webinar'],['Live webinar','19 Nov · 10:00','Materi, demo dan Q&A'],['Take-home labs','setelah webinar','Ulangi demo di lab Anda sendiri'],['Workshop offline','26 Nov','Beyond the Container'],['Keep learning','kapan saja','Civo Kubernetes Academy']],
+      after:2,a:[['/academy/','Lanjutkan take-home labs →','d'],['/register','Ikut workshop 26 Nov','g']]},
+    {id:'workshop',s:'practice',d:'26',m:'Nov 2026',t:'2026-11-26T12:00:00+07:00',k:'WORKSHOP OFFLINE · JAKARTA · 10:00–12:00 WIB',h:'Beyond the Container — Mission Race',p:'Running highly available & scalable applications with Kubernetes: enam misi di cluster Civo Anda sendiri, papan skor live, podium Top 3.',
+      j:[['Daftar','sebelum 26 Nov','Google Form — amankan kursi'],['Akun Civo','sebelum 26 Nov','civo.com/signup + kredit $250'],['Check-in','09:30','Laptop online'],['Lights out','10:20','M0 → Final di cluster Anda'],['Podium','11:25','Top 3 & pizza'],['Keep learning','setelahnya','Civo Kubernetes Academy']],
+      a:[['/register','Lihat & daftar →','g'],['https://www.civo.com/signup','Buat akun Civo ↗','d']]},
+    {id:'partner',s:'partners',d:'Des',m:'2026',t:'2026-12-31T23:59:00+07:00',soon:1,k:'WEBINAR BERSAMA PARTNER',h:'Learn from Partners',p:'Perspektif partner tentang tantangan workload dan cara membawanya ke Civo. Topik dan tanggal segera diumumkan.',
+      j:[['Kabari saya','sekarang','Tinggalkan kontak'],['Undangan','Desember','Detail topik & tanggal'],['Live webinar','Desember','Diskusi & Q&A']],a:[['#kontak','Kabari saya →','d','event']]},
+    {id:'deep',s:'build',d:'Des',m:'2026',t:'2026-12-31T23:59:00+07:00',soon:1,k:'TECHNICAL DEEP-DIVE WEBINAR',h:'Build with Civo',p:'Live demo, architecture walkthrough dan insight praktis membangun di Civo. Segera diumumkan.',
+      j:[['Kabari saya','sekarang','Tinggalkan kontak'],['Undangan','Desember','Detail sesi'],['Deep-dive live','Desember','Demo & arsitektur']],a:[['#kontak','Kabari saya →','d','event']]}];
+  function status(e){ if(e.soon) return ['soon','Segera diumumkan']; var end=Date.parse(e.t);
+    if(e.today && new Date(NOW+7*3600e3).toISOString().slice(0,10)===e.today && NOW>end) return ['done','Selesai hari ini'];
+    if(NOW>end) return ['done','Selesai']; if(e.id==='workshop') return ['open','Pendaftaran dibuka']; return ['open','Akan datang'] }
+  var L=document.getElementById('evlist');
+  L.innerHTML=E.map(function(e){ var s=status(e), past=s[0]==='done';
+    var cur = past ? (e.after!=null?e.after:e.j.length) : 0;
+    var steps=e.j.map(function(x,i){ return '<div class="'+(i<cur?'ok':(i===cur?'now':''))+'"><b>'+x[0]+'</b><span>'+x[1]+'</span><small>'+x[2]+'</small></div>' }).join('');
+    var acts=e.a.map(function(x){ return x[3]?'<a class="btn '+x[2]+'" href="#kontak" hx-get="/site/contact?need='+x[3]+'&note='+encodeURIComponent(e.h)+'" hx-target="#contact-box">'+x[1]+'</a>':'<a class="btn '+x[2]+'" href="'+x[0]+'"'+(x[0].indexOf('http')===0?' target="_blank" rel="noopener"':'')+'>'+x[1]+'</a>' }).join('');
+    return '<article class="ev" data-s="'+e.s+'" id="ev-'+e.id+'"><div class="d"><b>'+e.d+'</b><span>'+e.m+'</span></div><div><span class="k">'+e.k+'</span><h3>'+e.h+'</h3><p>'+e.p+'</p><div class="acts">'+acts+'<button type="button" class="tgl" data-j>Lihat journey ↓</button></div></div><div><span class="st '+s[0]+'">'+s[1]+'</span></div><div class="jr"><div class="jsteps">'+steps+'</div></div></article>' }).join('');
+  if(window.htmx) htmx.process(L);
+  L.addEventListener('click',function(e){ var b=e.target.closest('[data-j]'); if(!b) return; var ev=b.closest('.ev'); ev.classList.toggle('open'); b.textContent=ev.classList.contains('open')?'Tutup journey ↑':'Lihat journey ↓' });
+  var sb=document.querySelectorAll('#story button');
+  function stage(k){ sb.forEach(function(b){b.classList.toggle('on',b.dataset.s===k)}); L.querySelectorAll('.ev').forEach(function(ev){ ev.classList.toggle('dim', k && ev.dataset.s!==k) });
+    if(k){ var f=L.querySelector('.ev[data-s="'+k+'"]'); if(f){ f.classList.add('open'); f.querySelector('[data-j]').textContent='Tutup journey ↑'; f.scrollIntoView({behavior:'smooth',block:'center'}) } } }
+  sb.forEach(function(b){ b.addEventListener('click',function(){ stage(b.dataset.s) }) });
+  document.getElementById('all').addEventListener('click',function(){ stage(null) });
+  var h=location.hash.replace('#',''); var t=h&&document.getElementById('ev-'+h); if(t){ t.classList.add('open'); t.querySelector('[data-j]').textContent='Tutup journey ↑'; setTimeout(function(){ t.scrollIntoView({block:'center'}) },200) }
+  else { var w=document.getElementById('ev-webinar'); w.classList.add('open'); w.querySelector('[data-j]').textContent='Tutup journey ↑' }
+})();
+</script>
+{% endblock %}
