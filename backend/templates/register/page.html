@@ -9,7 +9,6 @@
 <meta property="og:description" content="6 missions, 1 clock, your own Kubernetes cluster. Register to keep your seat.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400..700&family=Hanken+Grotesk:wght@400..900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-<script src="/register/htmx.min.js" defer></script>
 <style>
 :root{--g:#00ff6f;--gd:#00b84f;--ink:#0b0b0b;--paper:#f6f7f2;--mute:#5b5f58;--line:#e2e5dc;--asphalt:#121412}
 *{box-sizing:border-box} html{scroll-behavior:smooth}
@@ -147,6 +146,57 @@ label.f input:focus,label.f select:focus{outline:none;border-color:var(--ink);bo
 .racefx .bar2 i{display:block;height:100%;width:0;background:var(--g)}
 .racefx .hint{text-align:center;font:700 12px 'JetBrains Mono',monospace;letter-spacing:.14em;color:#6f746c;margin-top:10px}
 @media (prefers-reduced-motion:reduce){.bgrace svg.rc{animation:none;display:none}.racefx{height:auto}.racefx .stick{position:relative;height:auto;padding:60px 0}}
+
+/* ===== lower page: interactive ===== */
+.rv{opacity:0;transform:translateY(26px);transition:opacity .7s ease,transform .7s ease}.rv.in{opacity:1;transform:none}
+.term .tbar{display:flex;align-items:center;gap:6px;margin:-6px 0 14px}.term .tbar i{width:10px;height:10px;border-radius:50%;background:#333}
+.term .tbar span{margin-left:auto;font-weight:700;font-size:12px;letter-spacing:.1em;transition:color .3s}.term .tbar .bad{color:#ff6b6b}.term .tbar .ok{color:var(--g)}
+#tlines{min-height:262px}#tlines div{white-space:pre-wrap;animation:fadeIn .25s ease}@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.cur{display:inline-block;width:8px;height:15px;background:var(--g);vertical-align:-2px;animation:blink 1s steps(1) infinite}@keyframes blink{50%{opacity:0}}
+.nums{background:var(--g)}.nrow{display:grid;grid-template-columns:repeat(5,1fr);gap:0}@media(max-width:760px){.nrow{grid-template-columns:repeat(2,1fr)}}
+.nrow div{padding:30px 16px;text-align:center;border-left:2px solid rgba(0,0,0,.12)}.nrow div:first-child{border-left:0}
+.nrow b{display:block;font-weight:900;font-size:clamp(38px,5vw,62px);letter-spacing:-.03em;line-height:1}.nrow span{font-weight:700;font-size:14px;text-transform:uppercase;letter-spacing:.06em}
+.mx{display:grid;grid-template-columns:280px 1fr;gap:22px;margin-top:34px}@media(max-width:860px){.mx{grid-template-columns:1fr}}
+.mx-list{position:relative;display:flex;flex-direction:column;gap:8px}
+@media(max-width:860px){.mx-list{flex-direction:row;overflow-x:auto;padding-bottom:6px}}
+.mx-list button{display:flex;align-items:center;gap:12px;text-align:left;font:inherit;font-weight:700;font-size:16px;background:#fff;border:1.5px solid var(--line);border-radius:14px;padding:14px 16px;cursor:pointer;transition:all .18s;white-space:nowrap}
+.mx-list button i{font:700 13px 'JetBrains Mono',monospace;font-style:normal;background:var(--paper);border:1px solid var(--line);padding:3px 8px;border-radius:6px}
+.mx-list button:hover{border-color:var(--ink);transform:translateX(4px)}
+.mx-list button.on{background:var(--ink);color:#fff;border-color:var(--ink)}.mx-list button.on i{background:var(--g);color:var(--ink);border-color:var(--g)}
+.mx-list button.seen:not(.on) i:after{content:" ✓";color:var(--gd)}
+.mx-card{position:relative;overflow:hidden;background:var(--ink);color:#fff;border-radius:22px;padding:30px 32px;min-height:340px}
+.mx-card:after{content:"";position:absolute;right:0;top:0;bottom:0;width:26px;background:conic-gradient(#fff 25%,#0b0b0b 0 50%,#fff 0 75%,#0b0b0b 0) 0 0/13px 13px;opacity:.85}
+.mx-card .in{animation:slide .35s ease}@keyframes slide{from{opacity:0;transform:translateX(18px)}to{opacity:1;transform:none}}
+.mx-card .k{font:700 13px 'JetBrains Mono',monospace;color:var(--g);letter-spacing:.12em}
+.mx-card h3{font-family:'Newsreader',Georgia,serif;font-weight:500;font-size:clamp(30px,3.4vw,44px);margin:8px 0 10px}
+.mx-card p{color:#cfd3cb;font-size:17px;line-height:1.6;margin:0 0 16px;max-width:620px}
+.mx-card .tags{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}.mx-card .tags span{border:1px solid #3a3d3a;border-radius:999px;padding:5px 11px;font-size:13px;font-weight:600}
+.mx-card pre{margin:0 40px 16px 0;background:#050605;border:1px solid #2a2d2a;border-radius:12px;padding:14px 16px;font:14px/1.6 'JetBrains Mono',monospace;color:var(--g);overflow-x:auto}
+.mx-card .skill{display:inline-flex;align-items:center;gap:8px;background:var(--g);color:var(--ink);font-weight:800;border-radius:999px;padding:7px 14px;font-size:14px}
+.mx-card .nav{display:flex;gap:10px;margin-top:18px}.mx-card .nav button{font:inherit;font-weight:700;background:#1b1e1b;color:#fff;border:1px solid #333;border-radius:10px;padding:9px 14px;cursor:pointer}.mx-card .nav button:hover{border-color:var(--g)}
+.quizs{background:#eefbf3}
+.qz{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:30px}@media(max-width:900px){.qz{grid-template-columns:1fr}}
+.q{background:#fff;border:1.5px solid var(--ink);border-radius:20px;padding:22px;display:flex;flex-direction:column}
+.q .n{font:700 12px 'JetBrains Mono',monospace;letter-spacing:.12em;color:var(--gd)}.q h4{font-size:18px;margin:8px 0 14px;line-height:1.35}
+.q button{font:inherit;text-align:left;font-weight:600;background:var(--paper);border:1.5px solid var(--line);border-radius:12px;padding:11px 14px;margin:0 0 8px;cursor:pointer;transition:all .15s}
+.q button:hover:not(:disabled){border-color:var(--ink);transform:translateX(3px)}
+.q button.ok{background:var(--g);border-color:var(--gd)}.q button.no{background:#ffe3e3;border-color:#ff9b9b;text-decoration:line-through}
+.q button:disabled{cursor:default}.q .why{font-size:14.5px;line-height:1.5;color:#2b2f29;margin-top:6px;animation:fadeIn .3s}
+.qscore{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:14px;background:var(--ink);color:#fff;border-radius:18px;padding:18px 22px;animation:fadeIn .4s}
+.qscore b{font-size:20px}.qscore b em{font-style:normal;color:var(--g)}
+.rise{opacity:0;transform:translateY(60px) scale(.96);transition:opacity .7s ease var(--d,0s),transform .7s cubic-bezier(.2,1.4,.4,1) var(--d,0s)}.rise.in{opacity:1;transform:none}
+.pod{transition:transform .2s}.pod:hover{transform:translateY(-6px) rotate(-1deg)}
+.tline{list-style:none;margin:30px 0 0;padding:0 0 0 34px;position:relative}
+.tline:before{content:"";position:absolute;left:11px;top:6px;bottom:6px;width:4px;border-radius:4px;background:var(--line)}
+.tline:after{content:"";position:absolute;left:11px;top:6px;width:4px;border-radius:4px;background:var(--g);height:var(--fill,0%);transition:height .2s linear;box-shadow:0 0 12px var(--g)}
+.tline li{position:relative;display:grid;grid-template-columns:90px 1fr;gap:14px;padding:14px 0;opacity:.45;transition:opacity .4s}
+.tline li:before{content:"";position:absolute;left:-30px;top:20px;width:16px;height:16px;border-radius:50%;background:#fff;border:3px solid var(--line);z-index:1;transition:all .3s}
+.tline li.lit{opacity:1}.tline li.lit:before{border-color:var(--gd);background:var(--g)}
+.tline time{font:700 17px 'JetBrains Mono',monospace;color:var(--gd)}.tline b{display:block;font-size:19px}.tline span{color:var(--mute)}
+.tline li.hot div{background:#eafff1;border-radius:12px;padding:8px 12px;margin:-8px 0}
+.pulse{animation:pulse 2.2s infinite}@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(11,11,11,.45)}70%{box-shadow:0 0 0 18px rgba(11,11,11,0)}100%{box-shadow:0 0 0 0 rgba(11,11,11,0)}}
+.gfnote{margin:14px 0 0;font-size:14px;color:#0b2a17;font-weight:600}
+@media (prefers-reduced-motion:reduce){.rv,.rise{opacity:1!important;transform:none!important}.pulse{animation:none}}
 @media (prefers-reduced-motion:reduce){.ticker span,.lights i{animation:none}}
 </style>
 </head>
@@ -166,7 +216,7 @@ label.f input:focus,label.f select:focus{outline:none;border-color:var(--ink);bo
   <a class="brand" href="#top" aria-label="Civo">{{ logo|safe }}<span>Mission Race</span></a>
   <span class="mid">Beyond the Container · Thu 26 Nov 2026 · Jakarta</span>
   {% if closed %}<span class="btn" style="background:#333">Registration closed</span>{% else %}
-  <button class="btn g" hx-get="/register/form" hx-target="#sheet-body" hx-indicator="#sheet">Register now</button>{% endif %}
+  <a class="btn g" href="https://bit.ly/workshopcivo-08" target="_blank" rel="noopener">Register now</a>{% endif %}
 </div></header>
 
 <section class="hero" id="top">
@@ -181,7 +231,7 @@ label.f input:focus,label.f select:focus{outline:none;border-color:var(--ink);bo
       <div class="chips"><span class="chip k">Thu, 26 Nov 2026</span><span class="chip">10:00–12:00 WIB</span><span class="chip">In person · [Venue, Jakarta]</span></div>
       <div class="cta">
         {% if closed %}<span class="btn lg" style="background:#333">Registration closed</span>{% else %}
-        <button class="btn g lg" hx-get="/register/form" hx-target="#sheet-body">Register to keep your seat →</button>{% endif %}
+        <a class="btn g lg" href="https://bit.ly/workshopcivo-08" target="_blank" rel="noopener">Register to keep your seat →</a>{% endif %}
         <a class="btn ghost lg" href="#how">How it works</a>
       </div>
     </div>
@@ -250,77 +300,86 @@ label.f input:focus,label.f select:focus{outline:none;border-color:var(--ink);bo
   </div>
 </section>
 
-<section class="s story">
+<section class="s story" id="story">
   <div class="wrap panel">
-    <div>
+    <div class="rv">
       <p class="eyebrow" style="color:var(--g)">The situation</p>
       <h2>It's 11:00. The flash sale just started. <em>NusaMart is melting.</em></h2>
       <p class="lead">Carts time out. Pods restart. Someone drains a node in the middle of the rush. You have one hour and your own Kubernetes cluster to make the shop fast, resilient and ready for 12× the traffic — while Mission Control ranks everyone live on the big screen.</p>
-      <p class="lead">No slides-only session. You learn by fixing a real app, verified on your real cluster.</p>
+      <button class="btn ghost" type="button" id="replay" style="margin-top:22px">▶ Replay the incident</button>
     </div>
-    <div class="term" aria-label="Terminal showing the shop failing, then recovering">
-      <div><span class="d">$</span> kubectl get pods -n nusamart</div>
-      <div>ecommerce-rust-6c9f…  <span class="r">OOMKilled</span>   restarts 7</div>
-      <div>ecommerce-rust-6c9f…  <span class="y">CrashLoopBackOff</span></div>
-      <div class="d">p95 latency  4 812 ms   errors 23%</div>
-      <div style="margin-top:10px"><span class="d">$</span> kubectl get hpa -n nusamart -w</div>
-      <div>cpu: 118%/60%   replicas 2 → <span class="g">5</span></div>
-      <div class="g" style="margin-top:10px">✓ Flash sale probe: 0 failed, p95 143 ms</div>
-      <div class="g">🏁 Final passed · P1 on Mission Control</div>
+    <div class="term rv" id="incident" aria-label="Terminal: the shop fails, then recovers">
+      <div class="tbar"><i></i><i></i><i></i><span id="tstate" class="bad">● INCIDENT</span></div>
+      <div id="tlines"></div>
     </div>
+  </div>
+</section>
+
+<section class="nums" aria-label="The race in numbers">
+  <div class="wrap nrow">
+    <div class="rv"><b data-n="6">6</b><span>missions</span></div>
+    <div class="rv"><b data-n="60">60</b><span>minutes on the clock</span></div>
+    <div class="rv"><b data-n="3">3</b><span>nodes per cluster</span></div>
+    <div class="rv"><b data-n="12" data-s="×">12×</b><span>flash-sale traffic</span></div>
+    <div class="rv"><b data-n="250" data-p="$">$250</b><span>Civo credits</span></div>
   </div>
 </section>
 
 <section class="s" id="how">
   <div class="wrap">
-    <p class="eyebrow">How the race works</p>
+    <div class="rv"><p class="eyebrow">How the race works</p>
     <h2>Six missions. One clock. <em>Every check is real.</em></h2>
-    <p class="lead">Each mission is verified live on your cluster by Civo Launchpad — no screenshots, no honour system. Clear them in order; the fastest builders take the podium.</p>
-    <div class="missions">
-      <div class="m"><span class="id">M0</span><h3>Launch</h3><p>Create a 3-node cluster in the Civo dashboard and connect it to Launchpad.</p></div>
-      <div class="m"><span class="id">M1</span><h3>Deploy &amp; Expose</h3><p>Ship NusaMart and open the shop on a public load balancer.</p></div>
-      <div class="m"><span class="id">M2</span><h3>Right-size</h3><p>Fix requests and limits so pods stop being throttled and killed.</p></div>
-      <div class="m"><span class="id">M3</span><h3>Scale</h3><p>Let the HPA add pods by itself when the k6 rush hits.</p></div>
-      <div class="m"><span class="id">M4</span><h3>Stay Available</h3><p>Drain a node mid-sale without dropping a single customer.</p></div>
-      <div class="m final"><span class="id">FINAL</span><h3>Flash Sale Ready</h3><p>Warm capacity on three nodes, then survive the live burst test.</p></div>
+    <p class="lead">Tap a mission to see what you'll do. Each one is verified live on your cluster — no screenshots, no honour system.</p></div>
+    <div class="mx rv">
+      <div class="mx-list" role="tablist" id="mxlist"></div>
+      <div class="mx-card" id="mxcard" aria-live="polite"></div>
     </div>
     <div class="two">
-      <div class="card"><h3>🧠 Forget passive learning</h3><p>Every step changes something on a live cluster, and Launchpad tells you exactly what passed and what to fix next.</p></div>
-      <div class="card"><h3>💻 Just bring a laptop</h3><p>Use the <b>Launchpad Shell</b> — a Linux terminal in your browser with kubectl ready. Same on Windows, Mac and Linux.</p></div>
+      <div class="card rv"><h3>🧠 Forget passive learning</h3><p>Every step changes something on a live cluster, and Launchpad tells you exactly what passed and what to fix next.</p></div>
+      <div class="card rv"><h3>💻 Just bring a laptop</h3><p>Use the <b>Launchpad Shell</b> — a Linux terminal in your browser with kubectl ready. Same on Windows, Mac and Linux.</p></div>
     </div>
+  </div>
+</section>
+
+<section class="s quizs" id="quiz">
+  <div class="wrap">
+    <div class="rv"><p class="eyebrow">Pit-stop warm-up</p>
+    <h2>Three questions. <em>Are you grid-ready?</em></h2>
+    <p class="lead">No pressure — pick an answer and see why. Every answer is something you'll do for real on 26 Nov.</p></div>
+    <div class="qz rv" id="qz"></div>
   </div>
 </section>
 
 <section class="s rewards">
   <div class="wrap">
-    <p class="eyebrow" style="color:var(--g)">The final reward</p>
+    <div class="rv"><p class="eyebrow" style="color:var(--g)">The final reward</p>
     <h2>Top 3 take the podium.</h2>
-    <p class="lead">The first three builders to pass the Final win prizes, announced at 11:25. Everyone who races leaves with something.</p>
+    <p class="lead">The first three builders to pass the Final win prizes, announced at 11:25. Everyone who races leaves with something.</p></div>
     <div class="podium">
-      <div class="pod"><div class="medal">🥈</div><h3>P2</h3><p>[Prize to be announced]</p></div>
-      <div class="pod p1"><div class="medal">🏆</div><h3>P1</h3><p>[Prize to be announced]</p></div>
-      <div class="pod"><div class="medal">🥉</div><h3>P3</h3><p>[Prize to be announced]</p></div>
+      <div class="pod rise" style="--d:.15s"><div class="medal">🥈</div><h3>P2</h3><p>[Prize to be announced]</p></div>
+      <div class="pod p1 rise" style="--d:0s"><div class="medal">🏆</div><h3>P1</h3><p>[Prize to be announced]</p></div>
+      <div class="pod rise" style="--d:.3s"><div class="medal">🥉</div><h3>P3</h3><p>[Prize to be announced]</p></div>
     </div>
     <div class="perks">
-      <div class="perk">🏅<b>Certificate</b><span>Sent by the Civo Indonesia team after the workshop.</span></div>
-      <div class="perk">💰<b>$250 Civo credits</b><span>On your own Civo account (terms apply).</span></div>
-      <div class="perk">🍕<b>Pizza on us</b><span>Fuel for the race, and a room full of Kubernetes builders.</span></div>
+      <div class="perk rv">🏅<b>Certificate</b><span>Sent by the Civo Indonesia team after the workshop.</span></div>
+      <div class="perk rv">💰<b>$250 Civo credits</b><span>On your own Civo account (terms apply).</span></div>
+      <div class="perk rv">🍕<b>Pizza on us</b><span>Fuel for the race, and a room full of Kubernetes builders.</span></div>
     </div>
   </div>
 </section>
 
-<section class="s">
+<section class="s" id="rundown">
   <div class="wrap">
-    <p class="eyebrow">Rundown · Thursday 26 Nov</p>
-    <h2>Two hours, grid to podium.</h2>
-    <table class="run">
-      <tr><td>09:30</td><td>Check-in · coffee · get your laptop online</td></tr>
-      <tr><td>10:00</td><td>Welcome &amp; the NusaMart story · why HA and scaling matter</td></tr>
-      <tr class="hot"><td>10:20</td><td><b>Lights out</b> — M0 to Final on your own cluster, Mission Control on the big screen</td></tr>
-      <tr><td>11:20</td><td>Chequered flag · race closes</td></tr>
-      <tr class="hot"><td>11:25</td><td><b>Top 3 on the podium</b> · prizes</td></tr>
-      <tr><td>11:35</td><td>Pizza · Q&amp;A with the Civo Indonesia team</td></tr>
-    </table>
+    <div class="rv"><p class="eyebrow">Rundown · Thursday 26 Nov</p>
+    <h2>Two hours, grid to podium.</h2></div>
+    <ol class="tline" id="tline">
+      <li><time>09:30</time><div><b>Check-in</b><span>Coffee, Wi-Fi, laptop online</span></div></li>
+      <li><time>10:00</time><div><b>Welcome &amp; the NusaMart story</b><span>Why HA and scaling matter</span></div></li>
+      <li class="hot"><time>10:20</time><div><b>🚦 Lights out</b><span>M0 → Final on your own cluster, Mission Control on the big screen</span></div></li>
+      <li><time>11:20</time><div><b>🏁 Chequered flag</b><span>The race closes</span></div></li>
+      <li class="hot"><time>11:25</time><div><b>🏆 Top 3 on the podium</b><span>Prizes for the fastest builders</span></div></li>
+      <li><time>11:35</time><div><b>🍕 Pizza &amp; Q&amp;A</b><span>With the Civo Indonesia team</span></div></li>
+    </ol>
   </div>
 </section>
 
@@ -329,10 +388,10 @@ label.f input:focus,label.f select:focus{outline:none;border-color:var(--ink);bo
   <div class="wrap">
     <p class="eyebrow" style="color:var(--ink)">Register</p>
     <h2>Seats are limited.<br>Spots are <em>earned.</em></h2>
-    <p class="lead">One minute to register and your seat on the grid is kept. We'll remind you before race day.</p>
+    <p class="lead">One minute on the registration form and your seat on the grid is kept. We'll remind you before race day.</p>
     {% if closed %}<span class="btn lg" style="background:#333">Registration closed</span>{% else %}
-    <button class="btn lg" hx-get="/register/form" hx-target="#sheet-body">Register to keep your seat →</button>{% endif %}
-    <div><span hx-get="/register/seats" hx-trigger="load, every 30s" hx-swap="outerHTML"></span></div>
+    <a class="btn lg pulse" href="https://bit.ly/workshopcivo-08" target="_blank" rel="noopener">Register to keep your seat →</a>{% endif %}
+    <p class="gfnote">Opens the registration form (Google Form) in a new tab.</p>
   </div>
   <div class="band b checker" aria-hidden="true"></div>
 </section>
@@ -342,9 +401,9 @@ label.f input:focus,label.f select:focus{outline:none;border-color:var(--ink);bo
     <p class="eyebrow">FAQ</p>
     <h2>Good questions.</h2>
     <details><summary>Do I need to know Kubernetes?</summary><p>Basic terminal comfort helps. Every mission explains what to do and why, and Launchpad tells you what failed and how to fix it. Kubernetes regulars can race for the podium.</p></details>
-    <details><summary>Do I need a Civo account?</summary><p>Not to register. After you keep your seat we'll ask you to create a free Civo account before race day, so your cluster — and the $250 credit — are yours to keep.</p></details>
+    <details><summary>Do I need a Civo account?</summary><p>Not to register. Before race day, create a free account at <a href="https://www.civo.com/signup" target="_blank" rel="noopener">civo.com/signup</a> so your cluster — and the $250 credit — are yours to keep.</p></details>
     <details><summary>What do I need to install?</summary><p>Nothing. The Launchpad Shell gives you a terminal in your browser. If you prefer your own terminal, bring the civo CLI, kubectl and git.</p></details>
-    <details><summary>Can I bring a colleague?</summary><p>Yes — each person registers with their own email so everyone gets a seat on the grid.</p></details>
+    <details><summary>Can I bring a colleague?</summary><p>Yes — each person registers on the form with their own email so everyone gets a seat on the grid.</p></details>
   </div>
 </section>
 
@@ -362,32 +421,7 @@ label.f input:focus,label.f select:focus{outline:none;border-color:var(--ink);bo
   </div>
 </footer>
 
-<dialog id="sheet" aria-labelledby="sheet-title">
-  <div class="sheet-top"><span class="t" id="sheet-title">🏁 KEEP YOUR SEAT · 26.11</span><button type="button" aria-label="Close" onclick="document.getElementById('sheet').close()">×</button></div>
-  <div class="sheet-flag" aria-hidden="true"></div>
-  <div id="sheet-body"><p class="note">Loading…</p></div>
-</dialog>
 
-<script>
-(function(){
-  var sheet = document.getElementById('sheet');
-  // Every register button loads the form into the sheet; open it as soon as the request starts.
-  document.body.addEventListener('htmx:beforeRequest', function(e){
-    if (e.detail.target && e.detail.target.id === 'sheet-body' && !sheet.open) {
-      if (e.detail.requestConfig && e.detail.requestConfig.verb === 'get') document.getElementById('sheet-body').innerHTML = '<p class="note">Loading…</p>';
-      sheet.showModal();
-    }
-  });
-  document.body.addEventListener('htmx:afterSwap', function(e){
-    if (e.detail.target.id === 'sheet-body') { var f = e.detail.target.querySelector('input[name=name]'); if (f && !f.value) f.focus(); sheet.scrollTop = 0; }
-  });
-  sheet.addEventListener('click', function(e){ if (e.target === sheet) sheet.close(); });
-  // UTM tags travel with the form as "source".
-  var p = new URLSearchParams(location.search), src = ['utm_source','utm_medium','utm_campaign'].map(function(k){ return p.get(k) }).filter(Boolean).join('/') || 'register-page';
-  document.body.addEventListener('htmx:configRequest', function(e){ if (e.detail.path.indexOf('/register/form') === 0 && !e.detail.parameters.source) e.detail.parameters.source = src; });
-  if (location.hash === '#register-now') document.querySelector('[hx-get="/register/form"]') && setTimeout(function(){ htmx.trigger(document.querySelector('.cta [hx-get]'), 'click') }, 300);
-})();
-</script>
 
 <script>
 (function(){
@@ -455,6 +489,69 @@ label.f input:focus,label.f select:focus{outline:none;border-color:var(--ink);bo
   }
   window.addEventListener('resize', function(){ last=-1 });
   draw(0); requestAnimationFrame(tick);
+})();
+</script>
+
+<script>
+(function(){
+  var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var IO = 'IntersectionObserver' in window;
+  function onSee(el, fn, th){ if(!el) return; if(!IO){ fn(); return } var o=new IntersectionObserver(function(es){ es.forEach(function(e){ if(e.isIntersecting){ fn(e.target); o.unobserve(e.target) } }) },{threshold:th||.15}); o.observe(el) }
+  document.querySelectorAll('.rv,.rise').forEach(function(el){ onSee(el, function(){ el.classList.add('in') }) });
+
+  // --- incident terminal: types itself, from broken to green ---
+  var L=[['d','$ kubectl get pods -n nusamart'],['','ecommerce-rust-6c9f…  <span class="r">OOMKilled</span>   restarts 7'],['','ecommerce-rust-6c9f…  <span class="y">CrashLoopBackOff</span>'],['d','p95 latency 4 812 ms · errors 23%'],
+         ['d','$ kubectl set resources deploy/ecommerce-rust --requests=memory=256Mi --limits=memory=256Mi'],['d','$ kubectl get hpa -n nusamart -w'],['','cpu: 118%/60%   replicas 2 → <span class="g">5</span>'],
+         ['g','✓ Flash sale probe: 0 failed, p95 143 ms'],['g','🏁 Final passed · P1 on Mission Control']];
+  var tl=document.getElementById('tlines'), ts=document.getElementById('tstate'), timer=null;
+  function play(){ clearTimeout(timer); tl.innerHTML=''; ts.className='bad'; ts.textContent='● INCIDENT'; var i=0;
+    (function step(){ if(i>=L.length){ tl.insertAdjacentHTML('beforeend','<div><span class="d">$</span> <span class="cur"></span></div>'); return }
+      var l=L[i++]; tl.insertAdjacentHTML('beforeend','<div class="'+l[0]+'">'+l[1]+'</div>');
+      if(i===5){ ts.className='bad'; ts.textContent='● FIXING…' } if(i===8){ ts.className='ok'; ts.textContent='● HEALTHY' }
+      timer=setTimeout(step, reduce?0:(i<5?650:900)) })() }
+  onSee(document.getElementById('incident'), play, .4);
+  document.getElementById('replay').addEventListener('click', play);
+
+  // --- numbers count up ---
+  document.querySelectorAll('.nrow b').forEach(function(b){ onSee(b, function(){ var to=+b.dataset.n, p=b.dataset.p||'', sfx=b.dataset.s||'', t0=performance.now();
+    if(reduce){ b.textContent=p+to+sfx; return }
+    (function f(t){ var k=Math.min(1,(t-t0)/1100); b.textContent=p+Math.round(to*(1-Math.pow(1-k,3)))+sfx; if(k<1) requestAnimationFrame(f) })(t0) }, .5) });
+
+  // --- mission explorer ---
+  var M=[
+    {id:'M0',t:'Launch',g:'Create a 3-node cluster in the Jakarta region (JKT1) from the Civo dashboard, then connect it to Launchpad.',tags:['Civo dashboard','JKT1','kubectl'],c:'kubectl get nodes',s:'🚀 Cluster in ~90 seconds'},
+    {id:'M1',t:'Deploy & Expose',g:'Ship NusaMart with Kustomize and open the shop on a public Civo load balancer.',tags:['Kustomize','Service','Load balancer'],c:'kubectl get svc -n nusamart   # wait for EXTERNAL-IP',s:'🌐 Ship it'},
+    {id:'M2',t:'Right-size',g:'Set requests equal to limits so pods get Guaranteed QoS and stop being throttled or OOMKilled.',tags:['Requests & limits','QoS','OOMKilled'],c:'kubectl get pods -n nusamart \\\n  -o custom-columns=POD:.metadata.name,QOS:.status.qosClass',s:'⚖️ Right-sizing'},
+    {id:'M3',t:'Scale',g:'Add a Horizontal Pod Autoscaler so NusaMart grows by itself when the k6 rush hits.',tags:['HPA','metrics-server','k6'],c:'kubectl get hpa -n nusamart -w',s:'📈 Autoscaling'},
+    {id:'M4',t:'Stay Available',g:'Protect the shop with a PodDisruptionBudget, then drain a node mid-sale without dropping a customer.',tags:['PodDisruptionBudget','drain','zero downtime'],c:'kubectl drain <node> --ignore-daemonsets --delete-emptydir-data',s:'🛡️ Zero-downtime ops'},
+    {id:'FINAL',t:'Flash Sale Ready',g:'Warm capacity (HPA min ≥ 3), one pod on each of 3 nodes, then survive the live burst: 0 errors, p95 under 1.5 s.',tags:['Topology spread','HPA','Burst test'],c:'kubectl get pods -n nusamart -o wide',s:'🏁 Flash-sale ready'}];
+  var list=document.getElementById('mxlist'), card=document.getElementById('mxcard'), cur=0;
+  function esc(x){ return String(x).replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c]}) }
+  list.innerHTML=M.map(function(m,i){ return '<button role="tab" data-i="'+i+'"><i>'+m.id+'</i>'+m.t+'</button>' }).join('');
+  function show(i){ cur=(i+M.length)%M.length; var m=M[cur];
+    list.querySelectorAll('button').forEach(function(b,k){ b.classList.toggle('on',k===cur); b.setAttribute('aria-selected',k===cur); if(k===cur) b.classList.add('seen') });
+    card.innerHTML='<div class="in"><span class="k">MISSION '+(cur+1)+' OF 6 · '+m.id+'</span><h3>'+m.t+'</h3><p>'+m.g+'</p><div class="tags">'+m.tags.map(function(t){return '<span>'+t+'</span>'}).join('')+'</div><pre>'+esc(m.c)+'</pre><span class="skill">Skill unlocked: '+m.s+'</span>'
+      +'<div class="nav"><button type="button" data-d="-1">← Previous</button><button type="button" data-d="1">'+(cur===M.length-1?'Back to M0 ↺':'Next mission →')+'</button></div></div>' }
+  list.addEventListener('click', function(e){ var b=e.target.closest('button'); if(b) show(+b.dataset.i) });
+  card.addEventListener('click', function(e){ var b=e.target.closest('button[data-d]'); if(b) show(cur+(+b.dataset.d)) });
+  show(0);
+
+  // --- pit-stop quiz ---
+  var Q=[{q:'Pods keep getting OOMKilled during the sale. What do you fix first?',a:['Add more nodes','Set memory requests and limits','Restart the cluster'],k:1,w:'Without memory limits that match real usage, the kernel kills the container. Right-sizing is mission M2.'},
+         {q:'Traffic jumps 12× at 11:00. What adds pods automatically?',a:['A ConfigMap','An Ingress','A Horizontal Pod Autoscaler'],k:2,w:'The HPA watches CPU and adds replicas when it climbs — that is mission M3.'},
+         {q:'You must drain a node mid-sale. What keeps enough pods serving?',a:['A PodDisruptionBudget','A Secret','A new namespace'],k:0,w:'A PDB tells Kubernetes how many pods must stay up while nodes are drained — mission M4.'}];
+  var qz=document.getElementById('qz'), score=0, done=0;
+  qz.innerHTML=Q.map(function(x,i){ return '<div class="q" data-i="'+i+'"><span class="n">QUESTION '+(i+1)+' / 3</span><h4>'+x.q+'</h4>'+x.a.map(function(a,j){return '<button type="button" data-j="'+j+'">'+a+'</button>'}).join('')+'</div>' }).join('');
+  qz.addEventListener('click', function(e){ var b=e.target.closest('button[data-j]'); if(!b) return; var box=b.closest('.q'), x=Q[+box.dataset.i], j=+b.dataset.j;
+    box.querySelectorAll('button').forEach(function(o,k){ o.disabled=true; if(k===x.k) o.classList.add('ok'); else if(k===j) o.classList.add('no') });
+    box.insertAdjacentHTML('beforeend','<div class="why">'+(j===x.k?'✅ Correct. ':'Not quite. ')+x.w+'</div>'); if(j===x.k) score++; done++;
+    if(done===Q.length) qz.insertAdjacentHTML('beforeend','<div class="qscore"><b>You scored <em>'+score+'/3</em> — '+(score===3?'grid-ready. Come and race for P1!':score===2?'nearly there. The missions will fill the gap.':'perfect reason to join — you will learn all three by doing.')+'</b><a class="btn g" href="https://bit.ly/workshopcivo-08" target="_blank" rel="noopener">Register to keep your seat →</a></div>') });
+
+  // --- rundown: the line fills as you scroll ---
+  var tline=document.getElementById('tline'), items=[].slice.call(tline.querySelectorAll('li'));
+  function fill(){ var r=tline.getBoundingClientRect(), vh=innerHeight, p=Math.max(0,Math.min(1,(vh*.7-r.top)/r.height));
+    tline.style.setProperty('--fill',(p*100).toFixed(1)+'%'); items.forEach(function(li){ var y=li.offsetTop+20; li.classList.toggle('lit', y<=p*r.height+4) }) }
+  if(reduce){ tline.style.setProperty('--fill','100%'); items.forEach(function(li){li.classList.add('lit')}) } else { addEventListener('scroll', fill, {passive:true}); fill() }
 })();
 </script>
 </body>
