@@ -175,6 +175,11 @@ async fn page(State(st): State<Arc<SeatState>>) -> Response {
     render(PageTpl { logo: crate::cert::LOGO, closed: st.closed() })
 }
 
+/// The Mission Race landing page, for "/" on the workshop domain (see site::host_mw).
+pub fn landing(closed: bool) -> Response {
+    render(PageTpl { logo: crate::cert::LOGO, closed })
+}
+
 async fn form_get(State(st): State<Arc<SeatState>>, headers: HeaderMap, Query(q): Query<Values>) -> Response {
     if headers.get("hx-request").is_none() { return Redirect::to("/register#register").into_response(); }
     if st.closed() { return render(ClosedTpl { message: "Registration for 26 Nov is closed. Follow Civo Indonesia for the next workshop.".into() }); }

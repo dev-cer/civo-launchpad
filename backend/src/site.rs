@@ -31,12 +31,13 @@ pub struct SiteState {
     hosts: Vec<String>,
     /// What "/" shows on the site hosts: "workshop" (register landing, default) or "company".
     home: String,
+    window: Option<(u64, u64)>,
     db: Option<Mutex<Connection>>,
     admin_token: Option<String>,
 }
 
 impl SiteState {
-    pub fn from_env(admin_token: Option<String>) -> Arc<Self> {
+    pub fn from_env(admin_token: Option<String>, window: Option<(u64, u64)>) -> Arc<Self> {
         let hosts: Vec<String> = env::var("SITE_HOSTS").unwrap_or_default().split(',')
             .map(|h| h.trim().to_lowercase()).filter(|h| !h.is_empty()).collect();
         let path = env::var("SEATS_DB").ok().filter(|s| !s.is_empty()).unwrap_or_else(|| "/data/register.db".to_string());
@@ -44,7 +45,7 @@ impl SiteState {
         if !hosts.is_empty() { println!("Site hosts: {}", hosts.join(", ")); }
         let home = env::var("SITE_HOME").unwrap_or_default().trim().to_lowercase();
         let home = if home == "company" { home } else { "workshop".to_string() };
-        Arc::new(SiteState { hosts, db, admin_token, home })
+        Arc::new(SiteState { hosts, db, admin_token, home, window })
     }
     fn seats(&self) -> i64 {
         self.db.as_ref().and_then(|d| d.lock().ok().and_then(|c| c.query_row("SELECT COUNT(*) FROM seats", [], |r| r.get(0)).ok())).unwrap_or(0)
@@ -94,11 +95,10 @@ pub async fn host_mw(State(st): State<Arc<SiteState>>, req: Request, next: Next)
     }
     if req.uri().path() == "/" {
         if st.home == "company" { return home(&st); }
-        // Workshop domain: "/" is the Mission Race register landing page.
-        let mut req = req;
-        let pq = req.uri().query().map(|q| format!("/register?{q}")).unwrap_or_else(|| "/register".to_string());
-        if let Ok(u) = pq.parse() { *req.uri_mut() = u; }
-        return next.run(req).await;
+        // Workshop domain: "/" is the Mission Race register landing page. Rendered here, because
+        // Router::layer middleware runs after routing (rewriting the URI would hit the static fallback).
+        let closed = matches!(st.window, Some((_, c)) if now() > c);
+        return crate::seats::landing(closed);
     }
     next.run(req).await
 }

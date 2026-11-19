@@ -414,7 +414,7 @@ async fn main() {
     let static_dir = env::var("STATIC_DIR").unwrap_or_else(|_| "static".to_string());
     let port = env::var("PORT").unwrap_or_else(|_| "8080".to_string());
 
-    let site_state = site::SiteState::from_env(state.admin_token.clone());
+    let site_state = site::SiteState::from_env(state.admin_token.clone(), state.window);
     let app = Router::new()
         .route("/healthz", get(|| async { "ok" }))
         .route("/api/register", post(register))
