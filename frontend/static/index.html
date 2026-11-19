@@ -1029,7 +1029,7 @@ resource "civo_kubernetes_cluster" "lab" {
 /* ---------------- AI / GPU ---------------- */
 { id:'gpu', mod:'ai', title:'GPU Node Pools', dur:'10 min', level:'Advanced',
   intro:`For inference/training, add a GPU node pool and schedule pods that request the <code>nvidia.com/gpu</code> resource.
-  <div class="note info">GPU capacity in the Indonesia region is scheduled for December 2026 — ask your facilitator about reserving capacity.</div>`,
+  <div class="note info">GPU capacity in the Indonesia region is coming soon — ask your facilitator to register your interest.</div>`,
   tasks:[
     { t:'Find GPU sizes', cmd:'civo size ls -s kubernetes | grep -i gpu', re:/^civo size (ls|list).*gpu$/i, out:'<span class="dim">[simulated] Available GPU sizes depend on the region & your account.</span>\n| an.g1.l40s.kube.x1   | 1x NVIDIA L40S  | kubernetes |\n| an.g1.a100.kube.x1   | 1x NVIDIA A100  | kubernetes |' },
     { t:'Example GPU pod', d:'A pod manifest requesting 1 GPU.', cmd:'kubectl apply -f gpu-smoke-test.yaml', re:/^kubectl apply -f gpu-smoke-test\.yaml$/, need:'active', out:'pod/gpu-smoke-test created\n<span class="dim">[simulated] The pod stays Pending until a GPU node pool exists.</span>' },

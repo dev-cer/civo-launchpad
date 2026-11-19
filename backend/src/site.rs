@@ -166,8 +166,8 @@ pub struct Prod {
 
 const PRODUCTS: &[Prod] = &[
     Prod { key: "civo-ai", title: "Civo AI", h1a: "GPU cloud untuk", h1b: "membangun, melatih dan merilis AI.",
-        tagline: "Jalankan training dan inference AI dengan performa GPU NVIDIA yang bisa diskalakan. Kapasitas GPU untuk region Indonesia dijadwalkan Desember 2026 — reservasi dibuka sekarang.",
-        avail: "GPU region Indonesia: Desember 2026 · reservasi dibuka", accent: "#7cf3ff", glow: "rgba(124,243,255,.18)", cta: "Reservasi kapasitas GPU",
+        tagline: "Jalankan training dan inference AI dengan performa GPU NVIDIA yang bisa diskalakan. GPU untuk region Indonesia segera hadir (coming soon) — daftarkan minat Anda sekarang.",
+        avail: "GPU region Indonesia: coming soon · daftar minat", accent: "#7cf3ff", glow: "rgba(124,243,255,.18)", cta: "Daftar minat GPU",
         flow_title: "ALUR AI DI CIVO", flow: &[("🛠️", "Build", "Siapkan data dan environment di Kubernetes: notebook, pipeline dan storage S3."),
             ("🧠", "Train", "Latih atau fine-tune model dengan GPU NVIDIA; tambah node GPU saat dibutuhkan."),
             ("🚀", "Ship", "Sajikan model sebagai API di cluster yang sama dan skalakan sesuai trafik.")],
@@ -182,9 +182,9 @@ const PRODUCTS: &[Prod] = &[
             ("Fine-tuning model", "Sesuaikan model bahasa dengan data dan istilah bisnis Anda menggunakan GPU sesuai kebutuhan."),
             ("OCR dan computer vision", "Proses dokumen dan gambar dalam jumlah besar dengan pipeline GPU."),
             ("Inference API", "Sajikan model sebagai layanan yang otomatis bertambah kapasitasnya saat permintaan naik.")],
-        road_title: "Dari reservasi sampai produksi",
-        road: &[("HARI INI", "Reservasi", "Ceritakan kebutuhan GPU Anda lewat form di bawah."), ("BERIKUTNYA", "Sizing", "Tim Arupa membantu memilih tipe dan jumlah GPU."),
-            ("DES 2026", "GPU live", "Kapasitas GPU tersedia di region Indonesia."), ("SETELAHNYA", "Produksi", "Workload AI berjalan dengan dukungan tim lokal.")],
+        road_title: "Dari daftar minat sampai produksi",
+        road: &[("HARI INI", "Daftar minat", "Ceritakan kebutuhan GPU Anda lewat form di bawah."), ("BERIKUTNYA", "Sizing", "Tim Arupa membantu memilih tipe dan jumlah GPU."),
+            ("COMING SOON", "GPU live", "Kapasitas GPU tersedia di region Indonesia."), ("SETELAHNYA", "Produksi", "Workload AI berjalan dengan dukungan tim lokal.")],
         note: "Ketersediaan, tipe GPU dan harga dikonfirmasi saat sizing. Skema GPU terpisah dari Civo Kubernetes." },
     Prod { key: "civo-private", title: "Civo Private", h1a: "Private cloud berdaulat,", h1b: "single-tenant.",
         tagline: "CivoStack Enterprise: software stack Civo untuk private dan edge cloud di hardware Anda, partner, atau data center — pengalaman cloud yang sama dengan Civo public, dengan kendali penuh.",

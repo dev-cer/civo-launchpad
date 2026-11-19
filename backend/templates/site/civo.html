@@ -186,7 +186,7 @@
   // three clouds
   var P=[{n:'civo public',a:['live','✓ Live di Indonesia: Civo Kubernetes'],d:'Kubernetes, compute, database, storage dan networking di public cloud — untuk SaaS, aplikasi web dan workload modern.',l:['☸️ Kubernetes (live di JKT1)','🖥️ Compute','🗄️ Database','💾 Storage & object store','🌐 Networking']},
          {n:'civo private',a:['ask','Tanyakan ketersediaannya'],d:'Private cloud berdaulat dan single-tenant di CivoStack — software stack Civo untuk private/edge cloud di hardware partner atau pelanggan.',l:['🏛️ Berdaulat','🔒 Single-tenant','🧱 CivoStack Enterprise','🏢 Di data center Anda atau partner']},
-         {n:'civo ai',a:['res','GPU: Desember 2026, dengan reservasi'],d:'GPU cloud untuk membangun, melatih dan merilis AI dengan performa NVIDIA yang bisa diskalakan.',l:['🛠️ Build','🧠 Train','🚀 Ship','📅 Reservasi kapasitas GPU']}];
+         {n:'civo ai',a:['res','GPU region Indonesia: coming soon'],d:'GPU cloud untuk membangun, melatih dan merilis AI dengan performa NVIDIA yang bisa diskalakan.',l:['🛠️ Build','🧠 Train','🚀 Ship','📅 Reservasi kapasitas GPU']}];
   var pr=document.getElementById('prod'), tt=document.querySelectorAll('#three .tab');
   function prod(i){ tt.forEach(function(b,k){b.classList.toggle('on',k===i)}); var p=P[i]; pr.innerHTML='<div class="prod"><div><span class="avail '+p.a[0]+'">'+p.a[1]+'</span><h3>'+p.n+'</h3><p>'+p.d+'</p><a class="btn d" href="#kontak" hx-get="/site/contact?need=civo&note='+encodeURIComponent(p.n)+'" hx-target="#contact-box">Tanya tentang '+p.n+' →</a></div><ul>'+p.l.map(function(x){return '<li>'+x+'</li>'}).join('')+'</ul></div>'; if(window.htmx) htmx.process(pr) }
   tt.forEach(function(b,k){ b.addEventListener('click',function(){ prod(k) }) }); prod(0);
