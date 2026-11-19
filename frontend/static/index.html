@@ -37,7 +37,7 @@ code,.mono{font-family:var(--mono)}
 .ddm button small{color:var(--muted);font-size:12px}
 .ddm button .d{color:var(--green);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
 .ddm hr{border:0;border-top:1px solid var(--line);margin:6px 4px}
-.evbar{position:sticky;top:56px;z-index:40;background:#000;border-bottom:1px solid var(--line);font-family:'Hanken Grotesk',var(--sans)}
+.evbar{position:sticky;top:var(--hdr,56px);z-index:40;background:#000;border-bottom:1px solid var(--line);font-family:'Hanken Grotesk',var(--sans)}
 .evbar .in{max-width:1180px;margin:0 auto;padding:0 24px;display:flex;align-items:center;gap:18px;height:50px;overflow-x:auto;scrollbar-width:none}
 .evbar .tt{white-space:nowrap;font-size:13.5px;color:var(--muted)}.evbar .tt b{color:var(--text);font-weight:600}.evbar .tt i{font-style:normal;color:var(--green);font-weight:700;font-size:11px;letter-spacing:.12em;margin-right:8px}
 .evbar nav{display:flex;gap:4px;margin-left:auto}
@@ -58,7 +58,7 @@ code,.mono{font-family:var(--mono)}
 .evc .bar{height:4px;background:var(--line);border-radius:4px;overflow:hidden}.evc .bar i{display:block;height:100%;background:var(--green)}
 .winchip{font-family:var(--mono,monospace);font-size:12px;color:var(--muted);border:1px solid var(--line);border-radius:99px;padding:6px 12px;white-space:nowrap}
 .winchip b{color:var(--green)}.winchip.warn{border-color:#ffb020}.winchip.warn b{color:#ffb020}
-.gate{min-height:calc(100vh - 58px);display:grid;place-items:center;padding:40px 24px;font-family:'Hanken Grotesk',var(--sans);background:radial-gradient(circle at 80% 20%,rgba(0,255,111,.10),transparent 50%)}
+.gate{min-height:calc(100vh - var(--hdr,58px));display:grid;place-items:center;padding:40px 24px;font-family:'Hanken Grotesk',var(--sans);background:radial-gradient(circle at 80% 20%,rgba(0,255,111,.10),transparent 50%)}
 .gate .in{max-width:1080px;width:100%;display:grid;grid-template-columns:1.3fr 1fr;gap:48px;align-items:center}
 .gate .eb{color:var(--green);font-size:12px;font-weight:700;letter-spacing:.16em;text-transform:uppercase}
 .gate h1{font-family:'Newsreader',Georgia,serif;font-weight:500;font-size:60px;line-height:1.02;margin:10px 0 14px}
@@ -142,7 +142,7 @@ table.map td:nth-child(3){color:var(--muted)}
 .how p{margin:0;color:var(--muted);font-size:13.5px;line-height:1.5}
 footer{margin-top:70px;color:var(--dim);font-size:12.5px;border-top:1px solid var(--line);padding-top:18px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
 /* ---------- lab ---------- */
-.lab{display:grid;grid-template-columns:minmax(380px,460px) 1fr;height:calc(100vh - 58px)}
+.lab{display:grid;grid-template-columns:minmax(380px,460px) 1fr;height:calc(100vh - var(--hdr,58px))}
 .instr{border-right:1px solid var(--line);background:var(--panel);display:flex;flex-direction:column;min-height:0}
 .instr .scroll{overflow-y:auto;padding:22px 24px 30px;flex:1}
 .crumb{font-size:12px;color:var(--muted);display:flex;gap:6px;align-items:center;flex-wrap:wrap}
@@ -302,10 +302,10 @@ pre.yaml{background:var(--term);border:1px solid var(--line);border-radius:8px;p
 @keyframes fadeout{to{opacity:0}}
 .confetti{position:fixed;inset:0;pointer-events:none;z-index:1000}
 .modal{position:fixed;inset:0;background:rgba(5,7,6,.8);display:grid;place-items:center;z-index:900;animation:fadein .3s;padding:20px}
-#termdock{position:fixed;top:58px;right:0;bottom:0;left:min(380px,34vw);z-index:40;background:#0b0b0b;border-left:1px solid var(--line2,#2a2a2a);display:none}
+#termdock{position:fixed;top:var(--hdr,58px);right:0;bottom:0;left:min(380px,34vw);z-index:40;background:#0b0b0b;border-left:1px solid var(--line2,#2a2a2a);display:none}
 #termdock.on{display:block} #termdock iframe{width:100%;height:100%;border:0;background:#0b0b0b}
 #termdock .ph{position:absolute;inset:0;display:grid;place-items:center;color:#9a9a9a;font-size:15px;text-align:center;padding:24px}
-.tpanel{width:min(380px,34vw);box-sizing:border-box;padding:22px 20px 40px;min-height:calc(100vh - 58px)}
+.tpanel{width:min(380px,34vw);box-sizing:border-box;padding:22px 20px 40px;min-height:calc(100vh - var(--hdr,58px))}
 .tpanel h1{font-size:30px;margin:6px 0 10px} .tpanel ol{padding-left:18px;margin:10px 0} .tpanel li{margin:0 0 12px;line-height:1.45;font-size:14.5px}
 .tpanel .drop{border:1.5px dashed var(--muted);border-radius:12px;padding:14px;text-align:center;font-size:13.5px;color:var(--muted);cursor:pointer}
 .tpanel .drop.over{border-color:var(--green);color:var(--text)} .tpanel textarea{width:100%;min-height:80px;margin-top:8px;font:12px ui-monospace,monospace;background:transparent;color:var(--text);border:1px solid var(--line2,#2a2a2a);border-radius:8px;padding:8px;box-sizing:border-box}
@@ -421,7 +421,7 @@ body.sky .brand .sub,body.sky .modnav button,body.sky .prog{color:#2f5242}
 body.sky .modnav button:hover{background:rgba(6,42,23,.06);color:#062a17}
 body.sky .keychip{border-color:rgba(6,42,23,.18);color:#2f5242}
 .reg{--ink:#062a17;--ink2:#2f5242;--acc:#00a843;color:var(--ink);font-family:var(--sans);background:#eaf6ff}
-.rhero{position:relative;min-height:calc(100vh - 58px);overflow:hidden;background:linear-gradient(180deg,#5fb5ff 0%,#9fd5ff 38%,#e3f3ff 66%,#f4fbff 100%);display:flex;flex-direction:column;align-items:center;padding-top:5vh}
+.rhero{position:relative;min-height:calc(100vh - var(--hdr,58px));overflow:hidden;background:linear-gradient(180deg,#5fb5ff 0%,#9fd5ff 38%,#e3f3ff 66%,#f4fbff 100%);display:flex;flex-direction:column;align-items:center;padding-top:5vh}
 .cloud{position:absolute;border-radius:50%;background:#fff;filter:blur(2px);opacity:.92;animation:drift linear infinite}
 .cloud::before,.cloud::after{content:"";position:absolute;background:#fff;border-radius:50%}
 .cloud::before{width:55%;height:120%;left:12%;top:-55%}
@@ -514,7 +514,7 @@ body.sky .keychip{border-color:rgba(6,42,23,.18);color:#2f5242}
 @media (max-width:1500px){.brand .sub{display:none}}
 
 @media (max-width:900px){
-  .topbar{flex-wrap:wrap;height:auto;padding:10px 14px;gap:8px}.modnav{order:5;flex-basis:100%}.lab{height:auto}
+  .topbar{padding:6px 14px;gap:8px}.modnav{margin:0 -14px;padding:8px 14px 10px}.lab{height:auto}
   .hero{grid-template-columns:1fr}.howgrid{grid-template-columns:1fr 1fr}
   .lab{grid-template-columns:1fr;height:auto}.work{height:70vh}
   .prog .bar{display:none}.brand .sub{display:none}
@@ -522,7 +522,7 @@ body.sky .keychip{border-color:rgba(6,42,23,.18);color:#2f5242}
 
 /* ===== Launchpad portal / event mode / leaderboard (Civo brand) ===== */
 .cv-serif{font-family:'Newsreader',Georgia,serif;font-weight:400;letter-spacing:-.015em}
-.enter{min-height:calc(100vh - 58px);display:grid;grid-template-columns:1.1fr .9fr;background:#000;color:#fff;font-family:'Hanken Grotesk',var(--sans)}
+.enter{min-height:calc(100vh - var(--hdr,58px));display:grid;grid-template-columns:1.1fr .9fr;background:#000;color:#fff;font-family:'Hanken Grotesk',var(--sans)}
 .enter .l{padding:64px 6vw 56px;display:flex;flex-direction:column;gap:22px;justify-content:center;background:#000;background-image:radial-gradient(rgba(0,255,111,.14) 1.3px,transparent 1.5px);background-size:26px 26px}
 .enter .eb{font-size:12px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#00FF6F}
 .enter h1{font-family:'Newsreader',Georgia,serif;font-weight:400;font-size:clamp(52px,7vw,96px);line-height:.98;margin:0;letter-spacing:-.02em}
@@ -602,6 +602,26 @@ body.big .lb h1{font-size:96px}body.big .lb table{font-size:26px}
 .lb td.m{font-family:var(--mono);font-size:18px;color:#cfcfcf}
 .lb td .of{font-size:11px;background:#00FF6F;color:#000;border-radius:999px;padding:2px 8px;margin-left:8px;vertical-align:middle}
 .lb .demo{margin-top:10px;font-size:13px}
+.cdg{font-family:'Hanken Grotesk',var(--sans);max-width:1100px}
+.cdg-hd{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:18px}.cdg-hd h2{margin:0 0 4px}.cdg-hd p{margin:0;color:var(--muted)}
+.cdg-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}@media(max-width:1000px){.cdg-grid{grid-template-columns:1fr}}
+.cdg-card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 20px}.cdg-card.wide{grid-column:1/-1}
+.cdg-card h5{margin:0 0 10px;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--green)}
+.cdg-card ol{margin:0;padding-left:20px;line-height:1.8}.cdg-card a{color:var(--green)}
+.cdg-card table{width:100%;border-collapse:collapse;font-size:14px}.cdg-card td{padding:7px 4px;border-bottom:1px solid var(--line);vertical-align:top}.cdg-card td:first-child{font-family:var(--mono);color:var(--green);width:64px}
+.cdg-note{color:var(--muted);font-size:13.5px;margin:12px 0 0}
+.cdg-cmd{display:grid;grid-template-columns:minmax(160px,240px) 1fr auto;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+.cdg-cmd span{color:var(--muted);font-size:13.5px}.cdg-cmd code{font-family:var(--mono);font-size:13px;background:#050605;border:1px solid var(--line);border-radius:8px;padding:6px 10px;overflow-x:auto;white-space:nowrap}
+.cdg-cmd button{background:var(--green-a);color:var(--green);border:1px solid var(--green);border-radius:8px;padding:6px 12px;cursor:pointer;font-weight:700}
+@media(max-width:700px){.cdg-cmd{grid-template-columns:1fr}}
+/* ---------- menu bar: own row, wraps instead of hiding items (zoom friendly) ---------- */
+.topbar{flex-wrap:wrap;height:auto;min-height:58px;row-gap:0}
+.topbar>.brand{min-height:58px}
+.topbar .prog{margin-left:auto}
+.modnav{order:10;flex:1 1 100%;flex-wrap:wrap;overflow:visible;gap:6px;margin:0 -20px;padding:8px 20px 10px;border-top:1px solid var(--line);background:rgba(0,0,0,.25)}
+.modnav button{border:1px solid var(--line2);border-radius:999px;padding:7px 15px;font-weight:600;font-size:13.5px;color:var(--text);transition:all .15s}
+.modnav button:hover{border-color:var(--green);color:var(--green);background:var(--green-a)}
+.modnav button.on{background:var(--green);color:#000;border-color:var(--green)}
 </style>
 </head>
 <body>
@@ -628,6 +648,7 @@ body.big .lb h1{font-size:96px}body.big .lb table{font-size:26px}
 </header>
 
 <main id="app"></main>
+<script>(function(){var t=document.querySelector('.topbar');function f(){document.documentElement.style.setProperty('--hdr',t.offsetHeight+'px')}f();if(window.ResizeObserver)new ResizeObserver(f).observe(t);addEventListener('resize',f)})();</script>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -1092,7 +1113,7 @@ function route(){
   if (h==='event' || h==='ev/beyond-scaling') return renderEvent();
   if (h==='leaderboard' || h==='ev/beyond-scaling/leaderboard') return renderLeaderboard();
   if (h==='ev/k8s-at-scale') return renderWebinarTrack();
-  if (h==='certificate' && EDITION==='workshop') return renderCert();
+  if (h==='certificate' && EDITION==='workshop'){ location.hash='#'+ED.home; return }
   if (h==='terminal' && EDITION==='workshop') return renderTerminal();
   if (h==='library') return renderLibrary();
   if (h.startsWith('lab-')) { const l = LABS.find(x => x.id === h.slice(4));
@@ -1170,7 +1191,7 @@ const JOURNEYS = {
     {k:'Check-in', t:'09:30 · laptop check', d:'Register in Launchpad; civo CLI, kubectl, git and your API key ready', until:'2026-11-26T10:05'},
     {k:'Talk', t:'10:05 · Beyond the Container', d:'Highly available &amp; scalable apps on Kubernetes', until:'2026-11-26T10:20'},
     {k:'Mission race', t:'10:20–11:20 · M0 → Final', d:'Fastest to finish wins, checked live on your cluster', until:'2026-11-26T11:25', prog:true},
-    {k:'Winners', t:'11:25 · top 3 &amp; recap', d:'Mission Control, prizes, pizza 🍕 — certificates by e-mail', until:'2026-11-26T12:00'},
+    {k:'Winners', t:'11:25 · top 3 &amp; recap', d:'Mission Control, prizes and pizza 🍕', until:'2026-11-26T12:00'},
     {k:'Keep learning', t:'Civo Kubernetes Academy', d:'All labs, self-paced', link:'ACADEMY'},
   ]};
 function journeyHTML(ev){
@@ -1638,8 +1659,37 @@ async function createCluster(c){
 /* =========================================================
    DASHBOARD
    ========================================================= */
+function dashGuide(el){
+  const own = S.own || !S.reg;
+  const cmds = [['Pods and the node each one runs on','kubectl get pods -n nusamart -o wide'],['Autoscaler (HPA) and disruption budget','kubectl get hpa,pdb -n nusamart'],['External IP of the shop','kubectl get svc -n nusamart'],['Nodes','kubectl get nodes -o wide']];
+  el.innerHTML = `<div class="cdg">
+    <div class="cdg-hd"><div><h2>Civo Dashboard</h2><p>See your real cluster on <b>dashboard.civo.com</b> while you deploy from the Terminal.</p></div>
+      ${own?`<a class="btn primary" href="https://dashboard.civo.com/" target="_blank" rel="noopener">Open dashboard.civo.com ↗</a>`:''}</div>
+    ${own?`<div class="cdg-grid">
+      <div class="cdg-card"><h5>How to log in</h5><ol>
+        <li>Open <a href="https://dashboard.civo.com/" target="_blank" rel="noopener">dashboard.civo.com</a> in a new tab.</li>
+        <li>Sign in with <b>your own Civo account</b> — the email you registered with${S.reg&&S.reg.civo?` (<span class="mono">${esc(S.reg.civo)}</span>)`:''}.</li>
+        <li>Pick the <b>Jakarta (JKT1)</b> region in the region selector.</li>
+        <li>Go to <b>Kubernetes</b> and open <span class="mono">civo-k8s-lab</span>.</li></ol>
+        <p class="cdg-note">No account yet? <a href="https://www.civo.com/signup" target="_blank" rel="noopener">Sign up at civo.com/signup ↗</a></p></div>
+      <div class="cdg-card"><h5>What to check per mission</h5><table>
+        <tr><td>M0</td><td>Cluster status <b>Active</b>, 3 nodes in <b>Node pools</b></td></tr>
+        <tr><td>M1</td><td><b>Load balancers</b>: NusaMart's public IP</td></tr>
+        <tr><td>M2–M3</td><td>Node pool size and cluster <b>events</b> while the k6 rush runs</td></tr>
+        <tr><td>M4</td><td><b>Node pools</b>: watch a node being drained and coming back</td></tr>
+        <tr><td>Any</td><td><b>Firewall</b>: ports 80, 443 and 6443 open</td></tr></table></div>
+      <div class="cdg-card wide"><h5>Workloads (pods, HPA) — from the Terminal</h5>
+        <p class="cdg-note" style="margin-top:0">The Civo dashboard shows cluster-level resources. Pods and autoscaling live inside Kubernetes, so check them with kubectl:</p>
+        ${cmds.map(c=>`<div class="cdg-cmd"><span>${c[0]}</span><code>${c[1]}</code><button onclick="navigator.clipboard&&navigator.clipboard.writeText('${c[1]}');toast('Copied — paste it in the Terminal')">Copy</button></div>`).join('')}
+        <p class="cdg-note">Launchpad still scores each mission with <b>Check on my cluster</b> — the dashboard is for watching, not for scoring.</p></div>
+    </div>`
+    : `<div class="cdg-card"><h5>Backup seat</h5><p>Your cluster runs on the Civo Indonesia team's account, so there is no dashboard login for it. Use the Terminal commands below, or ask a facilitator to show the cluster on the big screen.</p>
+        ${cmds.map(c=>`<div class="cdg-cmd"><span>${c[0]}</span><code>${c[1]}</code></div>`).join('')}</div>`}
+  </div>`;
+}
 function renderDash(){
   const el = $('#dash'); if (!el) return;
+  if (EDITION==='workshop') return dashGuide(el);
   const cl = S.cluster, st = cl.status;
   const badge = st==='active'?'<span class="badge active">Active</span>':st==='building'?'<span class="badge building">'+wheelSVG(14,{all:true,spin:true})+'Building…</span>':st==='deleted'?'<span class="badge">Deleted</span>':'<span class="badge">Not provisioned</span>';
   const nodes = cl.pools.reduce((a,p)=>a+p.n,0);
@@ -2112,7 +2162,7 @@ function closeSkip(){ const m=$('#skipm'); m&&m.remove() }
 function missionClock(){
   if (EDITION==='workshop'){
     if (RACE.state==='running'){ const t=Math.max(0,Math.floor(Date.now()/1000+RACE.skew-RACE.start)); return {cur:-1,big:'⏱ '+fmtT(t),sub:`race running · ${Object.keys(RACE.mine).length}/${MISSIONS.length} missions passed`} }
-    if (RACE.state==='finished') return {cur:-1,big:'Race over',sub:'Board frozen · missions still count for your certificate until 23:59 WIB'};
+    if (RACE.state==='finished') return {cur:-1,big:'Race over',sub:'Board frozen · see you on the podium at 11:25'};
     const d=wib('10:20')-Date.now(); if (d>0){ const dd=Math.floor(d/864e5), hh=Math.floor(d%864e5/36e5), mm=Math.floor(d%36e5/6e4), ss=Math.floor(d%6e4/1e3);
       return {cur:-1,big:dd>0?`${dd}d ${hh}h`:hh>0?`${hh}h ${mm}m`:`${mm}:${String(ss).padStart(2,'0')}`,sub:'until the race starts · Thu 26 Nov, 10:20 WIB'} }
     return {cur:-1,big:'Ready…',sub:'waiting for the facilitator’s start signal'};
@@ -2145,8 +2195,8 @@ async function raceCheck(mid){
       if (j.passed){ if (j.elapsed!=null) RACE.mine[mid]=j.elapsed; else if (RACE.mine[mid]==null) RACE.mine[mid]=0; saveRace() }
       out.innerHTML = j.already ? '<div>✅ Already passed — on to the next mission!</div>'
         : (j.checks||[]).map(c=>`<div>${c.ok?'✅':'❌'} <span>${esc(c.name)}</span></div>${c.ok?'':`<div class="h">${esc(c.hint)}</div>`}`).join('')
-          + (j.passed?`<div><b>🏁 ${mid} passed${j.elapsed!=null?' at +'+fmtT(j.elapsed):''}</b>${j.late?' · counts toward your certificate (race board closed at 11:20)':''}</div>`:'')
-          + (j.certificate?`<div>🏅 Certificate earned so far: <b>${j.certificate}</b> — <a href="#certificate">details</a></div>`:'');
+          + (j.passed?`<div><b>🏁 ${mid} passed${j.elapsed!=null?' at +'+fmtT(j.elapsed):''}</b>${j.late?' · after the race board closed at 11:20':''}</div>`:'')
+          + '';
       if (j.passed){ confetti&&confetti(); btn.textContent='✓ Passed · check again'; }
     }
   }catch(e){ out.innerHTML='<div>⚠️ Could not reach Launchpad — check your Wi-Fi.</div>' }
@@ -2170,13 +2220,11 @@ function renderEvent(){
     <div class="top"><div><div class="eb">Civo Workshop · Thu 26 Nov 2026 · 10:00–12:00 WIB</div><h1>Beyond the Container</h1><p style="font-size:17px;margin:8px 0 0">Running Highly Available &amp; Scalable Applications with Kubernetes</p>
       <p style="color:var(--muted);margin:10px 0 0;max-width:620px">${S.own||!S.reg ? 'You build everything on <b style="color:var(--text)">your own Civo account</b> in the Jakarta region (JKT1) — starting with the cluster itself.' : `You are on backup seat <b class="mono" style="color:var(--text)">${esc(S.clusterName||'—')}</b>, prepared by the Civo Indonesia team.`} ${EDITION==='workshop'?'<b style="color:var(--text)">It is a race:</b> when the facilitator starts the clock, complete M0 → Final in order. Press <b style="color:var(--text)">Check on my cluster</b> on each mission — Launchpad verifies your real cluster and records your time. Fastest to finish wins.':'Connect in M0, then one mission at a time. The clock below follows the room.'}</p>
       ${S.reg ? (S.own ? `<p style="margin:10px 0 0">${S.linked?'<span class="mono" style="color:var(--green,#00ff6f)">✓ Your cluster is connected</span> &nbsp;':''}<button class="btn ${S.linked?'':'primary'}" onclick="openConnect()">${S.linked?'Reconnect':'🔗 Connect my cluster'}</button></p>` : (!S.demo?`<p style="margin:10px 0 0"><button class="btn primary" onclick="downloadKubeconfig()">⬇ Download kubeconfig (backup seat)</button></p>`:'')) : ''}
-      <div class="benefits" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px"><span class="pill" style="border:1.5px solid var(--text);border-radius:999px;padding:6px 14px;font-weight:700">🍕 Pizza on us</span><span class="pill" style="border:1.5px solid var(--text);border-radius:999px;padding:6px 14px;font-weight:700">🏅 Certificate</span><span class="pill" style="background:#00ff6f;color:#000;border:1.5px solid #00ff6f;border-radius:999px;padding:6px 14px;font-weight:800">💰 $250 Free Civo Cloud Credits</span></div></div>
+      <div class="benefits" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px"><span class="pill" style="border:1.5px solid var(--text);border-radius:999px;padding:6px 14px;font-weight:700">🍕 Pizza on us</span><span class="pill" style="background:#00ff6f;color:#000;border:1.5px solid #00ff6f;border-radius:999px;padding:6px 14px;font-weight:800">💰 $250 Free Civo Cloud Credits</span></div></div>
       <div class="clock"><b id="mclock">${c.big}</b><span id="mclocks">${c.sub}</span></div></div>
     ${journeyHTML(evById('beyond-scaling'))}
     <div class="tl">${cards}</div>
-    <div class="box"><h3>🏅 Certificates</h3><p style="color:var(--muted);font-size:14px;margin:0 0 12px"><b style="color:var(--text)">Completion</b>: all six missions passed. <b style="color:var(--text)">Participation</b>: M0–M2 passed. Missions keep counting until 23:59 WIB; signed certificates are e-mailed by Civo Indonesia within 3 working days.</p>
-      <button class="btn primary" onclick="go('certificate')">My certificate status →</button></div>
-    <div class="box"><h3>Schedule</h3><div style="color:var(--muted);font-size:14px;line-height:1.8">Before 26 Nov: sign up for your own Civo account (required to register) · 09:30 Check-in: register in Launchpad, Wi-Fi &amp; kubectl check · 10:00 Opening · 10:05 Talk &amp; a 3-minute demo of a mission check · <b style="color:var(--text)">10:20 Race starts: M0 → Final</b> · 11:20 Race closes · 11:25 Winners &amp; certificates · 11:40 Q&amp;A &amp; pizza 🍕 · 12:00 Close</div></div>
+    <div class="box"><h3>Schedule</h3><div style="color:var(--muted);font-size:14px;line-height:1.8">Before 26 Nov: sign up for your own Civo account (required to register) · 09:30 Check-in: register in Launchpad, Wi-Fi &amp; kubectl check · 10:00 Opening · 10:05 Talk &amp; a 3-minute demo of a mission check · <b style="color:var(--text)">10:20 Race starts: M0 → Final</b> · 11:20 Race closes · 11:25 Winners · 11:40 Q&amp;A &amp; pizza 🍕 · 12:00 Close</div></div>
     ${!take.length ? `<div class="box"><h3>After the workshop</h3><p style="color:var(--muted);font-size:14px;margin:0 0 12px">Keep going at your own pace in the <b style="color:var(--text)">Civo Kubernetes Academy</b> — 22 labs from GitOps and Terraform to GPU node pools and NetworkPolicy.</p>
       <button class="btn primary" onclick="window.open(LINKS.academy,'_blank','noopener')">Open the Academy ↗</button></div>` : `<div class="box"><h3>Take-home labs</h3><p style="color:var(--muted);font-size:14px;margin:0 0 12px">Not part of today’s clock — your Launchpad access stays open after the event.</p>
       <div class="th">${take.map(l=>`<button onclick="go('lab-${l.id}')">${labDone(l)?'✓ ':''}${l.title}<br><span class="mono" style="font-size:11px">${l.dur}</span></button>`).join('')}</div></div>`}
@@ -2190,7 +2238,7 @@ const ENTER_COPY = {
     chips:[['Live webinar · Thu 19 Nov','10:00–11:30 WIB · Zoom'],['Take-home journey','9 labs · open until 23:59 WIB']],
     bub:'Hi, I’m Captain Helm! Enter your name and email — your lab is ready in seconds.' },
   workshop:{ lead:'<b>Beyond the Container: Running Highly Available &amp; Scalable Applications with Kubernetes</b> — on your own Civo account in the Jakarta region (JKT1): create your cluster, then race through six missions, verified live on your cluster. Fastest to finish wins.',
-    chips:[['Workshop · Thu 26 Nov','10:00–12:00 WIB · in person'],['Mission race M0 → Final','Pizza · certificate · $250 credits']],
+    chips:[['Workshop · Thu 26 Nov','10:00–12:00 WIB · in person'],['Mission race M0 → Final','Pizza · prizes · $250 credits']],
     bub:'Hi, I’m Captain Helm — register with your Civo account. In the race you launch your own cluster in Jakarta!' },
   academy:{ lead:'The <b>Civo Kubernetes Academy</b> for partners and customers: 22 hands-on labs with a live terminal and dashboard — from your first cluster to GitOps, security and GPU.',
     chips:[['8 modules · 22 labs','Self-paced, EKS Workshop flow'],['Partner enablement','Academy cohorts &amp; resellers']],
