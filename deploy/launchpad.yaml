@@ -73,8 +73,9 @@ spec:
             - { name: SEATS_DB, value: /data/register.db }
             - { name: REGISTER_LIMIT, value: "__REGISTER_LIMIT__" }
             - { name: PUBLIC_URL, value: "https://__HOST__" }
-            # Company landing page on "/" for these hosts (empty = workshop app on "/").
+            # Own domain hosts: "/" shows SITE_HOME (workshop = Mission Race register landing; company = Arupa page).
             - { name: SITE_HOSTS, value: "__SITE_HOSTS__" }
+            - { name: SITE_HOME, value: "__SITE_HOME__" }
             - { name: RACE_FILE, value: /data/race.json }
             - { name: OWN_KUBECONFIG_DIR, value: /data/own-kubeconfigs }
             - { name: KUBECONFIG_DIR, value: /kubeconfigs }

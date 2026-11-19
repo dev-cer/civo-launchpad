@@ -29,6 +29,8 @@ use std::{env, sync::{Arc, Mutex}, time::{SystemTime, UNIX_EPOCH}};
 
 pub struct SiteState {
     hosts: Vec<String>,
+    /// What "/" shows on the site hosts: "workshop" (register landing, default) or "company".
+    home: String,
     db: Option<Mutex<Connection>>,
     admin_token: Option<String>,
 }
@@ -39,8 +41,10 @@ impl SiteState {
             .map(|h| h.trim().to_lowercase()).filter(|h| !h.is_empty()).collect();
         let path = env::var("SEATS_DB").ok().filter(|s| !s.is_empty()).unwrap_or_else(|| "/data/register.db".to_string());
         let db = open(&path).map(Mutex::new).map_err(|e| eprintln!("Leads DB unavailable at {path}: {e}")).ok();
-        if !hosts.is_empty() { println!("Site: arupacloud landing page on {}", hosts.join(", ")); }
-        Arc::new(SiteState { hosts, db, admin_token })
+        if !hosts.is_empty() { println!("Site hosts: {}", hosts.join(", ")); }
+        let home = env::var("SITE_HOME").unwrap_or_default().trim().to_lowercase();
+        let home = if home == "company" { home } else { "workshop".to_string() };
+        Arc::new(SiteState { hosts, db, admin_token, home })
     }
     fn seats(&self) -> i64 {
         self.db.as_ref().and_then(|d| d.lock().ok().and_then(|c| c.query_row("SELECT COUNT(*) FROM seats", [], |r| r.get(0)).ok())).unwrap_or(0)
@@ -69,6 +73,8 @@ pub fn router(st: Arc<SiteState>) -> Router {
         .route("/site/solutions/:cat", get(panel))
         .route("/site/recommend", post(recommend))
         .route("/site/contact", get(contact_get).post(contact_post))
+        .route("/brand/arupa-logo.png", get(|| async { png(include_bytes!("assets/arupa-logo.png")) }))
+        .route("/brand/arupa-logo-white.png", get(|| async { png(include_bytes!("assets/arupa-logo-white.png")) }))
         .route("/admin/leads", get(admin_leads))
         .route("/admin/leads.csv", get(admin_leads_csv))
         .with_state(st)
@@ -86,7 +92,14 @@ pub async fn host_mw(State(st): State<Arc<SiteState>>, req: Request, next: Next)
             return Redirect::permanent(&format!("https://{apex}{pq}")).into_response();
         }
     }
-    if req.uri().path() == "/" { return home(&st); }
+    if req.uri().path() == "/" {
+        if st.home == "company" { return home(&st); }
+        // Workshop domain: "/" is the Mission Race register landing page.
+        let mut req = req;
+        let pq = req.uri().query().map(|q| format!("/register?{q}")).unwrap_or_else(|| "/register".to_string());
+        if let Ok(u) = pq.parse() { *req.uri_mut() = u; }
+        return next.run(req).await;
+    }
     next.run(req).await
 }
 
@@ -314,6 +327,10 @@ async fn admin_leads_csv(State(st): State<Arc<SiteState>>, headers: HeaderMap) -
     Response::builder().header(header::CONTENT_TYPE, "text/csv; charset=utf-8")
         .header(header::CONTENT_DISPOSITION, "attachment; filename=\"arupacloud-leads.csv\"").header(header::CACHE_CONTROL, "no-store")
         .body(Body::from(out)).unwrap()
+}
+
+fn png(b: &'static [u8]) -> Response {
+    ([(header::CONTENT_TYPE, "image/png"), (header::CACHE_CONTROL, "public, max-age=86400")], b).into_response()
 }
 
 fn clean(s: &str, max: usize) -> String {
