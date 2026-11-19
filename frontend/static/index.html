@@ -622,6 +622,14 @@ body.big .lb h1{font-size:96px}body.big .lb table{font-size:26px}
 .modnav button{border:1px solid var(--line2);border-radius:999px;padding:7px 15px;font-weight:600;font-size:13.5px;color:var(--text);transition:all .15s}
 .modnav button:hover{border-color:var(--green);color:var(--green);background:var(--green-a)}
 .modnav button.on{background:var(--green);color:#000;border-color:var(--green)}
+.event .ms.lock{opacity:.5;filter:saturate(.4)}.event .ms.lock .labs button{cursor:not-allowed}
+.event .ms .labs button.rd{color:var(--muted)}.event .ms .labs button small{color:var(--muted)}
+.event .ms .labs button[disabled]{cursor:not-allowed}
+.event .ms .labs button.chk.warn{background:var(--amber,#f5c542)}
+.mbadge{position:absolute;top:14px;right:14px;font-size:11.5px;font-weight:800;border-radius:999px;padding:4px 10px;letter-spacing:.02em}
+.mbadge.ok{background:var(--green,#00ff6f);color:#000}.mbadge.lk{background:#2a2d2a;color:#b8bdb4}.mbadge.go{background:#003d1c;color:var(--green,#00ff6f);border:1px solid var(--green,#00ff6f);animation:pulseb 2s infinite}
+@keyframes pulseb{50%{box-shadow:0 0 0 6px rgba(0,255,111,.15)}}
+.two-steps{display:flex;flex-wrap:wrap;gap:10px}
 </style>
 </head>
 <body>
@@ -694,7 +702,7 @@ function renderGate(g){
   const t = g==='before'
     ? { eb:'Launchpad opens soon', h:`Opens ${WINDOW.day}`, sub:`Doors open at ${WINDOW.start} when the ${EDITION==='workshop'?'workshop':'webinar'} starts, and stay open until 23:59 WIB the same day.`,
         big:`<b id="gatecount">${fmtLeft(WINDOW.o-nowMs())}</b><span>until doors open</span>`,
-        cta: EDITION==='workshop' ? `<p class="hint">Before you come: <b>sign up for your own Civo account</b> at dashboard.civo.com (card required, not prepaid/virtual) — you need it to register, and your $250 credit lands there. You create your own cluster in the race; bring a laptop with <code>civo</code> CLI, <code>kubectl</code> and <code>git</code> installed (Windows: use <b>PowerShell 7</b> or Git Bash, not Windows PowerShell 5.1), and your Civo API key.</p><a class="btn primary" href="${REG_FORM}" target="_blank" rel="noopener">Not registered? Register now ↗</a>`
+        cta: EDITION==='workshop' ? `<p class="hint">Before you come: <b>sign up for your own Civo account</b> at dashboard.civo.com (card required, not prepaid/virtual) — you need it to register, and your $250 credit lands there. You create your own cluster in the race; bring a laptop with <code>civo</code> CLI, <code>kubectl</code> and <code>git</code> installed (Windows: use <b>PowerShell 7</b> or Git Bash, not Windows PowerShell 5.1), and your Civo API key.</p><div class="two-steps"><a class="btn primary" href="${REG_FORM}" target="_blank" rel="noopener">① Register for the workshop ↗</a><a class="btn" href="https://www.civo.com/signup" target="_blank" rel="noopener">② Create your Civo account ↗</a></div><p class="hint" style="margin-top:10px">You need <b>both</b>: the form keeps your seat, the Civo account is where you build your cluster (and get the $250 credit).</p>`
              : `<p class="hint">Join the live session on Zoom, then come back here for the take-home journey.</p><a class="btn primary" href="${REG_FORM}" target="_blank" rel="noopener">Not registered? Register now ↗</a>` }
     : { eb:'Launchpad closed', h:'Thanks for sailing with us', sub:`This Launchpad was open on ${WINDOW.day}, from ${WINDOW.start} until 23:59 WIB. Your progress stays in this browser.`,
         big:`<b>${LABS.filter(labDone).length}/${LABS.length}</b><span>labs you completed</span>`,
@@ -1062,7 +1070,10 @@ function toast(msg){ const t=$('#toast'); t.innerHTML=msg; t.classList.add('show
 function addApp(a){ if(!S.cluster.apps.includes(a)) S.cluster.apps.push(a) }
 function updateProgress(){
   const total = LABS.length, done = LABS.filter(labDone).length, pct = Math.round(done/total*100);
-  $('#pwheel').innerHTML = wheelSVG(30); $('#ptext').textContent = `${done}/${total} labs · ${pct}%`;
+  $('#pwheel').innerHTML = wheelSVG(30);
+  let raced=null; try{ raced=RACE.mine }catch(e){}
+  if (EDITION==='workshop' && raced){ const n=MISSIONS.filter(m=>raced[m.id]!=null).length; $('#ptext').textContent = `🏁 ${n}/${MISSIONS.length} missions · ${n*100} pts`; return }
+  $('#ptext').textContent = `${done}/${total} labs · ${pct}%`;
 }
 function nodesOut(labels){
   if(S.cluster.status!=='active') return '<span class="err">The connection to the server was refused — create the cluster first.</span>';
@@ -1116,6 +1127,7 @@ function route(){
   if (h==='certificate' && EDITION==='workshop'){ location.hash='#'+ED.home; return }
   if (h==='terminal' && EDITION==='workshop') return renderTerminal();
   if (h==='library') return renderLibrary();
+  if (h.startsWith('lab-') && EDITION==='workshop') { const mi=MISSIONS.findIndex(m=>m.labs.includes(h.slice(4))); if (mi>0 && missionState(mi)==='locked'){ toast(`🔒 ${MISSIONS[mi].id} is locked — pass ${MISSIONS[mi-1].id} first`); location.hash='#'+ED.home; return } }
   if (h.startsWith('lab-')) { const l = LABS.find(x => x.id === h.slice(4));
     if (l && !S.reg){ S.pendingLab = l.id; save(); toast('Enter Launchpad first to claim your lab'); return go('enter') }
     if (l) return renderLab(l) }
@@ -2197,22 +2209,35 @@ async function raceCheck(mid){
         : (j.checks||[]).map(c=>`<div>${c.ok?'✅':'❌'} <span>${esc(c.name)}</span></div>${c.ok?'':`<div class="h">${esc(c.hint)}</div>`}`).join('')
           + (j.passed?`<div><b>🏁 ${mid} passed${j.elapsed!=null?' at +'+fmtT(j.elapsed):''}</b>${j.late?' · after the race board closed at 11:20':''}</div>`:'')
           + '';
-      if (j.passed){ confetti&&confetti(); btn.textContent='✓ Passed · check again'; }
+      if (j.passed){ confetti&&confetti(); btn.textContent='✓ Passed · check again'; updateProgress(); const ni=MISSIONS.findIndex(m=>m.id===mid)+1; if (ni<MISSIONS.length && !j.already) { toast(`+100 pts · ${MISSIONS[ni].id} unlocked`); setTimeout(()=>{ if ((location.hash||'').includes('beyond-scaling')) renderEvent() }, 2200) } }
     }
   }catch(e){ out.innerHTML='<div>⚠️ Could not reach Launchpad — check your Wi-Fi.</div>' }
   btn.disabled=false;
 }
+function missionState(i){
+  if (EDITION!=='workshop') return 'active';
+  if (RACE.mine[MISSIONS[i].id]!=null) return 'passed';
+  for (let j=0;j<i;j++) if (RACE.mine[MISSIONS[j].id]==null) return 'locked';
+  return 'active';
+}
+function raceScore(){ return MISSIONS.filter(m=>RACE.mine[m.id]!=null).length*100 }
 function missionPct(m){ const ls=m.labs.map(id=>LABS.find(l=>l.id===id)).filter(Boolean); return ls.filter(labDone).length/ls.length }
 function renderEvent(){
-  CUR=null; S.ctx='beyond-scaling'; save(); markNav('event'); clearInterval(TICK);
+  CUR=null; S.ctx='beyond-scaling'; save(); markNav('event'); clearInterval(TICK); updateProgress();
   const c=missionClock();
   const cards=MISSIONS.map((m,i)=>{ const p=missionPct(m), ls=m.labs.map(id=>LABS.find(l=>l.id===id));
-    return `<div class="ms ${c.cur===i?'now':''} ${p>=1?'ok':''}"><div class="n">${m.id}</div><h3>${m.name}</h3>
+    const st=missionState(i), prev=i>0?MISSIONS[i-1].id:'', needLink=EDITION==='workshop' && S.reg && S.own && !S.linked;
+    const badge = EDITION!=='workshop' ? '' : st==='passed' ? `<span class="mbadge ok">✅ Passed · +100 pts</span>` : st==='locked' ? `<span class="mbadge lk">🔒 Locked — pass ${prev} first</span>` : `<span class="mbadge go">▶ Your mission now</span>`;
+    return `<div class="ms ${c.cur===i?'now':''} ${(EDITION==='workshop'?st==='passed':p>=1)?'ok':''} ${st==='locked'?'lock':''} ${st==='active'&&EDITION==='workshop'?'now':''}">${badge}<div class="n">${m.id}</div><h3>${m.name}</h3>
       <div class="t">${EDITION==='workshop'?`Mission ${i+1} of ${MISSIONS.length} · ~${m.min} min`:`${m.start} · ${m.min} min`}</div><div class="g">${m.goal}</div>
       <div class="bar"><i style="width:${p*100}%"></i></div>
-      <div class="labs">${ls.map(l=>`<button class="${labDone(l)?'dn':''}" onclick="go('lab-${l.id}')">${labDone(l)?'✓':'→'} ${l.title}</button>`).join('')}
+      <div class="labs">${ls.map((l,k)=>EDITION==='workshop'
+        ? `<button class="${labDone(l)?'rd':''}" ${st==='locked'?'disabled':''} onclick="go('lab-${l.id}')">${st==='locked'?'🔒':'📖'} Step ${k+1} · ${l.title}${labDone(l)?' <small>· read</small>':''}</button>`
+        : `<button class="${labDone(l)?'dn':''}" onclick="go('lab-${l.id}')">${labDone(l)?'✓':'→'} ${l.title}</button>`).join('')}
 
-      ${EDITION==='workshop' ? `<button class="chk" id="rb-${m.id}" onclick="raceCheck('${m.id}')">${RACE.mine[m.id]!=null?'✓ Passed · check again':'✓ Check on my cluster'}</button>${RACE.mine[m.id]!=null?`<div class="won">Passed at +${fmtT(RACE.mine[m.id])}</div>`:''}<div class="rc" id="rc-${m.id}"></div>`
+      ${EDITION==='workshop' ? (st==='locked' ? `<button class="chk" disabled>🔒 Pass ${prev} to unlock</button>`
+          : needLink ? `<button class="chk warn" onclick="openConnect()">🔗 Connect your cluster first</button><div class="won" style="color:var(--amber)">Checks run on your real cluster — connect it in M0 (Terminal tab).</div>`
+          : `<button class="chk" id="rb-${m.id}" onclick="raceCheck('${m.id}')">${st==='passed'?'✓ Passed · check again':'✓ Check on my cluster'}</button>`)+`${RACE.mine[m.id]!=null?`<div class="won">Passed at +${fmtT(RACE.mine[m.id])}</div>`:''}<div class="rc" id="rc-${m.id}"></div>`
         : (i>0?`<button class="skip" onclick="openSkip(${i})">Behind? Skip to ${m.id}</button>`:'')}</div></div>` }).join('');
   const core=new Set(MISSIONS.flatMap(m=>m.labs).concat(['getting-started']));
   const take=LABS.filter(l=>!core.has(l.id));
