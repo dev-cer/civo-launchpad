@@ -1,5 +1,6 @@
 # Civo Launchpad on the "launchpad-ops" cluster. Rendered by scripts/deploy-launchpad.ps1:
-#   __HOST__  launchpad.<traefik-LB-IP>.sslip.io      __EMAIL__  ACME contact for Let's Encrypt
+#   __HOST__  arupacloud.com, or launchpad.<traefik-LB-IP>.sslip.io      __EMAIL__  ACME contact for Let's Encrypt
+#   TLS hosts, ingress rules and SITE_HOSTS are filled by deploy-launchpad.ps1 (apex + www when www resolves too)
 #   __IMAGE__ ghcr.io/<owner>/civo-launchpad:workshop-latest
 #   __OPEN__ / __CLOSE__  event window (RFC3339). Simulation: now .. now+1 day. Event: 26 Nov 10:00 .. 23:59 WIB.
 #   __SHELL_ON__ / __SHELL_MAX__  Launchpad Shell on (1/0) and how many web terminals at once (deploy -Shells)
@@ -72,6 +73,8 @@ spec:
             - { name: SEATS_DB, value: /data/register.db }
             - { name: REGISTER_LIMIT, value: "__REGISTER_LIMIT__" }
             - { name: PUBLIC_URL, value: "https://__HOST__" }
+            # Company landing page on "/" for these hosts (empty = workshop app on "/").
+            - { name: SITE_HOSTS, value: "__SITE_HOSTS__" }
             - { name: RACE_FILE, value: /data/race.json }
             - { name: OWN_KUBECONFIG_DIR, value: /data/own-kubeconfigs }
             - { name: KUBECONFIG_DIR, value: /kubeconfigs }
@@ -132,16 +135,10 @@ metadata:
 spec:
   ingressClassName: traefik
   tls:
-    - hosts: [__HOST__]
+    - hosts: [__TLS_HOSTS__]
       secretName: launchpad-tls
   rules:
-    - host: __HOST__
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service: { name: launchpad, port: { number: 80 } }
+__RULES__
 ---
 # Launchpad Shell: one web-terminal pod per participant, managed by Launchpad (ServiceAccount below).
 apiVersion: v1

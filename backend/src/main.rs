@@ -34,6 +34,7 @@ mod agent;
 mod kube;
 mod shell;
 mod seats;
+mod site;
 use axum::{
     extract::{Path, Query, State},
     http::{header, HeaderMap, StatusCode},
@@ -50,7 +51,7 @@ use std::{
     time::{SystemTime, UNIX_EPOCH},
 };
 use tokio::sync::Mutex;
-use tower_http::{cors::CorsLayer, services::ServeDir};
+use tower_http::{cors::CorsLayer, services::{ServeDir, ServeFile}};
 
 #[derive(Clone, Serialize, Deserialize, Debug)]
 struct DummyAccount {
@@ -413,6 +414,7 @@ async fn main() {
     let static_dir = env::var("STATIC_DIR").unwrap_or_else(|_| "static".to_string());
     let port = env::var("PORT").unwrap_or_else(|_| "8080".to_string());
 
+    let site_state = site::SiteState::from_env(state.admin_token.clone());
     let app = Router::new()
         .route("/healthz", get(|| async { "ok" }))
         .route("/api/register", post(register))
@@ -444,11 +446,18 @@ async fn main() {
         .route("/shell/:sid/*rest", get(shell_proxy))
         .route("/cert/:id", get(cert_page))
         .route("/verify/:id", get(verify_page))
-        .fallback_service(ServeDir::new(static_dir))
+        .fallback_service(ServeDir::new(&static_dir))
         .layer(CorsLayer::permissive())
         .with_state(state.clone())
         // Workshop landing + seat reservation (Askama + HTMX, SQLite): /register, /admin/registrations
-        .merge(seats::router(seats::SeatState::from_env(state.admin_token.clone(), state.window)));
+        .merge(seats::router(seats::SeatState::from_env(state.admin_token.clone(), state.window)))
+        // The race app also lives at /workshop, so the company domain can keep "/" for its landing page.
+        .route_service("/workshop", ServeFile::new(format!("{static_dir}/index.html")))
+        .route_service("/workshop/", ServeFile::new(format!("{static_dir}/index.html")))
+        .route("/launchpad", get(|| async { axum::response::Redirect::permanent("/workshop") }))
+        .merge(site::router(site_state.clone()))
+        // arupacloud.com: "/" = company landing page, www -> apex.
+        .layer(axum::middleware::from_fn_with_state(site_state, site::host_mw));
 
     let addr = format!("0.0.0.0:{port}");
     println!("🚀 Workshop server listening on http://{addr}");

@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex">
+<title>Leads · arupacloud.com · admin</title>
+<style>
+body{margin:0;font-family:system-ui,-apple-system,'Segoe UI',sans-serif;background:#f6f8fc;color:#0b1220}
+header{background:#061730;color:#fff;padding:14px 24px;display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+header b{font-size:20px;letter-spacing:.06em} header a{color:#9fd8ff;text-decoration:none;font-weight:600}
+main{padding:22px 24px} .top{display:flex;gap:12px;align-items:center;margin-bottom:16px}
+.stat{background:#061730;color:#fff;border-radius:999px;padding:8px 16px;font-weight:700}
+a.btn{background:#2563ff;color:#fff;text-decoration:none;font-weight:700;padding:10px 16px;border-radius:10px}
+.wrap{overflow:auto;background:#fff;border:1px solid #e3e8f0;border-radius:14px}
+table{border-collapse:collapse;width:100%;font-size:14px} th,td{padding:10px 12px;border-bottom:1px solid #eef1f6;text-align:left;vertical-align:top}
+th{background:#f1f4fa;font-size:12px;text-transform:uppercase;letter-spacing:.06em;white-space:nowrap} td.m{max-width:420px;white-space:pre-wrap}
+</style></head><body>
+<header><b>ARUPA admin</b><span>Leads dari arupacloud.com</span><a href="/admin/registrations">→ Pendaftar workshop</a></header>
+<main>
+  <div class="top"><span class="stat">{{ rows.len() }} leads</span><a class="btn" href="/admin/leads.csv">Download CSV</a></div>
+  <div class="wrap"><table>
+    <thead><tr><th>#</th><th>Masuk (WIB)</th><th>Nama</th><th>Email</th><th>Telepon</th><th>Perusahaan</th><th>Minat</th><th>Pesan</th><th>Sumber</th></tr></thead>
+    <tbody>{% for r in rows %}<tr><td>{{ r.id }}</td><td style="white-space:nowrap">{{ r.created }}</td><td><b>{{ r.name }}</b></td><td>{{ r.email }}</td><td>{{ r.phone }}</td><td>{{ r.company }}</td><td>{{ r.need }}</td><td class="m">{{ r.message }}</td><td>{{ r.source }}</td></tr>{% endfor %}
+    {% if rows.is_empty() %}<tr><td colspan="9" style="text-align:center;color:#777;padding:30px">Belum ada leads.</td></tr>{% endif %}</tbody>
+  </table></div>
+</main>
+<!-- logo kept for future header use -->{% if false %}{{ logo|safe }}{% endif %}
+</body></html>

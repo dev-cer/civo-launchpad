@@ -1,0 +1,9 @@
+<div class="pn{% if sol.cat == "kubernetes" %} k8s{% endif %}">
+  <div>
+    <span class="tag">{{ sol.tag }}</span>
+    <h3>{{ sol.title }}</h3>
+    <p>{{ sol.desc }}</p>
+    <a class="btn d" href="#kontak" hx-get="/site/contact?need={{ sol.cat }}" hx-target="#contact-box">Konsultasikan {{ sol.title }} →</a>
+  </div>
+  <ul>{% for (name, what) in sol.items %}<li><b>{{ name }}</b><span>{{ what }}</span></li>{% endfor %}</ul>
+</div>

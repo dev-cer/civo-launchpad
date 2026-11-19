@@ -343,6 +343,8 @@ fn clean(s: &str, max: usize) -> String {
 
 fn now() -> u64 { SystemTime::now().duration_since(UNIX_EPOCH).map(|d| d.as_secs()).unwrap_or(0) }
 
+pub fn wib_pub(t: i64) -> String { wib(t) }
+
 /// Unix seconds -> "YYYY-MM-DD HH:MM" in WIB (UTC+7).
 fn wib(t: i64) -> String {
     let t = t + 7 * 3600;

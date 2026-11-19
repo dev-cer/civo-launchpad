@@ -1,0 +1,19 @@
+<h3>Jadwalkan konsultasi</h3>
+<p class="note">Gratis, tanpa komitmen. Kami balas di hari kerja.</p>
+{% if !errors.is_empty() %}<div class="errs" role="alert"><ul>{% for e in errors %}<li>{{ e }}</li>{% endfor %}</ul></div>{% endif %}
+<form hx-post="/site/contact" hx-target="#contact-box" hx-disabled-elt="find button[type=submit]" novalidate>
+  <div class="row">
+    <label class="f">Nama lengkap<input name="name" value="{{ v.name }}" autocomplete="name" placeholder="Rina Saputri"></label>
+    <label class="f">Email kantor<input name="email" type="email" value="{{ v.email }}" autocomplete="email" placeholder="rina@perusahaan.co.id"></label>
+  </div>
+  <div class="row">
+    <label class="f">Perusahaan<input name="company" value="{{ v.company }}" autocomplete="organization" placeholder="PT Contoh Digital"></label>
+    <label class="f">Telepon / WhatsApp <span class="opt">(opsional)</span><input name="phone" type="tel" value="{{ v.phone }}" autocomplete="tel" placeholder="08xx xxxx xxxx"></label>
+  </div>
+  <label class="f">Minat<select name="need"><option value="">Pilih layanan…</option>{% for o in interests %}<option{% if o.selected %} selected{% endif %}>{{ o.label }}</option>{% endfor %}</select></label>
+  <label class="f">Ceritakan singkat <span class="opt">(opsional)</span><textarea name="message" placeholder="Contoh: aplikasi e-commerce kami sering lambat saat promo, ingin pindah ke Kubernetes.">{{ v.message }}</textarea></label>
+  <div class="hp" aria-hidden="true"><label>Website<input name="website" tabindex="-1" autocomplete="off"></label></div>
+  <input type="hidden" name="source" value="{{ v.source }}">
+  <label class="chk"><input type="checkbox" name="consent" value="yes"{% if !v.consent.is_empty() %} checked{% endif %}> Saya setuju PT Arupa Cloud Nusantara menggunakan data ini untuk menghubungi saya terkait permintaan ini.</label>
+  <button class="btn p lg" type="submit" style="width:100%">Kirim permintaan <span class="spin" aria-hidden="true"></span></button>
+</form>

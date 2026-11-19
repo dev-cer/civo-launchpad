@@ -1,0 +1,6 @@
+{% if recos.is_empty() %}<div class="empty">👈 Pilih kebutuhan untuk melihat rekomendasi solusi.</div>{% else %}
+<p class="eyebrow" style="color:var(--cyan);margin-bottom:4px">Rekomendasi untuk Anda</p>
+{% for r in recos %}<div class="rc" style="animation-delay:{{ loop.index0 * 60 }}ms"><div class="n">{{ loop.index }}</div><div><b>{{ r.title }}</b><span>{{ r.why }}</span></div></div>{% endfor %}
+<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:18px">
+  <a class="btn p" href="#kontak" hx-get="/site/contact?need={{ recos[0].cat }}&note={{ needs|urlencode }}" hx-target="#contact-box">Konsultasikan rekomendasi ini →</a>
+</div>{% endif %}
