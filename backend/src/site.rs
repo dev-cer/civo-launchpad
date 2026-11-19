@@ -44,11 +44,9 @@ impl SiteState {
         let db = open(&path).map(Mutex::new).map_err(|e| eprintln!("Leads DB unavailable at {path}: {e}")).ok();
         if !hosts.is_empty() { println!("Site hosts: {}", hosts.join(", ")); }
         let home = env::var("SITE_HOME").unwrap_or_default().trim().to_lowercase();
-        let home = if home == "company" { home } else { "workshop".to_string() };
+        // "/" on the company domain: the Arupa Cloud page (default) or the workshop landing.
+        let home = if home == "workshop" { home } else { "company".to_string() };
         Arc::new(SiteState { hosts, db, admin_token, home, window })
-    }
-    fn seats(&self) -> i64 {
-        self.db.as_ref().and_then(|d| d.lock().ok().and_then(|c| c.query_row("SELECT COUNT(*) FROM seats", [], |r| r.get(0)).ok())).unwrap_or(0)
     }
 }
 
@@ -71,6 +69,11 @@ fn open(path: &str) -> rusqlite::Result<Connection> {
 
 pub fn router(st: Arc<SiteState>) -> Router {
     Router::new()
+        .route("/civo", get(civo_page))
+        .route("/civo/", get(civo_page))
+        .route("/civo/partner", get(partner_page))
+        .route("/partnercivo", get(|| async { Redirect::permanent("/civo/partner") }))
+        .route("/partner-civo", get(|| async { Redirect::permanent("/civo/partner") }))
         .route("/site/solutions/:cat", get(panel))
         .route("/site/recommend", post(recommend))
         .route("/site/contact", get(contact_get).post(contact_post))
@@ -108,66 +111,65 @@ pub async fn host_mw(State(st): State<Arc<SiteState>>, req: Request, next: Next)
 struct Sol { cat: &'static str, title: &'static str, tag: &'static str, desc: &'static str, items: &'static [(&'static str, &'static str)] }
 
 const SOLUTIONS: &[Sol] = &[
-    Sol { cat: "kubernetes", title: "Kubernetes & Cloud Native", tag: "Civo Kubernetes · Jakarta",
-        desc: "Managed Kubernetes dari Civo di region Jakarta, dioperasikan Arupa sebagai Civo Indonesia Representative. Kubernetes standar (CNCF certified), jadi workload mudah dipindah.",
-        items: &[("Civo Kubernetes", "Cluster siap pakai dalam hitungan menit, region Jakarta (JKT1)"),
-                 ("Arupa Object Storage (S3)", "Penyimpanan objek S3-compatible untuk aplikasi dan backup"),
-                 ("Cloud Stack", "VMware dan Kubernetes untuk aplikasi tradisional maupun modern"),
-                 ("GPU / AI", "Komputasi GPU untuk AI, ML dan HPC")] },
-    Sol { cat: "compute", title: "Komputasi & Private Cloud", tag: "Virtual Datacenter",
-        desc: "Virtual Datacenter yang bisa diatur penuh, sampai private cloud dedicated di data center Jakarta atau Cibitung.",
-        items: &[("Virtual Datacenter (VDC)", "Resource custom, HA, backup dan DR terintegrasi, tanpa kontrak mengikat"),
-                 ("Dedicated Private Cloud", "Kontrol data penuh dan kepatuhan untuk lingkungan dedicated"),
-                 ("Datacenter & Connectivity", "Layanan data center, konektivitas, network & security"),
-                 ("Cloud Management", "Monitoring infrastruktur dan aplikasi")] },
-    Sol { cat: "backup", title: "Backup & Disaster Recovery", tag: "Veeam · Zerto",
-        desc: "Lindungi data di cloud, on-premise dan Microsoft 365 dengan backup terjadwal, immutable, dan DR yang teruji.",
-        items: &[("Veeam Backup & Backup 365", "Backup VM, server fisik dan Microsoft 365 ke cloud lokal"),
-                 ("Arupa Backup & S3 Object Storage", "Repository backup hemat dengan dukungan immutable"),
-                 ("Zerto SecondSite", "Continuous data protection: RPO dalam detik, RTO dalam menit"),
-                 ("Veeam Replication", "Replikasi dan failover/failback yang mudah diuji")] },
-    Sol { cat: "security", title: "Keamanan Siber", tag: "SOC as a Service",
-        desc: "Lapisan keamanan dari edge sampai operasional: cegah serangan, temukan celah, pantau 24x7.",
-        items: &[("Anti-DDoS & WAF", "Lindungi aplikasi web dari serangan volumetrik dan L7"),
-                 ("Vulnerability Scanning & Pentest", "Temukan dan tutup celah sebelum dieksploitasi"),
-                 ("SOC as a Service", "Pemantauan dan respons insiden keamanan"),
-                 ("SSL Certificate", "Sertifikat TLS untuk layanan Anda")] },
-    Sol { cat: "managed", title: "Managed & Professional Services", tag: "Dukungan lokal",
-        desc: "Tim lokal yang mendesain, mengimplementasi dan mengelola infrastruktur Anda — dengan SLA respons yang jelas.",
-        items: &[("Design & Architecture", "Rancangan arsitektur cloud, backup dan DR"),
-                 ("Implementation & Project Management", "Migrasi dan implementasi end-to-end"),
-                 ("Managed Cloud, Backup & Storage", "Operasional harian diurus tim Arupa"),
-                 ("Managed CCTV", "Rekaman CCTV online bersama ACOBA")] },
-    Sol { cat: "business", title: "Business Solution", tag: "Produktivitas",
-        desc: "Aplikasi bisnis as-a-service untuk kolaborasi dan operasional perusahaan.",
-        items: &[("Microsoft 365", "Sebagai Microsoft Tier 1 CSP"),
-                 ("Enterprise File Sharing & Virtual Dataroom", "Berbagi dokumen yang aman dan terkontrol"),
-                 ("Document & Order Management", "Digitalisasi proses dokumen dan pesanan"),
-                 ("Warehouse & Treasury System", "Sistem operasional siap pakai")] },
+    Sol { cat: "cloud", title: "Cloud Infrastructure", tag: "Sovereign cloud · Jakarta & Cibitung",
+        desc: "Cloud di data center Indonesia — dari Virtual Datacenter dan private cloud sampai Kubernetes terkelola Civo di region Jakarta.",
+        items: &[("Zettagrid Cloud Platform", "Virtual Datacenter: resource custom, HA, backup dan DR terintegrasi"),
+                 ("Civo Cloud Platform", "Kubernetes terkelola di region Jakarta (JKT1), siap dalam ~90 detik"),
+                 ("VMware Cloud Foundation", "Private cloud berbasis VMware — Broadcom Premier Partner (VCSP)"),
+                 ("Red Hat Hybrid Cloud", "Platform hybrid cloud untuk aplikasi enterprise"),
+                 ("SUSE Cloud Native", "Stack cloud-native terbuka"),
+                 ("Dell & HPE Server", "Server dan storage untuk on-premise dan private cloud")] },
+    Sol { cat: "resilience", title: "Business Resilience", tag: "Backup · DR · Veeam",
+        desc: "Backup immutable dan disaster recovery antarzona, supaya bisnis tetap berjalan saat ransomware, bencana atau downtime.",
+        items: &[("Zettagrid Cloud Backup", "Backup VM dan server ke cloud lokal"),
+                 ("Zettagrid Cloud DR", "SecondSite DR: RPO dalam detik, RTO dalam menit"),
+                 ("Arupa Managed Backup", "Backup yang dioperasikan tim Arupa"),
+                 ("Veeam Data Platform", "Backup dan replikasi — Veeam Platinum Cloud Provider"),
+                 ("Veeam Backup for Microsoft 365", "Proteksi email dan file Microsoft 365 di Indonesia"),
+                 ("Arupa CCTV Backup", "Rekaman CCTV online bersama Acoba")] },
+    Sol { cat: "aidata", title: "AI & Data Platform", tag: "Object storage · lakehouse · GPU",
+        desc: "Fondasi data dan AI generasi baru: object storage S3, data lakehouse dan komputasi AI.",
+        items: &[("MinIO AIStor", "Object storage berperforma tinggi untuk AI"),
+                 ("Dremio Data Lakehouse", "Query terpadu lintas data lake dan database"),
+                 ("Croit Ceph Storage", "Software-defined storage berbasis Ceph"),
+                 ("Arupa Object Storage", "S3-compatible, cocok untuk backup immutable"),
+                 ("Supermicro AI Computing", "Server GPU untuk training dan inference")] },
+    Sol { cat: "specialized", title: "Specialized Solutions", tag: "Keamanan · jaringan · platform",
+        desc: "Solusi pelengkap untuk keamanan, jaringan dan operasional container.",
+        items: &[("Portainer", "Manajemen container dan Kubernetes yang sederhana"),
+                 ("HPE Networking", "Jaringan enterprise"),
+                 ("Fortinet Security", "Firewall dan keamanan jaringan"),
+                 ("Palo Alto AI Security", "Keamanan berbasis AI"),
+                 ("Cloudflare Web Security", "WAF, Anti-DDoS dan proteksi aplikasi web"),
+                 ("Twingate Zero Trust", "Akses jarak jauh zero trust"),
+                 ("Kaspersky Security", "Proteksi endpoint")] },
 ];
 
+/// Extra interests for the consultation form (not pillars).
+const EXTRA_NEEDS: &[(&str, &str)] = &[("civo", "Civo Kubernetes"), ("partner", "Program Partner Civo"), ("workshop", "Workshop & training Kubernetes")];
+
 const NEEDS: &[(&str, &str)] = &[
-    ("modern", "Modernisasi aplikasi / microservices"),
+    ("modern", "Modernisasi aplikasi / Kubernetes"),
     ("scale", "Aplikasi harus tahan lonjakan traffic"),
     ("ransomware", "Proteksi dari ransomware & kehilangan data"),
     ("dr", "Bisnis tidak boleh berhenti (DR)"),
     ("residency", "Data harus tetap di Indonesia"),
-    ("ai", "Menjalankan AI / GPU"),
+    ("ai", "Menjalankan AI / data platform"),
     ("security", "Mengamankan aplikasi web"),
-    ("m365", "Kolaborasi kantor & email"),
+    ("m365", "Proteksi Microsoft 365"),
 ];
 
 fn reco_for(need: &str) -> (&'static str, &'static str, &'static str) {
     match need {
-        "modern" => ("Civo Kubernetes", "Kubernetes standar di Jakarta — deploy container tanpa mengurus control plane.", "kubernetes"),
-        "scale" => ("Civo Kubernetes + autoscaling", "HPA dan node pool menambah kapasitas saat ramai, lalu turun lagi.", "kubernetes"),
-        "ransomware" => ("Veeam + Arupa Object Storage", "Backup terjadwal ke repository immutable di cloud lokal.", "backup"),
-        "dr" => ("Zerto SecondSite DR", "Replikasi berkelanjutan: RPO detik, RTO menit, failover teruji.", "backup"),
-        "residency" => ("Virtual Datacenter / Private Cloud", "Infrastruktur 100% lokal di Jakarta atau Cibitung, dukungan lokal.", "compute"),
-        "ai" => ("GPU / AI", "Komputasi GPU untuk training dan inference.", "kubernetes"),
-        "security" => ("Anti-DDoS + WAF + SOC", "Lindungi aplikasi publik dan pantau ancaman.", "security"),
-        "m365" => ("Microsoft 365 + Veeam Backup 365", "Produktivitas dengan backup Microsoft 365 di Indonesia.", "business"),
-        _ => ("Konsultasi arsitektur", "Tim kami bantu memetakan kebutuhan Anda.", "managed"),
+        "modern" => ("Civo Kubernetes", "Kubernetes standar di region Jakarta — deploy container tanpa mengurus control plane.", "civo"),
+        "scale" => ("Civo Kubernetes + autoscaling", "HPA dan node pool menambah kapasitas saat ramai, lalu turun lagi.", "civo"),
+        "ransomware" => ("Veeam + Arupa Object Storage", "Backup terjadwal ke repository immutable di cloud lokal.", "resilience"),
+        "dr" => ("Zettagrid Cloud DR (SecondSite)", "Replikasi antarzona Jakarta–Cibitung: RPO detik, RTO menit.", "resilience"),
+        "residency" => ("Sovereign Cloud: VDC / Private Cloud", "Infrastruktur di Jakarta dan Cibitung, dikelola tim lokal 24x7.", "cloud"),
+        "ai" => ("MinIO AIStor + GPU", "Object storage untuk AI dan komputasi GPU untuk training dan inference.", "aidata"),
+        "security" => ("Cloudflare + Fortinet", "WAF, Anti-DDoS dan firewall untuk aplikasi publik.", "specialized"),
+        "m365" => ("Veeam Backup for Microsoft 365", "Backup email dan file Microsoft 365 dengan data di Indonesia.", "resilience"),
+        _ => ("Konsultasi arsitektur", "Tim kami bantu memetakan kebutuhan Anda.", "cloud"),
     }
 }
 
@@ -179,7 +181,15 @@ struct Reco { title: &'static str, why: &'static str, cat: &'static str }
 
 #[derive(Template)]
 #[template(path = "site/home.html")]
-struct HomeTpl<'a> { civo: &'a str, tabs: Vec<CatTab>, sol: &'a Sol, needs: Vec<Need>, seats: i64, v: Lead, errors: Vec<String>, interests: Vec<Interest> }
+struct HomeTpl<'a> { civo: &'a str, nav: &'a str, tabs: Vec<CatTab>, sol: &'a Sol, needs: Vec<Need>, v: Lead, errors: Vec<String>, interests: Vec<Interest> }
+
+#[derive(Template)]
+#[template(path = "site/civo.html")]
+struct CivoTpl<'a> { civo: &'a str, nav: &'a str, v: Lead, errors: Vec<String>, interests: Vec<Interest> }
+
+#[derive(Template)]
+#[template(path = "site/partner.html")]
+struct PartnerTpl<'a> { civo: &'a str, nav: &'a str, v: Lead, errors: Vec<String>, interests: Vec<Interest> }
 
 #[derive(Template)]
 #[template(path = "site/panel.html")]
@@ -223,8 +233,13 @@ fn render<T: Template>(t: T) -> Response {
 }
 
 fn interests(need: &str) -> Vec<Interest> {
-    SOLUTIONS.iter().map(|s| s.title).chain(std::iter::once("Workshop & training Kubernetes"))
+    SOLUTIONS.iter().map(|s| s.title).chain(EXTRA_NEEDS.iter().map(|(_, t)| *t))
         .map(|t| Interest { label: t.to_string(), selected: need == t }).collect()
+}
+fn need_title(key: &str) -> String {
+    SOLUTIONS.iter().find(|s| s.cat == key || s.title == key).map(|s| s.title)
+        .or_else(|| EXTRA_NEEDS.iter().find(|(k, t)| *k == key || *t == key).map(|(_, t)| *t))
+        .unwrap_or("").to_string()
 }
 
 fn contact_tpl(v: Lead, errors: Vec<String>) -> ContactTpl {
@@ -232,12 +247,22 @@ fn contact_tpl(v: Lead, errors: Vec<String>) -> ContactTpl {
     ContactTpl { v, errors, interests }
 }
 
-fn home(st: &SiteState) -> Response {
+fn home(_st: &SiteState) -> Response {
     let tabs = SOLUTIONS.iter().enumerate().map(|(i, s)| CatTab { cat: s.cat, title: s.title, active: i == 0 }).collect();
     let needs = NEEDS.iter().map(|(k, l)| Need { key: k, label: l }).collect();
-    let mut r = render(HomeTpl { civo: crate::cert::LOGO, tabs, sol: &SOLUTIONS[0], needs, seats: st.seats(), v: Lead::default(), errors: vec![], interests: interests("") });
+    let mut r = render(HomeTpl { civo: crate::cert::LOGO, nav: "home", tabs, sol: &SOLUTIONS[0], needs, v: Lead::default(), errors: vec![], interests: interests("") });
     r.headers_mut().insert(header::CACHE_CONTROL, "public, max-age=60".parse().unwrap());
     r
+}
+
+async fn civo_page() -> Response {
+    let need = need_title("civo");
+    render(CivoTpl { civo: crate::cert::LOGO, nav: "civo", interests: interests(&need), v: Lead { need, ..Default::default() }, errors: vec![] })
+}
+
+async fn partner_page() -> Response {
+    let need = need_title("partner");
+    render(PartnerTpl { civo: crate::cert::LOGO, nav: "partner", interests: interests(&need), v: Lead { need, ..Default::default() }, errors: vec![] })
 }
 
 async fn panel(Path(cat): Path<String>) -> Response {
@@ -260,7 +285,7 @@ async fn recommend(body: String) -> Response {
 struct NeedQ { #[serde(default)] need: String, #[serde(default)] note: String }
 
 async fn contact_get(Query(q): Query<NeedQ>) -> Response {
-    let need = SOLUTIONS.iter().find(|s| s.cat == q.need || s.title == q.need).map(|s| s.title.to_string()).unwrap_or_default();
+    let need = need_title(&q.need);
     let message = if q.note.is_empty() { String::new() } else { format!("Kebutuhan: {}", clean(&q.note, 400)) };
     render(contact_tpl(Lead { need, message, ..Default::default() }, vec![]))
 }

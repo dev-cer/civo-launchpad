@@ -1,218 +1,135 @@
-<!doctype html>
-<html lang="id">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Arupa Cloud — Cloud lokal, dukungan lokal · PT Arupa Cloud Nusantara</title>
-<meta name="description" content="PT Arupa Cloud Nusantara: cloud, Kubernetes, backup, disaster recovery, keamanan dan managed service berbasis as-a-service, dengan infrastruktur dan dukungan 100% lokal.">
-<meta property="og:title" content="Arupa Cloud — Cloud lokal, dukungan lokal">
-<meta property="og:description" content="Cloud, Kubernetes, backup, DR dan keamanan as-a-service dari Jakarta.">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400..800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-<script src="/register/htmx.min.js" defer></script>
-<style>
-:root{--navy:#061730;--navy2:#0b2347;--blue:#2563ff;--cyan:#22d3ee;--ink:#0b1220;--mute:#5a6478;--line:#e3e8f0;--paper:#f6f8fc;--g:#00ff6f}
-*{box-sizing:border-box} html{scroll-behavior:smooth;scroll-padding-top:80px}
-body{margin:0;font-family:'Plus Jakarta Sans',system-ui,sans-serif;color:var(--ink);background:var(--paper);-webkit-font-smoothing:antialiased}
-a{color:inherit} svg{display:block}
-.wrap{max-width:1180px;margin:0 auto;padding:0 24px}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;font:inherit;font-weight:700;font-size:15px;padding:13px 22px;border-radius:12px;border:0;cursor:pointer;text-decoration:none;transition:transform .15s,box-shadow .15s;white-space:nowrap}
-.btn:hover{transform:translateY(-2px)} .btn.p{background:var(--blue);color:#fff;box-shadow:0 10px 30px rgba(37,99,255,.35)} .btn.o{background:transparent;color:#fff;border:1.5px solid rgba(255,255,255,.35)}
-.btn.d{background:var(--ink);color:#fff} .btn.lg{padding:16px 26px;font-size:16px}
-.eyebrow{font:700 12.5px 'JetBrains Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--blue);margin:0 0 12px}
-h2{font-size:clamp(30px,3.6vw,46px);line-height:1.1;letter-spacing:-.02em;margin:0 0 14px;font-weight:800}
-.lead{font-size:18px;line-height:1.65;color:var(--mute);max-width:720px;margin:0}
-section.s{padding:96px 0}
-/* header */
-.top{position:sticky;top:0;z-index:40;background:rgba(6,23,48,.86);backdrop-filter:blur(12px);color:#fff;border-bottom:1px solid rgba(255,255,255,.08)}
-.top .wrap{display:flex;align-items:center;gap:28px;height:68px}
-.brand{display:flex;align-items:baseline;gap:6px;text-decoration:none;font-weight:800;font-size:22px;letter-spacing:.06em}
-.brand span{font-weight:500;letter-spacing:.02em;color:var(--cyan);font-size:18px}
-.nav{display:flex;gap:22px;font-size:14.5px;font-weight:600;color:#c9d4e6;margin-left:auto} .nav a{text-decoration:none} .nav a:hover{color:#fff}
-@media(max-width:900px){.nav{display:none}.top .btn{margin-left:auto}}
-/* hero */
-.hero{position:relative;overflow:hidden;color:#fff;background:radial-gradient(900px 500px at 80% 10%,rgba(37,99,255,.35),transparent 60%),radial-gradient(700px 400px at 10% 90%,rgba(34,211,238,.18),transparent 60%),var(--navy);padding:84px 0 0}
+{% extends "site/base.html" %}
+{% block title %}Arupa Cloud — Sovereign Cloud. Global Technology. Trusted Partner.{% endblock %}
+{% block desc %}PT Arupa Cloud Nusantara: sovereign cloud operator dan technology aggregator — cloud, backup & DR, AI & data, dan keamanan sebagai layanan, dari Jakarta dan Cibitung.{% endblock %}
+{% block css %}
+.hero{position:relative;overflow:hidden;color:#fff;background:radial-gradient(900px 520px at 85% 10%,rgba(10,155,232,.35),transparent 60%),radial-gradient(700px 420px at 5% 95%,rgba(244,121,32,.22),transparent 60%),var(--navy);padding:76px 0 0}
 .hero:before{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.05) 1px,transparent 1px);background-size:48px 48px;-webkit-mask-image:radial-gradient(ellipse at 70% 30%,#000 20%,transparent 70%);mask-image:radial-gradient(ellipse at 70% 30%,#000 20%,transparent 70%)}
-.hero .grid{position:relative;display:grid;grid-template-columns:1.05fr .95fr;gap:40px;align-items:center}
-@media(max-width:940px){.hero .grid{grid-template-columns:1fr}}
+.hero .grid{position:relative;display:grid;grid-template-columns:1.05fr .95fr;gap:40px;align-items:center}@media(max-width:940px){.hero .grid{grid-template-columns:1fr}}
 .pill{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:999px;padding:7px 14px;font-size:13.5px;font-weight:600;color:#d7e2f3}
-.pill i{width:8px;height:8px;border-radius:50%;background:var(--g);box-shadow:0 0 10px var(--g)}
-.hero h1{font-size:clamp(40px,5.4vw,70px);line-height:1.02;letter-spacing:-.035em;margin:20px 0 18px;font-weight:800}
-.hero h1 em{font-style:normal;background:linear-gradient(90deg,var(--cyan),#7aa2ff);-webkit-background-clip:text;background-clip:text;color:transparent}
+.pill i{width:8px;height:8px;border-radius:50%;background:var(--orange);box-shadow:0 0 10px var(--orange)}
+.hero h1{font-size:clamp(40px,5.2vw,66px);line-height:1.03;letter-spacing:-.035em;margin:20px 0 18px;font-weight:800}
+.hero h1 em{font-style:normal;background:linear-gradient(90deg,var(--blue),var(--cyan));-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero h1 u{text-decoration:none;color:var(--orange)}
 .hero p.sub{font-size:19px;line-height:1.6;color:#c3cfe3;max-width:560px;margin:0 0 28px}
-.hero .ctas{display:flex;gap:12px;flex-wrap:wrap}
-.stats{position:relative;display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.1);border-radius:18px;overflow:hidden;margin:64px 0 0}
-.stats div{background:rgba(6,23,48,.92);padding:22px 24px} .stats b{display:block;font-size:36px;font-weight:800;letter-spacing:-.02em} .stats span{color:#9fb0cc;font-size:14px}
-@media(max-width:700px){.stats{grid-template-columns:1fr 1fr}}
-.stack{position:relative;height:470px}
-.stack svg{width:100%;height:100%}
-.stack .layer{cursor:pointer;transition:transform .25s}
-.stack text{font-family:'Plus Jakarta Sans',system-ui,sans-serif} .stack g[font-family] text{font-family:'JetBrains Mono',monospace}
-.stack .layer:hover{transform:translateY(-6px)}
-.stack .layer:hover .face{filter:brightness(1.25)}
-.marquee{position:relative;margin-top:56px;border-top:1px solid rgba(255,255,255,.08);background:rgba(0,0,0,.18);overflow:hidden;white-space:nowrap;padding:18px 0}
-.marquee span{display:inline-block;animation:mq 40s linear infinite;padding-right:40px;font-weight:600;font-size:14.5px;color:#b8c6dd}
-.marquee b{color:#fff;font-weight:700;margin:0 20px 0 0} .marquee b:before{content:"✓ ";color:var(--cyan)}
+.roles{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:24px;padding:22px}
+.roles .rt{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
+.roles .rt button{font:inherit;font-weight:700;color:#c9d4e6;background:transparent;border:1px solid rgba(255,255,255,.2);border-radius:12px;padding:12px;cursor:pointer;text-align:left}
+.roles .rt button small{display:block;font-weight:600;font-size:11.5px;letter-spacing:.12em;color:#8fa3c2;margin-bottom:2px}
+.roles .rt button.on{background:#fff;color:var(--ink);border-color:#fff}.roles .rt button.on small{color:var(--blue)}
+.roles .rb{min-height:190px;animation:rise .35s ease}
+.roles .rb p{color:#c3cfe3;line-height:1.6;margin:0 0 16px}
+.badges{display:flex;flex-wrap:wrap;gap:8px}.badges span{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);border-radius:10px;padding:9px 14px;font-weight:700}
+.badges span.k{background:var(--g);color:#0b0b0b;border-color:var(--g)}
+.stats{position:relative;display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.1);border-radius:18px;overflow:hidden;margin:58px 0 0}
+.stats div{background:rgba(6,23,48,.92);padding:22px 24px}@media(max-width:700px){.stats{grid-template-columns:1fr 1fr}}
+.marquee{position:relative;margin-top:52px;border-top:1px solid rgba(255,255,255,.08);background:rgba(0,0,0,.18);overflow:hidden;white-space:nowrap;padding:16px 0}
+.marquee span{display:inline-block;animation:mq 46s linear infinite;padding-right:40px;font-weight:600;font-size:14.5px;color:#b8c6dd}
+.marquee b{color:#fff;font-weight:700;margin:0 22px 0 0}.marquee b:before{content:"✓ ";color:var(--orange)}
 @keyframes mq{to{transform:translateX(-50%)}}
-/* explorer */
-.tabs{display:flex;flex-wrap:wrap;gap:8px;margin:30px 0 18px}
-.tab{font:inherit;font-weight:700;font-size:14.5px;padding:11px 16px;border-radius:999px;border:1.5px solid var(--line);background:#fff;color:var(--ink);cursor:pointer;transition:all .15s}
-.tab:hover{border-color:var(--blue)} .tab.on{background:var(--ink);color:#fff;border-color:var(--ink)}
-#panel{min-height:360px} #panel.htmx-swapping{opacity:0;transition:opacity .12s} #panel.htmx-settling .pn{animation:rise .35s ease}
-@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
-.pn{display:grid;grid-template-columns:.9fr 1.1fr;gap:28px;background:#fff;border:1px solid var(--line);border-radius:24px;padding:34px;box-shadow:0 20px 60px rgba(11,18,32,.06)}
-@media(max-width:860px){.pn{grid-template-columns:1fr}}
-.pn .tag{display:inline-block;font:700 12px 'JetBrains Mono',monospace;letter-spacing:.1em;text-transform:uppercase;background:#eaf0ff;color:var(--blue);padding:6px 10px;border-radius:8px}
-.pn h3{font-size:30px;letter-spacing:-.02em;margin:14px 0 10px} .pn p{color:var(--mute);line-height:1.65;font-size:16.5px;margin:0 0 20px}
-.pn ul{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:12px} @media(max-width:560px){.pn ul{grid-template-columns:1fr}}
-.pn li{border:1px solid var(--line);border-radius:16px;padding:18px;background:var(--paper);transition:transform .15s,border-color .15s} .pn li:hover{transform:translateY(-3px);border-color:var(--blue)}
-.pn li b{display:block;font-size:16px;margin-bottom:6px} .pn li span{color:var(--mute);font-size:14.5px;line-height:1.5}
-.pn.k8s .tag{background:#e3fff0;color:#008a3e}
-/* recommender */
-.reco{background:var(--navy);color:#fff}
-.reco .lead{color:#b8c6dd}
-.reco .grid{display:grid;grid-template-columns:1fr 1fr;gap:34px;margin-top:34px;align-items:start} @media(max-width:900px){.reco .grid{grid-template-columns:1fr}}
-.needs{display:flex;flex-wrap:wrap;gap:10px}
-.need{position:relative} .need input{position:absolute;opacity:0;pointer-events:none}
+.flip{perspective:1000px;cursor:pointer;min-height:220px}
+.flip .in{position:relative;height:100%;min-height:220px;transition:transform .6s;transform-style:preserve-3d}
+.flip.on .in{transform:rotateY(180deg)}
+.flip .f,.flip .b{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:20px;padding:24px;display:flex;flex-direction:column}
+.flip .f{background:#fff;border:1px solid var(--line)}.flip .b{background:var(--navy);color:#fff;transform:rotateY(180deg)}
+.flip .n{font:700 13px 'JetBrains Mono',monospace;color:var(--orange)} .flip h3{margin:10px 0 8px;font-size:21px} .flip p{margin:0;color:var(--mute);line-height:1.55}
+.flip .b p{color:#c3cfe3} .flip .b h3{color:var(--cyan)} .flip small{margin-top:auto;font-weight:700;color:var(--blue)}
+.zones{display:grid;grid-template-columns:1.1fr .9fr;gap:34px;align-items:center;margin-top:30px}@media(max-width:900px){.zones{grid-template-columns:1fr}}
+.zmap{background:#04122a;border:1px solid rgba(255,255,255,.12);border-radius:24px;padding:10px}
+.zfeat{display:grid;gap:10px}
+.zfeat button{font:inherit;text-align:left;color:#fff;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:16px 18px;cursor:pointer;transition:all .15s}
+.zfeat button b{display:block;font-size:16px}.zfeat button span{color:#9fb0cc;font-size:14px}
+.zfeat button.on,.zfeat button:hover{background:#fff;color:var(--ink);border-color:#fff}.zfeat button.on span,.zfeat button:hover span{color:var(--mute)}
+.tl{display:flex;overflow-x:auto;padding:30px 0 10px;scrollbar-width:thin}
+.tl button{flex:1 0 130px;position:relative;font:inherit;background:none;border:0;cursor:pointer;text-align:left;padding:28px 12px 0;color:var(--ink)}
+.tl button:before{content:"";position:absolute;top:8px;left:0;right:0;height:3px;background:var(--line)}
+.tl button:after{content:"";position:absolute;top:1px;left:12px;width:17px;height:17px;border-radius:50%;background:#fff;border:3px solid var(--line);transition:all .2s}
+.tl button.on:before{background:var(--blue)} .tl button.on:after,.tl button:hover:after{border-color:var(--orange);background:var(--orange)}
+.tl b{display:block;font-size:22px;font-weight:800}.tl span{color:var(--mute);font-size:14px}
+.tlbox{margin-top:18px;background:#fff;border:1px solid var(--line);border-radius:18px;padding:20px 24px;min-height:70px;animation:rise .3s ease}
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:30px}@media(max-width:860px){.steps{grid-template-columns:1fr 1fr}}
+.steps button{font:inherit;text-align:left;background:#fff;border:1.5px solid var(--line);border-radius:18px;padding:18px;cursor:pointer;transition:all .15s}
+.steps button i{font:700 12px 'JetBrains Mono',monospace;font-style:normal;color:var(--orange)} .steps button b{display:block;font-size:20px;margin-top:4px}
+.steps button.on{background:var(--ink);color:#fff;border-color:var(--ink)}.steps button:hover{border-color:var(--ink)}
+.stepbox{margin-top:14px;display:grid;grid-template-columns:1fr auto;gap:20px;align-items:center;background:var(--navy);color:#fff;border-radius:20px;padding:24px 28px;animation:rise .3s ease}
+.stepbox p{margin:6px 0 0;color:#c3cfe3}.stepbox .res{background:var(--orange);color:#fff;border-radius:12px;padding:10px 14px;font-weight:800;white-space:nowrap}
+@media(max-width:700px){.stepbox{grid-template-columns:1fr}}
+.sla{display:grid;grid-template-columns:.7fr 1.3fr;gap:28px;align-items:start;margin-top:30px}@media(max-width:900px){.sla{grid-template-columns:1fr}}
+.big{font-size:clamp(64px,8vw,104px);font-weight:800;letter-spacing:-.04em;line-height:1;color:var(--blue)}
+.tog{display:inline-flex;background:var(--paper);border:1px solid var(--line);border-radius:999px;padding:4px;margin-bottom:14px}
+.tog button{font:inherit;font-weight:700;border:0;background:none;border-radius:999px;padding:8px 16px;cursor:pointer;color:var(--mute)}.tog button.on{background:var(--ink);color:#fff}
+table.t{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--line);font-size:15px}
+table.t th,table.t td{padding:13px 16px;border-bottom:1px solid var(--line);text-align:left}table.t th{background:var(--paper);font-size:12.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--mute)}
+table.t td.r{font-weight:800;color:var(--blue);white-space:nowrap}
+.civospot{background:#0b0b0b;color:#fff;border-radius:28px;padding:44px;display:grid;grid-template-columns:1.2fr .8fr;gap:30px;align-items:center;position:relative;overflow:hidden}
+.civospot:after{content:"";position:absolute;right:-60px;top:-60px;width:240px;height:240px;border-radius:50%;background:radial-gradient(circle,rgba(0,255,111,.35),transparent 70%)}
+@media(max-width:860px){.civospot{grid-template-columns:1fr;padding:30px}}
+.civospot .logo svg{height:36px;width:auto;margin-bottom:18px}.civospot .logo svg path,.civospot .logo svg polygon,.civospot .logo svg rect{fill:#fff}
+.civospot h2 em{font-style:normal;color:var(--g)}.civospot p{color:#c8ccc4;line-height:1.6;font-size:17px}
+.civospot .sec{font-family:inherit;font-weight:800;font-size:72px;line-height:1;color:var(--g)}.civospot .sec small{font-size:18px;color:#fff;font-weight:700;display:block;margin-top:6px}
+.case .m{font-size:30px;font-weight:800;color:var(--orange);margin:10px 0 6px}
+.case .k{font:700 12px 'JetBrains Mono',monospace;letter-spacing:.12em;color:var(--blue)}
+.case details{margin-top:12px;color:var(--mute);font-size:14.5px}.case summary{cursor:pointer;font-weight:700;color:var(--ink)}
+.reco .needs{display:flex;flex-wrap:wrap;gap:10px}
+.need{position:relative}.need input{position:absolute;opacity:0;pointer-events:none}
 .need span{display:inline-flex;align-items:center;gap:8px;padding:12px 16px;border-radius:999px;border:1.5px solid rgba(255,255,255,.22);font-weight:600;font-size:15px;cursor:pointer;transition:all .15s;user-select:none}
-.need span:before{content:"+";font-weight:800;color:var(--cyan)}
-.need input:checked+span{background:#fff;color:var(--ink);border-color:#fff} .need input:checked+span:before{content:"✓";color:var(--blue)}
-.need input:focus-visible+span{outline:3px solid var(--cyan)}
+.need span:before{content:"+";font-weight:800;color:var(--orange)}
+.need input:checked+span{background:#fff;color:var(--ink);border-color:#fff}.need input:checked+span:before{content:"✓";color:var(--blue)}
 #reco{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:22px;padding:26px;min-height:280px}
 .rc{display:flex;gap:14px;align-items:flex-start;padding:16px 0;border-bottom:1px solid rgba(255,255,255,.1);animation:rise .35s ease both}
-.rc:last-of-type{border-bottom:0} .rc .n{flex:0 0 32px;height:32px;border-radius:10px;background:var(--blue);display:grid;place-items:center;font-weight:800}
-.rc b{display:block;font-size:17px} .rc span{color:#b8c6dd;font-size:14.5px;line-height:1.5}
-.empty{color:#8ea0bf;text-align:center;padding:60px 20px}
-/* civo */
-.civo{background:#0b0b0b;color:#fff;overflow:hidden;position:relative}
-.civo .grid{display:grid;grid-template-columns:1fr 1fr;gap:44px;align-items:center} @media(max-width:900px){.civo .grid{grid-template-columns:1fr}}
-.civo .eyebrow{color:var(--g)} .civo h2 em{font-style:normal;color:var(--g)} .civo .lead{color:#c8ccc4}
-.civo .logo svg{height:40px;width:auto;margin-bottom:22px} .civo .logo svg path,.civo .logo svg polygon,.civo .logo svg rect{fill:#fff}
-.four{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:26px}
-.four div{border:1px solid #2a2d2a;border-radius:16px;padding:18px;background:#121412} .four b{display:block;color:var(--g);margin-bottom:4px} .four span{color:#b3b8b0;font-size:14.5px;line-height:1.5}
-.term{background:#050605;border:1px solid #2a2d2a;border-radius:18px;font:14px/1.75 'JetBrains Mono',monospace;padding:24px;color:#cfd3cb;min-height:330px;box-shadow:0 30px 90px rgba(0,255,111,.08)}
-.term .g{color:var(--g)} .term .d{color:#6f746c} .term .c{color:#fff}
-.caret{display:inline-block;width:8px;height:16px;background:var(--g);vertical-align:-2px;animation:blink 1s steps(1) infinite} @keyframes blink{50%{opacity:0}}
-/* event */
-.event{background:var(--paper)}
-.ev{position:relative;overflow:hidden;display:grid;grid-template-columns:1.2fr .8fr;gap:30px;background:#0b0b0b;color:#fff;border-radius:28px;padding:44px}
-@media(max-width:860px){.ev{grid-template-columns:1fr;padding:30px}}
-.ev:after{content:"";position:absolute;right:0;top:0;bottom:0;width:46px;background:conic-gradient(#fff 25%,#0b0b0b 0 50%,#fff 0 75%,#0b0b0b 0) 0 0/23px 23px;opacity:.9}
-.ev .k{display:inline-block;font:700 12.5px 'JetBrains Mono',monospace;letter-spacing:.12em;background:var(--g);color:#0b0b0b;padding:6px 10px;border-radius:6px}
-.ev h3{font-size:clamp(30px,3.6vw,44px);letter-spacing:-.02em;margin:16px 0 10px;line-height:1.05} .ev p{color:#c8ccc4;line-height:1.6;font-size:16.5px;max-width:560px}
-.ev .chips{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 22px} .ev .chips span{border:1px solid #3a3d3a;border-radius:999px;padding:7px 12px;font-size:14px;font-weight:600}
-.ev .btn.g{background:var(--g);color:#0b0b0b}
-.cd{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;align-self:center;margin-right:40px}
-.cd div{background:#151715;border:1px solid #2a2d2a;border-radius:16px;padding:16px 8px;text-align:center} .cd b{display:block;font-size:34px;font-weight:800;color:var(--g)} .cd span{font-size:12px;color:#9aa096;text-transform:uppercase;letter-spacing:.1em}
-.ev .seats{margin-top:12px;color:#9aa096;font-size:14px}
-/* why */
-.why{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:34px} @media(max-width:860px){.why{grid-template-columns:1fr}}
-.why div{background:#fff;border:1px solid var(--line);border-radius:20px;padding:26px} .why .ic{width:44px;height:44px;border-radius:12px;background:#eaf0ff;display:flex;align-items:center;justify-content:center;font-size:22px;line-height:1;margin-bottom:14px}
-.why b{display:block;font-size:18px;margin-bottom:6px} .why span{color:var(--mute);line-height:1.55}
-/* contact */
-.contact{background:linear-gradient(180deg,var(--paper),#e9efff)}
-.contact .grid{display:grid;grid-template-columns:.8fr 1.2fr;gap:40px;align-items:start} @media(max-width:900px){.contact .grid{grid-template-columns:1fr}}
-.office{margin-top:22px;line-height:1.7;color:var(--mute)} .office b{color:var(--ink)}
-#contact-box{background:#fff;border-radius:24px;padding:30px;box-shadow:0 30px 80px rgba(11,18,32,.12)}
-#contact-box h3{font-size:26px;margin:0 0 6px;letter-spacing:-.01em} #contact-box .note{color:var(--mute);margin:0 0 18px}
-.row{display:grid;grid-template-columns:1fr 1fr;gap:14px} @media(max-width:560px){.row{grid-template-columns:1fr}}
-label.f{display:block;font-weight:700;font-size:14px;margin:0 0 14px} label.f .opt{font-weight:500;color:var(--mute)}
-label.f input,label.f select,label.f textarea{display:block;width:100%;margin-top:6px;font:inherit;font-weight:500;font-size:16px;padding:12px 14px;border:1.5px solid #cfd7e6;border-radius:12px;background:#fff;color:var(--ink)}
-label.f textarea{min-height:96px;resize:vertical}
-label.f input:focus,label.f select:focus,label.f textarea:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,255,.2)}
-.chk{display:flex;gap:10px;align-items:flex-start;font-size:14px;line-height:1.45;margin:4px 0 16px;color:var(--mute)} .chk input{margin-top:3px;width:18px;height:18px;accent-color:var(--blue)}
-.errs{background:#fff1f1;border:1px solid #ffc9c9;color:#8a0018;border-radius:12px;padding:12px 16px;margin:0 0 16px;font-weight:600;font-size:14.5px} .errs ul{margin:0;padding-left:18px}
-.hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
-.done{text-align:center;padding:30px 10px} .done .ok{width:64px;height:64px;border-radius:50%;background:#e3fff0;color:#008a3e;display:grid;place-items:center;font-size:32px;margin:0 auto 14px}
-.spin{display:none;width:16px;height:16px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:sp .7s linear infinite} .htmx-request .spin{display:inline-block} @keyframes sp{to{transform:rotate(360deg)}}
-footer{background:var(--navy);color:#9fb0cc;padding:56px 0 34px;font-size:14.5px}
-footer .cols{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:30px} @media(max-width:800px){footer .cols{grid-template-columns:1fr}}
-footer b{color:#fff} footer a{text-decoration:none} footer a:hover{color:#fff} footer .civo-rep svg{height:26px;width:auto;margin-top:10px} footer .civo-rep svg path,footer .civo-rep svg polygon,footer .civo-rep svg rect{fill:#fff}
-footer .bottom{border-top:1px solid rgba(255,255,255,.1);margin-top:34px;padding-top:20px;display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px}
-.rv{opacity:0;transform:translateY(22px);transition:opacity .7s,transform .7s} .rv.in{opacity:1;transform:none}
-@media (prefers-reduced-motion:reduce){.marquee span,.caret{animation:none}.rv{opacity:1;transform:none}}
-</style>
-</head>
-<body>
-
-<header class="top"><div class="wrap">
-  <a class="brand" href="/" aria-label="Arupa"><img src="/brand/arupa-logo-white.png" alt="Arupa" height="34" style="height:34px;width:auto"></a>
-  <nav class="nav"><a href="#solusi">Solusi</a><a href="#rekomendasi">Cari solusi</a><a href="#kubernetes">Kubernetes</a><a href="#event">Event</a><a href="#kontak">Kontak</a></nav>
-  <a class="btn p" href="#kontak">Konsultasi gratis</a>
-</div></header>
-
+.rc:last-of-type{border-bottom:0}.rc .n{flex:0 0 32px;height:32px;border-radius:10px;background:var(--orange);display:grid;place-items:center;font-weight:800}
+.rc b{display:block;font-size:17px}.rc span{color:#b8c6dd;font-size:14.5px;line-height:1.5}.empty{color:#8ea0bf;text-align:center;padding:60px 20px}
+{% endblock %}
+{% block content %}
 <section class="hero">
   <div class="wrap grid">
     <div>
-      <span class="pill"><i></i>Cloud &amp; Kubernetes di Jakarta · dukungan 100% lokal</span>
-      <h1>Cloud lokal.<br><em>Dukungan lokal.</em><br>Siap tumbuh.</h1>
-      <p class="sub">PT Arupa Cloud Nusantara menghadirkan cloud, Kubernetes, backup, disaster recovery, keamanan dan managed service berbasis as-a-service — supaya tim IT Anda fokus memodernisasi, bukan mengurus infrastruktur.</p>
-      <div class="ctas"><a class="btn p lg" href="#rekomendasi">Temukan solusi Anda →</a><a class="btn o lg" href="#solusi">Lihat layanan</a></div>
+      <span class="pill"><i></i>Company Profile 2027 · beroperasi sejak 2017</span>
+      <h1><em>Sovereign Cloud.</em><br>Global Technology.<br><u>Trusted Partner.</u></h1>
+      <p class="sub">Technology aggregator dan operator sovereign cloud untuk enterprise, pemerintah, BUMN dan mitra di Indonesia — teknologi prinsipal global, infrastruktur dan tim engineer di Indonesia, cukup satu mitra.</p>
+      <div style="display:flex;gap:12px;flex-wrap:wrap"><a class="btn p lg" href="#rekomendasi">Temukan solusi Anda →</a><a class="btn o lg" href="/civo">Civo Kubernetes</a></div>
     </div>
-    <div class="stack" aria-label="Lapisan layanan Arupa Cloud: klik untuk detail">
-      <svg viewBox="0 0 520 470" fill="none">
-        <defs>
-          <linearGradient id="lg1" x1="0" x2="1"><stop offset="0" stop-color="#2563ff"/><stop offset="1" stop-color="#22d3ee"/></linearGradient>
-          <linearGradient id="side" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0d2c5c"/><stop offset="1" stop-color="#081c3b"/></linearGradient>
-        </defs>
-        <!-- pulses travelling up the stack -->
-        <g stroke="url(#lg1)" stroke-width="2" opacity=".6"><path d="M260 420 V80" stroke-dasharray="4 10"><animate attributeName="stroke-dashoffset" from="0" to="-140" dur="2.4s" repeatCount="indefinite"/></path>
-          <path d="M150 380 V120" stroke-dasharray="4 10"><animate attributeName="stroke-dashoffset" from="0" to="-140" dur="3.1s" repeatCount="indefinite"/></path>
-          <path d="M370 380 V120" stroke-dasharray="4 10"><animate attributeName="stroke-dashoffset" from="0" to="-140" dur="2.8s" repeatCount="indefinite"/></path></g>
-        <!-- layers: bottom to top -->
-        <g class="layer" hx-get="/site/solutions/compute" hx-target="#panel" data-tab="compute" onclick="pickTab('compute')">
-          <path d="M260 330 L470 380 L260 430 L50 380 Z" class="face" fill="#0f2f63" stroke="#2b5cb8"/>
-          <path d="M50 380 L260 430 L260 448 L50 398 Z" fill="url(#side)"/><path d="M470 380 L260 430 L260 448 L470 398 Z" fill="#06142b"/>
-          <text x="260" y="386" text-anchor="middle" fill="#cfe0ff" font-family="Plus Jakarta Sans" font-size="15" font-weight="700">Infrastruktur lokal · Jakarta &amp; Cibitung</text>
-        </g>
-        <g class="layer" hx-get="/site/solutions/backup" hx-target="#panel" onclick="pickTab('backup')">
-          <path d="M260 250 L470 300 L260 350 L50 300 Z" class="face" fill="#123a78" stroke="#3a6fd0"/>
-          <path d="M50 300 L260 350 L260 366 L50 316 Z" fill="url(#side)"/><path d="M470 300 L260 350 L260 366 L470 316 Z" fill="#06142b"/>
-          <text x="260" y="306" text-anchor="middle" fill="#e3edff" font-family="Plus Jakarta Sans" font-size="15" font-weight="700">Backup · Disaster Recovery · Security</text>
-        </g>
-        <g class="layer" hx-get="/site/solutions/kubernetes" hx-target="#panel" onclick="pickTab('kubernetes')">
-          <path d="M260 170 L470 220 L260 270 L50 220 Z" class="face" fill="#1a4ea0" stroke="#5a8cf0"/>
-          <path d="M50 220 L260 270 L260 286 L50 236 Z" fill="url(#side)"/><path d="M470 220 L260 270 L260 286 L470 236 Z" fill="#06142b"/>
-          <text x="260" y="226" text-anchor="middle" fill="#fff" font-family="Plus Jakarta Sans" font-size="15" font-weight="800">Cloud · VDC · Civo Kubernetes</text>
-        </g>
-        <g class="layer" hx-get="/site/solutions/managed" hx-target="#panel" onclick="pickTab('managed')">
-          <path d="M260 90 L470 140 L260 190 L50 140 Z" class="face" fill="url(#lg1)"/>
-          <path d="M50 140 L260 190 L260 206 L50 156 Z" fill="#1b4aa8"/><path d="M470 140 L260 190 L260 206 L470 156 Z" fill="#0e7ea0"/>
-          <text x="260" y="146" text-anchor="middle" fill="#061730" font-family="Plus Jakarta Sans" font-size="16" font-weight="800">Aplikasi &amp; bisnis Anda</text>
-        </g>
-        <g font-family="JetBrains Mono" font-size="11.5" font-weight="700">
-          <g transform="translate(18 40)"><rect width="146" height="34" rx="10" fill="#0b2347" stroke="#2b5cb8"/><circle cx="16" cy="17" r="5" fill="#00ff6f"><animate attributeName="opacity" values="1;.3;1" dur="1.6s" repeatCount="indefinite"/></circle><text x="30" y="21" fill="#cfe0ff">Jakarta · JKT1</text></g>
-          <g transform="translate(380 30)"><rect width="122" height="34" rx="10" fill="#0b2347" stroke="#2b5cb8"/><text x="14" y="21" fill="#cfe0ff">ISO 27001</text></g>
-          <g transform="translate(392 440)"><rect width="112" height="28" rx="9" fill="#0b2347" stroke="#2b5cb8"/><text x="14" y="18" fill="#cfe0ff">PSE Kominfo</text></g>
-        </g>
-      </svg>
+    <div class="roles rv" id="roles">
+      <div class="rt"><button type="button" class="on"><small>UNIT BISNIS 1</small>Sovereign Cloud Operator</button><button type="button"><small>UNIT BISNIS 2</small>Technology Aggregator</button></div>
+      <div class="rb" id="rolebody"></div>
     </div>
   </div>
   <div class="wrap"><div class="stats">
-    <div><b data-count="2017">2017</b><span>berdiri sejak</span></div>
-    <div><b data-count="20" data-suffix="+">20+</b><span>layanan as-a-service</span></div>
-    <div><b data-count="100" data-suffix="%">100%</b><span>dukungan teknis lokal</span></div>
-    <div><b data-count="350" data-suffix="+">350+</b><span>pelanggan</span></div>
+    <div class="stat"><b data-count="2017">2017</b><span>beroperasi sejak</span></div>
+    <div class="stat"><b data-count="350" data-suffix="+">350+</b><span>pelanggan</span></div>
+    <div class="stat"><b data-count="25" data-suffix="+">25+</b><span>solusi terkurasi</span></div>
+    <div class="stat"><b data-count="2">2</b><span>zona cloud di Indonesia</span></div>
   </div></div>
-  <div class="marquee" aria-label="Sertifikasi dan kemitraan"><span><b>ISO 27001</b><b>ISO 27017</b><b>ISO 9001</b><b>PSE Kominfo</b><b>CSA STAR</b><b>Veeam Platinum Cloud Provider</b><b>Microsoft Tier 1 CSP</b><b>Microsoft QMTH</b><b>VMware Cloud Verified</b><b>Juniper Select Partner</b><b>ITIL Certified Team</b><b>Civo Indonesia Representative</b><b>ISO 27001</b><b>ISO 27017</b><b>ISO 9001</b><b>PSE Kominfo</b><b>CSA STAR</b><b>Veeam Platinum Cloud Provider</b><b>Microsoft Tier 1 CSP</b><b>Microsoft QMTH</b><b>VMware Cloud Verified</b><b>Juniper Select Partner</b><b>ITIL Certified Team</b><b>Civo Indonesia Representative</b></span></div>
+  <div class="marquee" aria-label="Sertifikasi dan kemitraan"><span><b>ISO 27001</b><b>ISO 27017</b><b>ISO 9001</b><b>CSA STAR</b><b>PSE Kominfo</b><b>ITIL Certified Team</b><b>Broadcom Premier Partner (VCSP)</b><b>VMware Cloud Verified</b><b>Veeam Platinum Cloud Provider</b><b>Microsoft Tier 1 CSP</b><b>Microsoft QMTH</b><b>Juniper Select Partner</b><b>Civo Indonesia Representative</b><b>ISO 27001</b><b>ISO 27017</b><b>ISO 9001</b><b>CSA STAR</b><b>PSE Kominfo</b><b>ITIL Certified Team</b><b>Broadcom Premier Partner (VCSP)</b><b>VMware Cloud Verified</b><b>Veeam Platinum Cloud Provider</b><b>Microsoft Tier 1 CSP</b><b>Microsoft QMTH</b><b>Juniper Select Partner</b><b>Civo Indonesia Representative</b></span></div>
 </section>
 
-<section class="s" id="solusi">
+<section class="s">
   <div class="wrap">
-    <div class="rv"><p class="eyebrow">Layanan</p><h2>Satu mitra untuk seluruh lapisan IT Anda</h2>
-    <p class="lead">Dari infrastruktur sampai aplikasi bisnis — pilih kategori untuk melihat detailnya.</p></div>
-    <div class="tabs" role="tablist">
-      {% for t in tabs %}<button class="tab{% if t.active %} on{% endif %}" role="tab" data-tab="{{ t.cat }}" hx-get="/site/solutions/{{ t.cat }}" hx-target="#panel" hx-swap="innerHTML swap:120ms settle:50ms">{{ t.title }}</button>{% endfor %}
+    <div class="rv"><p class="eyebrow">Masalah yang kami selesaikan</p><h2>Empat tantangan IT — klik kartu untuk melihat jawabannya</h2></div>
+    <div class="grid4" style="margin-top:28px">
+      <div class="flip rv" tabindex="0"><div class="in"><div class="f"><span class="n">01</span><h3>Kedaulatan data</h3><p>Regulasi menuntut data dan operasional tetap di Indonesia dan dapat diaudit.</p><small>Lihat solusi ↻</small></div><div class="b"><span class="n">SOLUSI</span><h3>Sovereign Cloud</h3><p>Zona cloud di Jakarta dan Cibitung, dikelola tim lokal 24x7, tersertifikasi ISO dan CSA STAR.</p></div></div></div>
+      <div class="flip rv" tabindex="0"><div class="in"><div class="f"><span class="n">02</span><h3>Kompleksitas vendor</h3><p>Banyak vendor dan kontrak memperlambat proyek dan mengaburkan akuntabilitas.</p><small>Lihat solusi ↻</small></div><div class="b"><span class="n">SOLUSI</span><h3>Satu kontrak, satu tim</h3><p>Teknologi prinsipal global dikurasi dan diintegrasikan sebagai layanan oleh satu mitra.</p></div></div></div>
+      <div class="flip rv" tabindex="0"><div class="in"><div class="f"><span class="n">03</span><h3>Biaya &amp; people</h3><p>CAPEX besar dan kebutuhan spesialis 24x7 membebani anggaran dan tim.</p><small>Lihat solusi ↻</small></div><div class="b"><span class="n">SOLUSI</span><h3>OPEX + support 24x7</h3><p>Model berlangganan, termasuk opsi bulanan tanpa komitmen, didukung engineer lokal.</p></div></div></div>
+      <div class="flip rv" tabindex="0"><div class="in"><div class="f"><span class="n">04</span><h3>Ketahanan &amp; AI</h3><p>Ransomware, downtime dan data AI menuntut infrastruktur generasi baru.</p><small>Lihat solusi ↻</small></div><div class="b"><span class="n">SOLUSI</span><h3>Resilience &amp; AI platform</h3><p>Backup immutable, DR antarzona, dan platform data &amp; AI siap pakai.</p></div></div></div>
+    </div>
+  </div>
+</section>
+
+<section class="s" id="solusi" style="padding-top:20px">
+  <div class="wrap">
+    <div class="rv"><p class="eyebrow">Portofolio</p><h2>Satu portofolio, empat pilar solusi</h2>
+    <p class="lead">Dikurasi dari prinsipal global dan dihadirkan sebagai layanan. Pilih pilar untuk melihat isinya.</p></div>
+    <div class="tabs" data-group="pillar" role="tablist">
+      {% for t in tabs %}<button class="tab{% if t.active %} on{% endif %}" role="tab" hx-get="/site/solutions/{{ t.cat }}" hx-target="#panel" hx-swap="innerHTML swap:120ms">{{ t.title }}</button>{% endfor %}
     </div>
     <div id="panel">{% include "site/panel.html" %}</div>
   </div>
 </section>
 
-<section class="s reco" id="rekomendasi">
+<section class="s dark reco" id="rekomendasi">
   <div class="wrap">
-    <div class="rv"><p class="eyebrow" style="color:var(--cyan)">Cari solusi</p><h2>Apa yang sedang Anda hadapi?</h2>
-    <p class="lead">Pilih satu atau beberapa kebutuhan. Rekomendasi muncul langsung — lalu konsultasikan dengan tim kami.</p></div>
-    <div class="grid">
+    <div class="rv"><p class="eyebrow">Cari solusi</p><h2>Apa yang sedang Anda hadapi?</h2>
+    <p class="lead">Pilih satu atau beberapa kebutuhan — rekomendasi muncul langsung, lalu konsultasikan dengan tim kami.</p></div>
+    <div class="grid2" style="margin-top:34px;align-items:start">
       <form class="needs" hx-post="/site/recommend" hx-trigger="change" hx-target="#reco">
         {% for n in needs %}<label class="need"><input type="checkbox" name="need" value="{{ n.key }}"><span>{{ n.label }}</span></label>{% endfor %}
       </form>
@@ -221,117 +138,137 @@ footer .bottom{border-top:1px solid rgba(255,255,255,.1);margin-top:34px;padding
   </div>
 </section>
 
-<section class="s civo" id="kubernetes">
-  <div class="wrap grid">
-    <div class="rv">
-      <div class="logo">{{ civo|safe }}</div>
-      <p class="eyebrow">Civo Indonesia Representative</p>
-      <h2>Kubernetes di Jakarta, <em>siap dalam hitungan menit.</em></h2>
-      <p class="lead">Arupa mengoperasikan Civo Kubernetes region Jakarta (JKT1). Managed Kubernetes yang sederhana untuk startup, SaaS, software house hingga perusahaan yang diregulasi.</p>
-      <div class="four">
-        <div><b>Easy to move</b><span>Kubernetes standar, CNCF certified — tanpa lock-in.</span></div>
-        <div><b>Easy to use</b><span>Cluster siap sekitar 90 detik, lewat dashboard atau CLI.</span></div>
-        <div><b>Sovereign</b><span>Data di region Jakarta, dioperasikan tim lokal Arupa.</span></div>
-        <div><b>Biaya transparan</b><span>Harga node tetap, tanpa biaya egress.</span></div>
+<section class="s dark" id="sovereign" style="background:#04122a">
+  <div class="wrap">
+    <div class="rv"><p class="eyebrow">Sovereign Cloud</p><h2>Infrastruktur lokal dengan standar global</h2>
+    <p class="lead">Dua zona cloud di Indonesia dengan replikasi antarzona. Arahkan atau klik fitur untuk melihat bagian arsitekturnya.</p></div>
+    <div class="zones">
+      <div class="zmap rv">
+        <svg viewBox="0 0 560 360" role="img" aria-label="Zona Jakarta dan Cibitung dengan replikasi antarzona">
+          <defs><linearGradient id="zl" x1="0" x2="1"><stop offset="0" stop-color="#0a9be8"/><stop offset="1" stop-color="#f47920"/></linearGradient>
+            <radialGradient id="zg"><stop offset="0" stop-color="#0a9be8" stop-opacity=".45"/><stop offset="1" stop-color="#0a9be8" stop-opacity="0"/></radialGradient></defs>
+          <g opacity=".25" stroke="#2b5cb8"><path d="M0 45 H560"/><path d="M0 90 H560"/><path d="M0 135 H560"/><path d="M0 180 H560"/><path d="M0 225 H560"/><path d="M0 270 H560"/><path d="M0 315 H560"/></g>
+          <g id="zcust"><rect x="24" y="36" width="160" height="70" rx="14" fill="#0b2347" stroke="#2b5cb8"/><text x="40" y="64" fill="#cfe0ff" font-size="13" font-weight="700" font-family="Plus Jakarta Sans">Lokasi pelanggan</text><text x="40" y="86" fill="#8fa3c2" font-size="11.5" font-family="JetBrains Mono">DC · M365 · pengguna</text></g>
+          <path d="M184 72 C236 72 236 150 262 165" stroke="#5a8cf0" stroke-width="2" stroke-dasharray="5 6" fill="none"><animate attributeName="stroke-dashoffset" from="0" to="-44" dur="1.6s" repeatCount="indefinite"/></path>
+          <text x="196" y="122" fill="#8fa3c2" font-size="11" font-family="JetBrains Mono">VPN · Direct link</text>
+          <circle cx="330" cy="180" r="90" fill="url(#zg)"/>
+          <g id="zjkt"><rect x="262" y="140" width="140" height="80" rx="16" fill="#0a9be8"/><text x="278" y="170" fill="#fff" font-size="16" font-weight="800" font-family="Plus Jakarta Sans">Zona Jakarta</text><text x="278" y="192" fill="#e6f5fd" font-size="11.5" font-family="JetBrains Mono">Produksi · VDC</text><text x="278" y="209" fill="#e6f5fd" font-size="11.5" font-family="JetBrains Mono">WAF · K8s · S3</text></g>
+          <g id="zcbt"><rect x="400" y="262" width="140" height="74" rx="16" fill="#f47920"/><text x="416" y="292" fill="#fff" font-size="16" font-weight="800" font-family="Plus Jakarta Sans">Zona Cibitung</text><text x="416" y="313" fill="#fff5ec" font-size="11.5" font-family="JetBrains Mono">DR · backup offsite</text></g>
+          <path d="M402 205 C460 210 470 240 468 262" stroke="url(#zl)" stroke-width="4" fill="none" stroke-linecap="round"/>
+          <circle r="6" fill="#fff"><animateMotion dur="2s" repeatCount="indefinite" path="M402 205 C460 210 470 240 468 262"/></circle>
+          <text x="476" y="224" fill="#ffd2b0" font-size="11.5" font-family="JetBrains Mono" font-weight="700">RPO detik</text><text x="476" y="240" fill="#ffd2b0" font-size="11.5" font-family="JetBrains Mono" font-weight="700">RTO menit</text>
+          <g id="zmgmt"><rect x="24" y="270" width="350" height="60" rx="14" fill="#0b2347" stroke="#2b5cb8"/><text x="40" y="296" fill="#cfe0ff" font-size="13" font-weight="700" font-family="Plus Jakarta Sans">Management plane</text><text x="40" y="316" fill="#8fa3c2" font-size="11.5" font-family="JetBrains Mono">Portal · monitoring · tim 24x7 · ticketing</text></g>
+          <rect id="zhl" x="0" y="0" width="0" height="0" rx="18" fill="none" stroke="#fff" stroke-width="3" stroke-dasharray="6 5" opacity="0"><animate attributeName="stroke-dashoffset" from="0" to="22" dur="1s" repeatCount="indefinite"/></rect>
+        </svg>
       </div>
-      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:26px"><a class="btn lg" style="background:var(--g);color:#0b0b0b" href="#kontak" hx-get="/site/contact?need=kubernetes" hx-target="#contact-box">Minta PoC Civo Kubernetes →</a></div>
-    </div>
-    <div class="term rv" id="term" aria-label="Contoh membuat cluster Civo Kubernetes">
-      <div><span class="d">$</span> <span class="c" data-type="civo kubernetes create nusamart --region JKT1 --nodes 3 --wait"></span></div>
-      <div class="out" hidden>
-        <div class="d">Creating cluster nusamart in JKT1 …</div>
-        <div>The cluster nusamart has been created in <span class="g">1 min 28 sec</span></div>
-        <div style="margin-top:10px"><span class="d">$</span> <span class="c">kubectl get nodes</span></div>
-        <div class="d">NAME                     STATUS   VERSION</div>
-        <div>k3s-nusamart-node-1     <span class="g">Ready</span>    v1.31</div>
-        <div>k3s-nusamart-node-2     <span class="g">Ready</span>    v1.31</div>
-        <div>k3s-nusamart-node-3     <span class="g">Ready</span>    v1.31</div>
-        <div style="margin-top:10px"><span class="d">$</span> <span class="caret"></span></div>
+      <div class="zfeat rv" id="zfeat">
+        <button type="button" data-z="zjkt"><b>📍 Dua zona di Indonesia</b><span>Jakarta untuk produksi, Cibitung untuk DR dan backup offsite.</span></button>
+        <button type="button" data-z="zcbt"><b>🔁 Replikasi antarzona</b><span>SecondSite DR dengan RPO dalam detik dan RTO dalam menit.</span></button>
+        <button type="button" data-z="zcust"><b>🔓 Platform terbuka, tanpa lock-in</b><span>VMware, Kubernetes dan S3 — standar terbuka, kontrak fleksibel.</span></button>
+        <button type="button" data-z="zmgmt"><b>🛡️ Tersertifikasi, tim lokal 24x7</b><span>ISO 27001, 27017, 9001 dan CSA STAR; eskalasi ke tim teknis di Jakarta.</span></button>
       </div>
     </div>
   </div>
 </section>
 
-<section class="s event" id="event">
+<section class="s">
   <div class="wrap">
-    <div class="ev rv">
-      <div>
-        <span class="k">WORKSHOP OFFLINE · 26.11.2026</span>
-        <h3>Beyond the Container — Mission Race</h3>
-        <p>Dua jam hands-on: jaga toko online NusaMart tetap hidup saat flash sale 12.12, di cluster Civo Anda sendiri. Enam misi, satu papan skor live, tiga pemenang di podium.</p>
-        <div class="chips"><span>Kamis, 26 Nov 2026</span><span>10:00–12:00 WIB</span><span>Jakarta</span><span>🍕 Pizza</span><span>🏅 Sertifikat</span><span>💰 $250 kredit Civo</span></div>
-        <a class="btn lg g" href="https://bit.ly/workshopcivo-08" target="_blank" rel="noopener">Daftar &amp; amankan kursi →</a>
-        {% if seats >= 20 %}<div class="seats">{{ seats }} builder sudah terdaftar</div>{% endif %}
+    <div class="rv"><p class="eyebrow">Perjalanan</p><h2>Tumbuh bersama transformasi digital Indonesia</h2><p class="lead">Klik tahun untuk melihat tonggaknya.</p></div>
+    <div class="tl" id="tl"></div>
+    <div class="tlbox" id="tlbox"></div>
+  </div>
+</section>
+
+<section class="s" id="cara-kerja" style="padding-top:10px">
+  <div class="wrap">
+    <div class="rv"><p class="eyebrow">Cara kami bekerja</p><h2>Mendampingi dari strategi hingga operasional</h2></div>
+    <div class="steps" id="steps"></div>
+    <div class="stepbox" id="stepbox"></div>
+    <div class="grid3" style="margin-top:22px">
+      <div class="card rv"><h3>🧭 Migrasi terukur</h3><p>Assessment → pilot → migrasi bertahap dengan replikasi Veeam → cutover → hypercare.</p></div>
+      <div class="card rv"><h3>🚪 Keluar tanpa lock-in</h3><p>VM VMware, objek S3 dan manifest Kubernetes tetap dalam format standar yang bisa dipindahkan.</p></div>
+      <div class="card rv"><h3>📆 Opsi tanpa komitmen</h3><p>Tersedia langganan bulanan non-commit untuk memulai dengan risiko kecil.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="s" style="background:#fff">
+  <div class="wrap">
+    <div class="rv"><p class="eyebrow">SLA &amp; dukungan</p><h2>Komitmen layanan yang terukur</h2></div>
+    <div class="sla">
+      <div class="rv"><div class="big">99,95%</div><p class="lead" style="margin-top:8px">Uptime SLA platform, dengan service credit hingga 50%.</p>
+        <p class="lead" style="margin-top:14px;font-size:16px">Eskalasi: <b>L1</b> service desk 24x7 → <b>L2</b> cloud engineer → <b>L3</b> spesialis platform → <b>TAM</b>.</p></div>
+      <div class="rv">
+        <div class="tog" id="tog"><button type="button" class="on" data-k="std">Standar</button><button type="button" data-k="exp">Express · 24x7 + TAM</button></div>
+        <table class="t"><thead><tr><th>Prioritas</th><th>Contoh</th><th>Respons</th></tr></thead><tbody id="slarows"></tbody></table>
       </div>
-      <div class="cd" id="cd" aria-label="Hitung mundur ke workshop"><div><b data-k="d">–</b><span>hari</span></div><div><b data-k="h">–</b><span>jam</span></div><div><b data-k="m">–</b><span>menit</span></div><div><b data-k="s">–</b><span>detik</span></div></div>
+    </div>
+  </div>
+</section>
+
+<section class="s" id="civo">
+  <div class="wrap">
+    <div class="civospot rv">
+      <div><div class="logo">{{ civo|safe }}</div><p class="eyebrow" style="color:var(--g)">Civo Indonesia Representative</p>
+        <h2>Civo Kubernetes, <em>live di region Jakarta.</em></h2>
+        <p>Kubernetes terkelola penuh, CNCF certified, control plane gratis dan tanpa biaya egress — dioperasikan tim lokal Arupa.</p>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:18px"><a class="btn g lg" href="/civo">Kenali Civo →</a><a class="btn o lg" href="/civo/partner">Jadi partner Civo</a></div></div>
+      <div class="sec">&lt;90<small>detik sampai cluster siap</small></div>
     </div>
   </div>
 </section>
 
 <section class="s" style="padding-top:20px">
   <div class="wrap">
-    <div class="rv"><p class="eyebrow">Kenapa Arupa</p><h2>Masuk akal untuk bisnis di Indonesia</h2></div>
-    <div class="why">
-      <div class="rv"><div class="ic">🇮🇩</div><b>100% infrastruktur lokal</b><span>Data center di Jakarta dan Cibitung — membantu memenuhi kebutuhan residensi data dan regulasi.</span></div>
-      <div class="rv"><div class="ic">🤝</div><b>Didukung tim lokal</b><span>Support berbahasa Indonesia, dari ticket dan telepon sampai Technical Account Manager.</span></div>
-      <div class="rv"><div class="ic">⚡</div><b>Siap pakai as-a-service</b><span>Deploy cepat, kelola mudah, tanpa investasi hardware di depan.</span></div>
-      <div class="rv"><div class="ic">🧩</div><b>Fleksibel</b><span>Bulanan tanpa komitmen atau kontrak berjangka — sesuaikan dengan pertumbuhan Anda.</span></div>
-      <div class="rv"><div class="ic">🛡️</div><b>Tersertifikasi</b><span>ISO 27001, ISO 27017, ISO 9001, PSE Kominfo dan CSA STAR.</span></div>
-      <div class="rv"><div class="ic">🏢</div><b>Dipercaya enterprise</b><span>Lebih dari 350 pelanggan, termasuk instansi pemerintah dan perusahaan terkemuka.</span></div>
+    <div class="rv"><p class="eyebrow">Studi kasus</p><h2>Hasil nyata di lapangan</h2></div>
+    <div class="grid4" style="margin-top:28px">
+      <div class="card case rv"><span class="k">E-COMMERCE</span><div class="m">99,9%</div><h3>Stabil saat puncak penjualan</h3><p>Uptime saat periode puncak.</p><details><summary>Masalah &amp; solusi</summary>Downtime saat lonjakan trafik dan tuntutan residensi data → Zettagrid VDC, SecondSite DR dan Veeam.</details></div>
+      <div class="card case rv"><span class="k">LAYANAN KEUANGAN</span><div class="m">3 tahun</div><h3>Backup patuh regulasi OJK</h3><p>Retensi backup di Indonesia.</p><details><summary>Masalah &amp; solusi</summary>Kewajiban retensi jangka panjang dengan data di Indonesia → Veeam Cloud Connect ke repositori Zettagrid.</details></div>
+      <div class="card case rv"><span class="k">KOMPUTASI &amp; AI</span><div class="m">−50%</div><h3>Performa pemrosesan naik</h3><p>Waktu proses turun setengahnya.</p><details><summary>Masalah &amp; solusi</summary>Latensi pemrosesan data dan gambar, skalabilitas terbatas → GPU NVIDIA di cloud Arupa.</details></div>
+      <div class="card case rv"><span class="k">BUSINESS CONTINUITY</span><div class="m">30 menit</div><h3>Pemulihan bencana teruji</h3><p>RTO yang sudah diuji.</p><details><summary>Masalah &amp; solusi</summary>Rencana DR manual dan belum pernah diuji → SecondSite DRaaS dengan DR drill rutin.</details></div>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:22px">
+      <span class="chip">🏆 Best Broadcom Partner of the Year 2024</span><span class="chip">🏆 Crayon Indonesia Partner Appreciation Night 2025</span><span class="chip">🏆 Best Competency Partner FY2022 · Veeam ProPartner Summit</span><span class="chip">🏆 Best Solution CSP Partner FY21 · Dell Technologies</span>
     </div>
   </div>
 </section>
 
 <section class="s contact" id="kontak">
   <div class="wrap grid">
-    <div class="rv">
-      <p class="eyebrow">Konsultasi gratis</p>
-      <h2>Ceritakan kebutuhan Anda</h2>
-      <p class="lead">Tim solution architect kami akan menghubungi Anda untuk membahas arsitektur, sizing dan langkah berikutnya.</p>
-      <div class="office"><b>PT Arupa Cloud Nusantara</b><br>South Quarter Tower A, Lantai 9<br>Jl. R.A. Kartini Kav. 8, Cilandak Barat<br>Jakarta Selatan 12430<br><b>Telepon</b> 021-2789-9962</div>
-    </div>
+    <div class="rv"><p class="eyebrow">Mari bertumbuh bersama</p><h2>Mulai dengan workshop arsitektur</h2>
+      <p class="lead">Ceritakan kebutuhan Anda — tim solusi kami akan menghubungi Anda untuk assessment teknis dan langkah berikutnya.</p>
+      <div class="office"><b>PT Arupa Cloud Nusantara</b><br>South Quarter Tower A, Lantai 9<br>Jl. R.A. Kartini Kav. 8, Cilandak Barat<br>Jakarta Selatan 12430<br><b>Telepon</b> 021-2789-9962</div></div>
     <div id="contact-box">{% include "site/contact.html" %}</div>
   </div>
 </section>
-
-<footer>
-  <div class="wrap">
-    <div class="cols">
-      <div><a class="brand" href="/"><img src="/brand/arupa-logo-white.png" alt="Arupa" style="height:38px;width:auto"></a><p style="max-width:360px;line-height:1.6">Solusi cloud dan digitalisasi berbasis as-a-service untuk transformasi digital yang berkelanjutan.</p>
-        <div class="civo-rep"><span>Civo Indonesia Representative</span>{{ civo|safe }}</div></div>
-      <div><b>Layanan</b><br><a href="#solusi">Komputasi &amp; Private Cloud</a><br><a href="#kubernetes">Civo Kubernetes</a><br><a href="#solusi">Backup &amp; DR</a><br><a href="#solusi">Keamanan Siber</a><br><a href="#solusi">Managed Services</a></div>
-      <div><b>Event &amp; belajar</b><br><a href="/register">Workshop 26 Nov · Mission Race</a><br><a href="/academy/">Civo Kubernetes Academy</a><br><a href="#kontak">Hubungi kami</a></div>
-    </div>
-    <div class="bottom"><span>© 2026 PT Arupa Cloud Nusantara</span><span>South Quarter Tower A, Jakarta Selatan</span></div>
-  </div>
-</footer>
-
+{% endblock %}
+{% block js %}
 <script>
-function pickTab(cat){ document.querySelectorAll('.tab').forEach(function(t){ t.classList.toggle('on', t.dataset.tab===cat) }); document.getElementById('solusi').scrollIntoView({behavior:'smooth'}) }
 (function(){
-  document.querySelectorAll('.tab').forEach(function(t){ t.addEventListener('click', function(){ pickTab(t.dataset.tab) }) });
-  // reveal on scroll + count-up
-  var io = 'IntersectionObserver' in window ? new IntersectionObserver(function(es){ es.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target) } }) }, {threshold:.12}) : null;
-  document.querySelectorAll('.rv').forEach(function(el){ io ? io.observe(el) : el.classList.add('in') });
-  var counted=false, st=document.querySelector('.stats');
-  function countUp(){ if(counted) return; counted=true; document.querySelectorAll('[data-count]').forEach(function(b){ var to=+b.dataset.count, from=to>1000?to-9:0, suf=b.dataset.suffix||'', t0=performance.now();
-    (function f(t){ var p=Math.min(1,(t-t0)/1300), v=Math.round(from+(to-from)*(1-Math.pow(1-p,3))); b.textContent=v+suf; if(p<1) requestAnimationFrame(f) })(t0) }) }
-  if(io){ new IntersectionObserver(function(es){ if(es[0].isIntersecting) countUp() }).observe(st) } else countUp();
-  // terminal typing when visible
-  var term=document.getElementById('term'), typed=false;
-  function type(){ if(typed) return; typed=true; var el=term.querySelector('[data-type]'), s=el.dataset.type, i=0;
-    (function k(){ el.textContent=s.slice(0,++i); if(i<s.length) setTimeout(k, 28); else setTimeout(function(){ term.querySelector('.out').hidden=false }, 500) })() }
-  if(io){ new IntersectionObserver(function(es){ if(es[0].isIntersecting) type() },{threshold:.4}).observe(term) } else type();
-  // countdown to 26 Nov 2026 10:00 WIB
-  var T=Date.parse('2026-11-26T10:00:00+07:00'), cd=document.getElementById('cd');
-  function tick(){ var d=Math.max(0,T-Date.now())/1000, v={d:Math.floor(d/86400),h:Math.floor(d%86400/3600),m:Math.floor(d%3600/60),s:Math.floor(d%60)};
-    cd.querySelectorAll('[data-k]').forEach(function(b){ b.textContent=String(v[b.dataset.k]).padStart(2,'0') }) }
-  tick(); setInterval(tick, 1000);
-  // after a "consult" link loads the form, bring it into view
-  document.body.addEventListener('htmx:afterSwap', function(e){ if(e.detail.target.id==='contact-box'){ document.getElementById('kontak').scrollIntoView({behavior:'smooth'}); var f=e.detail.target.querySelector('input[name=name]'); if(f && !f.value) setTimeout(function(){ f.focus({preventScroll:true}) }, 500) } });
-  var p=new URLSearchParams(location.search), src=['utm_source','utm_medium','utm_campaign'].map(function(k){ return p.get(k) }).filter(Boolean).join('/')||'arupacloud.com';
-  document.body.addEventListener('htmx:configRequest', function(e){ if(e.detail.path.indexOf('/site/contact')===0 && e.detail.verb==='post' && !e.detail.parameters.source) e.detail.parameters.source=src });
+  var R=[{p:'Mengoperasikan cloud di data center Indonesia, dikelola tim lokal 24x7.',b:[['Zettagrid',''],['Civo','k']]},
+         {p:'Mengkurasi dan mengintegrasikan teknologi prinsipal global sebagai layanan.',b:[['MinIO',''],['Veeam',''],['Broadcom VMware',''],['Zerto','']]}];
+  var rb=document.getElementById('rolebody'), rt=document.querySelectorAll('#roles .rt button');
+  function role(i){ rt.forEach(function(b,k){b.classList.toggle('on',k===i)}); rb.innerHTML='<p>'+R[i].p+'</p><div class="badges">'+R[i].b.map(function(x){return '<span class="'+x[1]+'">'+x[0]+'</span>'}).join('')+'</div>'+(i===0?'<p style="margin:16px 0 0;font-size:14px">☸️ Civo Kubernetes sudah live di region Jakarta — <a href="/civo" style="color:#7fe0ff">lihat detail →</a></p>':'<p style="margin:16px 0 0;font-size:14px">🧩 Satu kontrak, satu tim pendukung untuk semua prinsipal.</p>'); rb.style.animation='none'; rb.offsetHeight; rb.style.animation='' }
+  rt.forEach(function(b,k){ b.addEventListener('click',function(){ role(k) }) }); role(0);
+  document.querySelectorAll('.flip').forEach(function(f){ function t(){ f.classList.toggle('on') } f.addEventListener('click',t); f.addEventListener('keydown',function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); t() } }) });
+  var hl=document.getElementById('zhl'), zb=document.querySelectorAll('#zfeat button');
+  function zone(btn){ zb.forEach(function(b){b.classList.toggle('on',b===btn)}); var g=document.getElementById(btn.dataset.z).getBBox(); hl.setAttribute('x',g.x-8); hl.setAttribute('y',g.y-8); hl.setAttribute('width',g.width+16); hl.setAttribute('height',g.height+16); hl.setAttribute('opacity',1) }
+  zb.forEach(function(b){ b.addEventListener('click',function(){ zone(b) }); b.addEventListener('mouseenter',function(){ zone(b) }) });
+  setTimeout(function(){ zone(zb[0]) },400);
+  var J=[['2017','Zona cloud pertama di Jakarta'],['2018','Zona cloud di Cibitung'],['2019','Zona cloud di Singapura'],['2020','Arupa Object Storage'],['2021','Dedicated Private Cloud'],['2022','Acoba CCTV Backup & MinIO'],['2023','Layanan cyber security'],['2024','Best Broadcom Partner of the Year'],['Kini','AI & Data Platform']];
+  var tl=document.getElementById('tl'), tb=document.getElementById('tlbox');
+  tl.innerHTML=J.map(function(j,i){return '<button type="button" data-i="'+i+'"><b>'+j[0]+'</b><span>'+j[1]+'</span></button>'}).join('');
+  function year(i){ tl.querySelectorAll('button').forEach(function(b,k){b.classList.toggle('on',k<=i)}); tb.innerHTML='<b style="font-size:20px">'+J[i][0]+'</b> — '+J[i][1]; tb.style.animation='none'; tb.offsetHeight; tb.style.animation='' }
+  tl.addEventListener('click',function(e){ var b=e.target.closest('button'); if(b) year(+b.dataset.i) }); year(J.length-1);
+  var S=[['01','Discover','Assessment kebutuhan, risiko dan kepatuhan.','Peta prioritas'],['02','Design','Arsitektur solusi dan model biaya.','Desain & proposal'],['03','Deploy','PoC, implementasi dan migrasi.','Solusi di produksi'],['04','Operate','Managed service, monitoring dan optimasi 24x7.','SLA & laporan berkala']];
+  var st=document.getElementById('steps'), sb=document.getElementById('stepbox');
+  st.innerHTML=S.map(function(s,i){return '<button type="button" data-i="'+i+'"><i>'+s[0]+'</i><b>'+s[1]+'</b></button>'}).join('');
+  function step(i){ st.querySelectorAll('button').forEach(function(b,k){b.classList.toggle('on',k===i)}); sb.innerHTML='<div><b style="font-size:22px">'+S[i][1]+'</b><p>'+S[i][2]+'</p></div><span class="res">Hasil: '+S[i][3]+'</span>'; sb.style.animation='none'; sb.offsetHeight; sb.style.animation='' }
+  st.addEventListener('click',function(e){ var b=e.target.closest('button'); if(b) step(+b.dataset.i) }); step(0);
+  var L=[['P1 · Kritis','Layanan utama tidak tersedia','30 menit','15 menit'],['P2 · Tinggi','Gangguan besar, ada workaround','Hingga 4 jam','15 menit'],['P3 · Sedang','Gangguan sebagian fungsi','Hingga 8 jam','15 menit'],['P4 · Rendah','Permintaan & pertanyaan','Hari kerja berikutnya','15 menit']];
+  var rows=document.getElementById('slarows'), tg=document.querySelectorAll('#tog button');
+  function sla(k){ tg.forEach(function(b){b.classList.toggle('on',b.dataset.k===k)}); rows.innerHTML=L.map(function(r){return '<tr><td><b>'+r[0]+'</b></td><td>'+r[1]+'</td><td class="r">'+(k==='exp'?r[3]:r[2])+'</td></tr>'}).join('') }
+  tg.forEach(function(b){ b.addEventListener('click',function(){ sla(b.dataset.k) }) }); sla('std');
 })();
 </script>
-</body>
-</html>
+{% endblock %}

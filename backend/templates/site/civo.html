@@ -1,0 +1,211 @@
+{% extends "site/base.html" %}
+{% block title %}Civo Kubernetes di Indonesia — Arupa Cloud{% endblock %}
+{% block desc %}Civo Kubernetes live di region Jakarta (JKT1): Kubernetes terkelola penuh, siap dalam sekitar 90 detik, control plane gratis, tanpa biaya egress, dioperasikan tim lokal Arupa.{% endblock %}
+{% block css %}
+.chero{position:relative;overflow:hidden;background:radial-gradient(900px 500px at 80% 0%,rgba(0,255,111,.18),transparent 60%),#0b0b0b;color:#fff;padding:76px 0 70px}
+.chero .grid{display:grid;grid-template-columns:1.05fr .95fr;gap:40px;align-items:center}@media(max-width:940px){.chero .grid{grid-template-columns:1fr}}
+.chero .logo svg{height:40px;width:auto;margin-bottom:22px}.chero .logo svg path,.chero .logo svg polygon,.chero .logo svg rect{fill:#fff}
+.chero h1{font-size:clamp(40px,5.4vw,68px);line-height:1.03;letter-spacing:-.035em;margin:0 0 18px;font-weight:800}.chero h1 em{font-style:normal;color:var(--g)}
+.chero p.sub{font-size:19px;line-height:1.6;color:#c8ccc4;max-width:560px;margin:0 0 26px}
+.live{display:inline-flex;align-items:center;gap:8px;border:1px solid #2f3a32;background:#121612;border-radius:999px;padding:7px 14px;font-size:13.5px;font-weight:700;color:#d9f7e4;margin-bottom:18px}.live i{width:8px;height:8px;border-radius:50%;background:var(--g);box-shadow:0 0 10px var(--g)}
+.term{background:#050605;border:1px solid #2a2d2a;border-radius:20px;padding:22px;font:14px/1.7 'JetBrains Mono',monospace;color:#cfd3cb;box-shadow:0 30px 90px rgba(0,255,111,.08)}
+.term .g{color:var(--g)}.term .d{color:#6f746c}
+.tbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}.tbar .dots i{display:inline-block;width:10px;height:10px;border-radius:50%;background:#333;margin-right:6px}
+.term #go:disabled{opacity:.7;color:#0b0b0b}
+.clock{font-family:inherit;font-weight:800;font-size:46px;line-height:1;color:var(--g)}.clock small{font-size:14px;color:#9aa096;font-weight:600}
+.prog{height:8px;background:#1a1d1a;border-radius:8px;overflow:hidden;margin:12px 0}.prog i{display:block;height:100%;width:0;background:var(--g);transition:width .2s linear}
+.nodes{display:flex;gap:8px;margin-top:10px}.nodes span{flex:1;border:1px dashed #333;border-radius:10px;padding:10px 6px;text-align:center;font-size:12px;color:#6f746c;transition:all .3s}
+.nodes span.up{border:1px solid var(--g);color:var(--g);background:rgba(0,255,111,.06)}
+.three .tab.on{background:#0b0b0b;color:#fff;border-color:#0b0b0b}
+.prod{display:grid;grid-template-columns:1fr 1fr;gap:26px;background:#fff;border:1px solid var(--line);border-radius:24px;padding:32px;animation:rise .35s ease}@media(max-width:860px){.prod{grid-template-columns:1fr}}
+.prod h3{font-size:30px;margin:10px 0 8px}.prod p{color:var(--mute);line-height:1.6}
+.avail{display:inline-block;font-weight:800;font-size:13px;border-radius:999px;padding:6px 12px}.avail.live{background:#e3fff0;color:#007a35;border:0;margin:0}.avail.ask{background:#eef2ff;color:#3b4fd8}.avail.res{background:#fff3e6;color:#b35a00}
+.prod ul{list-style:none;padding:0;margin:0;display:grid;gap:10px}.prod li{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:14px 16px;font-weight:600}
+.arch{display:grid;grid-template-columns:.9fr 1.1fr;gap:30px;align-items:center}@media(max-width:900px){.arch{grid-template-columns:1fr}}
+.cp{background:#0b0b0b;color:#fff;border-radius:20px;padding:22px;text-align:center;position:relative}
+.cp b{font-size:18px}.cp .free{display:inline-block;background:var(--g);color:#0b0b0b;font-weight:800;border-radius:999px;padding:3px 10px;font-size:12.5px;margin-left:8px}
+.cp p{color:#b3b8b0;margin:6px 0 0;font-size:14px}
+.wk{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:16px}
+.wk span{background:#fff;border:1.5px solid var(--line);border-radius:12px;padding:14px 4px;text-align:center;font-weight:700;font-size:13px;transition:all .3s}
+.wk span.on{border-color:var(--gd);background:#e9fff2;color:#006b2e;animation:pop .35s ease}
+@keyframes pop{0%{transform:scale(.8)}60%{transform:scale(1.08)}100%{transform:scale(1)}}
+.ctl{display:flex;align-items:center;gap:12px;margin-top:14px}.ctl button{font:inherit;font-weight:800;width:42px;height:42px;border-radius:12px;border:1.5px solid var(--ink);background:#fff;cursor:pointer;font-size:20px}
+.ctl b{font-size:18px}
+.pills{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}.pills span{background:var(--paper);border:1px solid var(--line);border-radius:999px;padding:7px 12px;font-weight:700;font-size:13.5px}
+.why4 .card .n{font-family:inherit;font-weight:800;font-size:44px;line-height:1;color:var(--gd)}
+.pay{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:28px}@media(max-width:800px){.pay{grid-template-columns:1fr}}
+.pay .col{border-radius:22px;padding:26px}.pay .free{background:#0b0b0b;color:#fff}.pay .use{background:#fff;border:1px solid var(--line)}
+.pay h3{margin:0 0 14px;font-size:22px}.pay .free h3{color:var(--g)}
+.pay ul{list-style:none;padding:0;margin:0;display:grid;gap:10px}.pay li{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border-radius:14px;cursor:default;transition:background .15s}
+.pay .free li{background:#151815}.pay .use li{background:var(--paper)}.pay li:hover{transform:translateX(4px)}
+.pay li b{display:block}.pay li small{opacity:.75}
+.code{display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start;margin-top:10px}@media(max-width:900px){.code{grid-template-columns:1fr}}
+.code pre{margin:0;background:#050605;color:#d6dad2;border-radius:18px;padding:22px;font:13.5px/1.7 'JetBrains Mono',monospace;overflow-x:auto;min-height:220px;animation:rise .3s ease}
+.code pre .k{color:var(--g)}.code pre .c{color:#6f746c}
+.apps{display:flex;flex-wrap:wrap;gap:8px}.apps span{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px 14px;font-weight:700;font-size:14px;transition:all .15s}.apps span:hover{border-color:var(--gd);transform:translateY(-2px)}
+.regions{display:flex;flex-wrap:wrap;gap:12px;margin-top:24px}
+.regions button{font:inherit;font-weight:700;background:#fff;border:1.5px solid var(--line);border-radius:16px;padding:16px 20px;cursor:pointer;text-align:left;min-width:150px}
+.regions button small{display:block;color:var(--mute);font-weight:600;font-size:12.5px}.regions button.id{border-color:var(--gd);background:#e9fff2}
+.regions button.on{background:#0b0b0b;color:#fff;border-color:#0b0b0b}.regions button.on small{color:#b3b8b0}
+.rnote{margin-top:14px;background:#fff;border:1px solid var(--line);border-radius:16px;padding:16px 20px;animation:rise .3s ease}
+.start .card .n{display:inline-grid;place-items:center;width:38px;height:38px;border-radius:12px;background:#0b0b0b;color:var(--g);font-weight:800;margin-bottom:10px}
+{% endblock %}
+{% block content %}
+<section class="chero">
+  <div class="wrap grid">
+    <div>
+      <div class="logo">{{ civo|safe }}</div>
+      <span class="live"><i></i>Live di Indonesia · region Jakarta (JKT1)</span>
+      <h1>Kubernetes siap produksi, <em>dalam hitungan detik.</em></h1>
+      <p class="sub">Layanan Kubernetes terkelola penuh. Civo mengurus "otak" cluster, tim Anda fokus membangun aplikasi — dioperasikan secara lokal oleh Arupa.</p>
+      <div style="display:flex;gap:12px;flex-wrap:wrap"><a class="btn g lg" href="#kontak" hx-get="/site/contact?need=civo" hx-target="#contact-box">Minta PoC / sizing →</a><a class="btn o lg" href="/register">Ikut workshop 26 Nov</a></div>
+    </div>
+    <div class="term rv" aria-label="Simulasi membuat cluster Civo">
+      <div class="tbar"><span class="dots"><i></i><i></i><i></i></span><button class="btn g" id="go" type="button" style="padding:8px 14px;font-size:13.5px">▶ Buat cluster</button></div>
+      <div><span class="d">$</span> civo kubernetes create my-app --region JKT1 --nodes 3 --wait</div>
+      <div class="prog"><i id="bar"></i></div>
+      <div style="display:flex;justify-content:space-between;align-items:flex-end"><div class="clock" id="clk">0<small> detik</small></div><div id="st" class="d">menunggu…</div></div>
+      <div class="nodes"><span>node-1</span><span>node-2</span><span>node-3</span></div>
+      <div id="done" style="margin-top:12px;min-height:24px"></div>
+    </div>
+  </div>
+</section>
+
+<section class="s" id="produk">
+  <div class="wrap">
+    <div class="rv"><p class="eyebrow">Produk Civo</p><h2>Satu platform, tiga jenis cloud</h2><p class="lead">Mulai hari ini dengan Civo Kubernetes di region Indonesia. Pilih jenis cloud untuk melihat isinya.</p></div>
+    <div class="tabs three" id="three"><button class="tab on" type="button" data-i="0">civo public</button><button class="tab" type="button" data-i="1">civo private</button><button class="tab" type="button" data-i="2">civo ai</button></div>
+    <div id="prod"></div>
+  </div>
+</section>
+
+<section class="s" style="background:#fff">
+  <div class="wrap arch">
+    <div class="rv"><p class="eyebrow">Apa itu Civo Kubernetes?</p><h2>Control plane gratis. Bayar sesuai node.</h2>
+      <p class="lead">Control plane — "otak" cluster yang mengatur dan memantau aplikasi — dikelola Civo dengan high availability. Anda hanya membayar worker node yang dipakai, dan bisa menambah atau mengurangi node kapan saja.</p>
+      <div class="pills"><span>Berbasis K3s</span><span>Powered by CivoStack</span><span>CNCF Certified</span></div></div>
+    <div class="rv">
+      <div class="cp"><b>Control plane</b><span class="free">GRATIS</span><p>Dikelola Civo · high availability</p></div>
+      <div class="wk" id="wk"></div>
+      <div class="ctl"><button type="button" id="minus" aria-label="Kurangi node">−</button><button type="button" id="plus" aria-label="Tambah node">+</button><b id="nn">3 worker node</b><span style="color:var(--mute)">· coba scale</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="s why4">
+  <div class="wrap">
+    <div class="rv"><p class="eyebrow">Kenapa Civo</p><h2>Berhenti menunggu. Mulai membangun.</h2></div>
+    <div class="grid4" style="margin-top:28px">
+      <div class="card rv"><div class="n">90<small style="font-size:16px"> detik</small></div><h3>Cepat</h3><p>Kurang dari 90 detik, cluster terkelola penuh sudah berjalan.</p></div>
+      <div class="card rv"><div class="n">⚙️</div><h3>Mudah digunakan</h3><p>Dashboard, CLI, API dan Terraform — tanpa kerumitan yang tidak perlu.</p></div>
+      <div class="card rv"><div class="n">Rp</div><h3>Harga transparan</h3><p>Control plane gratis, tanpa biaya egress, ditagih dalam rupiah.</p></div>
+      <div class="card rv"><div class="n">🇮🇩</div><h3>Sovereign Cloud</h3><p>Region Indonesia, platform dikelola tim lokal Arupa, dukungan 24x7.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="s" style="padding-top:10px">
+  <div class="wrap">
+    <div class="rv"><p class="eyebrow">Biaya</p><h2>Bayar hanya yang Anda pakai</h2></div>
+    <div class="pay">
+      <div class="col free rv"><h3>Gratis</h3><ul>
+        <li>🧠<div><b>Control plane</b><small>Semua komponen inti, API cluster selalu tersedia</small></div></li>
+        <li>🌐<div><b>Data transfer (egress)</b><small>Tanpa biaya, tanpa batas</small></div></li>
+        <li>📍<div><b>Alamat IP</b><small>Tidak dikenakan biaya</small></div></li></ul></div>
+      <div class="col use rv"><h3>Sesuai pemakaian</h3><ul>
+        <li>🖥️<div><b>Worker node</b><small>Sesuai ukuran dan jumlah node</small></div></li>
+        <li>💾<div><b>Persistent volume</b><small>Penyimpanan data tambahan</small></div></li>
+        <li>🧩<div><b>Add-on opsional</b><small>Misalnya managed database</small></div></li></ul>
+        <p style="color:var(--mute);font-size:14px;margin:14px 0 0">Di Indonesia, harga ditagihkan dalam rupiah sesuai price list dan penawaran resmi Arupa. Kami hitung sizing dari tagihan cloud Anda saat ini.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="s" style="background:#fff">
+  <div class="wrap">
+    <div class="rv"><p class="eyebrow">Tools</p><h2>Kelola dengan tools yang sudah tim Anda pakai</h2></div>
+    <div class="tabs" id="tooltabs"><button class="tab on" type="button" data-i="0">Civo CLI</button><button class="tab" type="button" data-i="1">Terraform</button><button class="tab" type="button" data-i="2">REST API</button><button class="tab" type="button" data-i="3">Civo Dashboard</button></div>
+    <div class="code">
+      <pre id="snip"></pre>
+      <div><p class="lead" style="margin-bottom:16px"><b style="color:var(--ink)">100+ aplikasi</b> siap pasang langsung ke cluster dari Marketplace:</p>
+        <div class="apps"><span>🗄️ Database</span><span>🔁 CI/CD</span><span>📈 Monitoring</span><span>🔐 Keamanan</span><span>🧭 Argo CD</span><span>📊 Prometheus</span><span>🔑 cert-manager</span><span>🚦 Traefik</span><span>➕ dan lainnya</span></div></div>
+    </div>
+  </div>
+</section>
+
+<section class="s">
+  <div class="wrap">
+    <div class="rv"><p class="eyebrow">Multi-region</p><h2>Region global, termasuk Indonesia</h2><p class="lead">Klik region. Region Indonesia dioperasikan secara lokal oleh Arupa.</p></div>
+    <div class="regions" id="regions">
+      <button type="button" data-n="Region Amerika Serikat.">🇺🇸 US<small>Amerika Serikat</small></button>
+      <button type="button" data-n="Region Inggris — termasuk untuk kebutuhan sektor publik UK.">🇬🇧 UK<small>Inggris</small></button>
+      <button type="button" data-n="Region Eropa.">🇪🇺 EU<small>Eropa</small></button>
+      <button type="button" data-n="Region India untuk Asia Selatan.">🇮🇳 India<small>Asia Selatan</small></button>
+      <button type="button" class="id" data-n="Region Indonesia (JKT1) dioperasikan secara lokal oleh Arupa: data tetap di Indonesia, dukungan 24x7, tagihan dalam rupiah.">🇮🇩 Indonesia<small>Asia Tenggara · JKT1</small></button>
+    </div>
+    <div class="rnote" id="rnote"></div>
+    <div class="grid3" style="margin-top:22px">
+      <div class="card rv"><h3>🔐 Sertifikasi Civo (global)</h3><p>SOC 2, ISO 27001, Cyber Essentials Plus, Crown Commercial Service, G-Cloud (UK Government).</p></div>
+      <div class="card rv"><h3>🇮🇩 Di Indonesia</h3><p>ISO 9001, ISO 27001, ISO 27017 dan PSE Kominfo dikelola oleh Arupa.</p></div>
+      <div class="card rv"><h3>📈 SLA 99,95%</h3><p>Uptime platform per bulan, service desk 24x7, eskalasi L1 → L2 → L3 → TAM.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="s start" style="background:#fff">
+  <div class="wrap">
+    <div class="rv"><p class="eyebrow">Mari mulai</p><h2>Tiga langkah ke cluster pertama Anda</h2></div>
+    <div class="grid3" style="margin-top:26px">
+      <div class="card rv"><span class="n">1</span><h3>Pilih satu workload</h3><p>Aplikasi berisiko rendah yang cepat dibuktikan.</p></div>
+      <div class="card rv"><span class="n">2</span><h3>Coba di region Indonesia</h3><p>Cluster siap dalam sekitar 90 detik di JKT1.</p></div>
+      <div class="card rv"><span class="n">3</span><h3>Bicara dengan tim kami</h3><p>Sizing berdasarkan tagihan cloud Anda saat ini.</p></div>
+    </div>
+    <p style="margin-top:18px;color:var(--mute)">Beberapa klien global Civo: Mercedes-Benz, University of Oxford, THG, Orbital.</p>
+  </div>
+</section>
+
+<section class="s contact" id="kontak">
+  <div class="wrap grid">
+    <div class="rv"><p class="eyebrow">Civo Kubernetes</p><h2>Minta PoC atau sizing</h2>
+      <p class="lead">Tim Arupa membantu memilih workload pertama, menghitung sizing, dan menyiapkan PoC di region Jakarta.</p>
+      <div class="office"><b>Ingin jual Civo ke pelanggan Anda?</b><br><a href="/civo/partner" style="color:var(--blue2);font-weight:700">Lihat program partner Civo →</a></div></div>
+    <div id="contact-box">{% include "site/contact.html" %}</div>
+  </div>
+</section>
+{% endblock %}
+{% block js %}
+<script>
+(function(){
+  // cluster in ~90s (shown 10x faster)
+  var go=document.getElementById('go'), bar=document.getElementById('bar'), clk=document.getElementById('clk'), st=document.getElementById('st'), done=document.getElementById('done'), ns=document.querySelectorAll('.nodes span'), tm=null;
+  function run(){ clearInterval(tm); var t=0; ns.forEach(function(n){n.classList.remove('up')}); done.innerHTML=''; st.textContent='provisioning…'; go.disabled=true; go.textContent='⏳ Membuat…';
+    tm=setInterval(function(){ t+=1; bar.style.width=Math.min(100,t/88*100)+'%'; clk.innerHTML=t+'<small> detik</small>';
+      if(t===30) ns[0].classList.add('up'); if(t===55) ns[1].classList.add('up'); if(t===78) ns[2].classList.add('up');
+      if(t>=88){ clearInterval(tm); st.textContent='ACTIVE'; st.className='g'; done.innerHTML='<span class="g">✓ Cluster my-app siap dalam 1 menit 28 detik · 3 node Ready</span>'; go.disabled=false; go.textContent='↻ Ulangi' } },100) }
+  go.addEventListener('click',run); onSee(document.querySelector('.term'),function(){ setTimeout(run,600) },.5);
+  // three clouds
+  var P=[{n:'civo public',a:['live','✓ Live di Indonesia: Civo Kubernetes'],d:'Kubernetes, compute, database, storage dan networking di public cloud — untuk SaaS, aplikasi web dan workload modern.',l:['☸️ Kubernetes (live di JKT1)','🖥️ Compute','🗄️ Database','💾 Storage & object store','🌐 Networking']},
+         {n:'civo private',a:['ask','Tanyakan ketersediaannya'],d:'Private cloud berdaulat dan single-tenant di CivoStack — software stack Civo untuk private/edge cloud di hardware partner atau pelanggan.',l:['🏛️ Berdaulat','🔒 Single-tenant','🧱 CivoStack Enterprise','🏢 Di data center Anda atau partner']},
+         {n:'civo ai',a:['res','GPU: Desember 2026, dengan reservasi'],d:'GPU cloud untuk membangun, melatih dan merilis AI dengan performa NVIDIA yang bisa diskalakan.',l:['🛠️ Build','🧠 Train','🚀 Ship','📅 Reservasi kapasitas GPU']}];
+  var pr=document.getElementById('prod'), tt=document.querySelectorAll('#three .tab');
+  function prod(i){ tt.forEach(function(b,k){b.classList.toggle('on',k===i)}); var p=P[i]; pr.innerHTML='<div class="prod"><div><span class="avail '+p.a[0]+'">'+p.a[1]+'</span><h3>'+p.n+'</h3><p>'+p.d+'</p><a class="btn d" href="#kontak" hx-get="/site/contact?need=civo&note='+encodeURIComponent(p.n)+'" hx-target="#contact-box">Tanya tentang '+p.n+' →</a></div><ul>'+p.l.map(function(x){return '<li>'+x+'</li>'}).join('')+'</ul></div>'; if(window.htmx) htmx.process(pr) }
+  tt.forEach(function(b,k){ b.addEventListener('click',function(){ prod(k) }) }); prod(0);
+  // scale worker nodes
+  var wk=document.getElementById('wk'), nn=document.getElementById('nn'), n=3;
+  function nodes(){ wk.innerHTML=''; for(var i=1;i<=6;i++){ var s=document.createElement('span'); s.textContent=i<=n?'Node '+i:'—'; if(i<=n) s.className='on'; wk.appendChild(s) } nn.textContent=n+' worker node' }
+  document.getElementById('plus').onclick=function(){ if(n<6){n++;nodes()} }; document.getElementById('minus').onclick=function(){ if(n>1){n--;nodes()} }; nodes();
+  // tools
+  var T=['<span class="c"># Civo CLI — cluster 3 node di Jakarta</span>\n<span class="k">civo</span> region use JKT1\n<span class="k">civo</span> kubernetes create my-app \\\n  --nodes 3 --size g4s.kube.medium \\\n  --create-firewall --wait --save --switch\n<span class="k">kubectl</span> get nodes',
+         '<span class="c"># Terraform — provider civo/civo</span>\n<span class="k">provider</span> "civo" { region = "JKT1" }\n\n<span class="k">resource</span> "civo_firewall" "app" { name = "app-fw" }\n\n<span class="k">resource</span> "civo_kubernetes_cluster" "app" {\n  name        = "my-app"\n  firewall_id = civo_firewall.app.id\n  pools {\n    size       = "g4s.kube.medium"\n    node_count = 3\n  }\n}',
+         '<span class="c"># REST API — daftar cluster di JKT1</span>\n<span class="k">curl</span> -s https://api.civo.com/v2/kubernetes/clusters?region=JKT1 \\\n  -H "Authorization: bearer $CIVO_TOKEN"',
+         '<span class="c"># Civo Dashboard</span>\n1. dashboard.civo.com → pilih region Jakarta (JKT1)\n2. Kubernetes → Create cluster\n3. 3 node · g4s.kube.medium · Create\n4. Marketplace → pasang aplikasi dalam 1 klik'];
+  var sn=document.getElementById('snip'), tb=document.querySelectorAll('#tooltabs .tab');
+  function tool(i){ tb.forEach(function(b,k){b.classList.toggle('on',k===i)}); sn.innerHTML=T[i]; sn.style.animation='none'; sn.offsetHeight; sn.style.animation='' }
+  tb.forEach(function(b,k){ b.addEventListener('click',function(){ tool(k) }) }); tool(0);
+  // regions
+  var rg=document.querySelectorAll('#regions button'), rn=document.getElementById('rnote');
+  function reg(b){ rg.forEach(function(x){x.classList.toggle('on',x===b)}); rn.textContent=b.dataset.n; rn.style.animation='none'; rn.offsetHeight; rn.style.animation='' }
+  rg.forEach(function(b){ b.addEventListener('click',function(){ reg(b) }) }); reg(rg[rg.length-1]);
+})();
+</script>
+{% endblock %}
