@@ -25,11 +25,60 @@ pub struct RaceData {
     pub stop: Option<u64>,
     /// email -> (nama, [(misi, unix detik lulus)])
     pub done: HashMap<String, (String, Vec<(String, u64)>)>,
+    /// email -> missions whose paid hint was opened (each costs HINT_PENALTY_S on the board and 10 points)
+    #[serde(default)]
+    pub hints: HashMap<String, Vec<String>>,
 }
 
+/// Time penalty per opened hint on the leaderboard (seconds). Env HINT_PENALTY_S.
+pub fn hint_penalty() -> u64 { std::env::var("HINT_PENALTY_S").ok().and_then(|v| v.parse().ok()).unwrap_or(120) }
+
+/// Paid hint per mission: the full answer, including the planted bug.
+pub fn mission_hint(m: &str) -> &'static str {
+    match m {
+        "M0" => "Civo dashboard → Kubernetes → Create cluster: region Jakarta (JKT1), 3 nodes, g4s.kube.medium, CNI Cilium. When it is Active, download the kubeconfig, open Launchpad → Terminal → Open my shell and drop the file in. kubectl get nodes must list 3 Ready nodes.",
+        "M1" => "🐞 Bug: the Service selector is app=ecommerce, but the pods are labelled app=ecommerce-rust — so the load balancer has an IP but no pods behind it. Compare: kubectl get svc ecommerce-rust-svc -n nusamart -o jsonpath='{.spec.selector}' and kubectl get pods -n nusamart --show-labels. Fix in k8s/base/service.yaml (selector app: ecommerce-rust) and re-apply with kubectl apply -k k8s/overlays/before — or kubectl edit svc ecommerce-rust-svc -n nusamart.",
+        "M2" => "The 'before' sizing (CPU 50m/100m, memory 32Mi/64Mi) is Burstable and throttled. kubectl set resources deploy/ecommerce-rust -n nusamart --requests=cpu=500m,memory=128Mi --limits=cpu=500m,memory=128Mi, then kubectl scale deploy/ecommerce-rust -n nusamart --replicas=2.",
+        "M3" => "🐞 Bug: k8s/missions/m3-hpa.yaml targets a Deployment named ecommerce-rust-app, which does not exist (kubectl describe hpa -n nusamart shows the error). Set scaleTargetRef.name to ecommerce-rust, kubectl apply -f k8s/missions/m3-hpa.yaml, then run the load test: kubectl delete job k6-flash-sale -n loadtest --ignore-not-found; kubectl apply -k k6 — and watch kubectl get hpa -n nusamart -w.",
+        "M4" => "🐞 Bug: k8s/missions/m4-pdb.yaml says minAvailable: 100%, so ALLOWED DISRUPTIONS is 0 and kubectl drain waits forever. Change it to minAvailable: 1 and re-apply. Then kubectl get pods -n nusamart -o wide, drain the node that holds two pods (kubectl drain <node> --ignore-daemonsets --delete-emptydir-data) and kubectl uncordon <node> afterwards.",
+        "Final" => "🐞 Bug: k8s/missions/final-spread.yaml spreads on topologyKey kubernetes.io/host — no node has that label, so new pods stay Pending. Use kubernetes.io/hostname and patch again: kubectl patch deploy ecommerce-rust -n nusamart --patch-file k8s/missions/final-spread.yaml. Then warm capacity: kubectl patch hpa ecommerce-rust -n nusamart -p '{\"spec\":{\"minReplicas\":3}}' and wait for 3 Ready pods on 3 nodes.",
+        _ => "",
+    }
+}
+
+/// A check result. `clue` is free; `hint` is the precise fix and is only shown after the paid hint is opened.
 #[derive(Serialize, Clone)]
-pub struct Check { pub name: String, pub ok: bool, pub hint: String }
-fn ck(name: &str, ok: bool, hint: &str) -> Check { Check { name: name.into(), ok, hint: if ok { String::new() } else { hint.into() } } }
+pub struct Check { pub name: String, pub ok: bool, pub clue: String, pub hint: String }
+fn ck(name: &str, ok: bool, hint: &str) -> Check {
+    let clue = if ok { String::new() } else { clue_for(name).to_string() };
+    Check { name: name.into(), ok, clue, hint: if ok { String::new() } else { hint.into() } }
+}
+/// Free clues: point at the symptom, never at the command.
+fn clue_for(name: &str) -> &'static str {
+    let n = name.to_lowercase();
+    if n.starts_with("3 nodes") { "Your cluster needs 3 nodes in Ready state — and Launchpad must be able to see it (Connect in M0)." }
+    else if n.starts_with("namespace") || n.starts_with("deployment") { "NusaMart is not running in the nusamart namespace yet. Start from the repo's 'before' overlay." }
+    else if n.starts_with("original") { "The image and RECO_WORK must stay as shipped in the repo." }
+    else if n.starts_with("at least 1 pod") { "Look at the pods: are they Running and READY?" }
+    else if n.starts_with("service selector") { "The load balancer only sends traffic to pods whose labels match the Service. Do they match?" }
+    else if n.starts_with("load balancer") { "A LoadBalancer Service gets its public IP after 1–2 minutes." }
+    else if n.starts_with("shop answers") { "The IP exists but nothing answers. Follow the path: load balancer → Service → pods." }
+    else if n.starts_with("requests = limits") { "Guaranteed QoS needs requests equal to limits for both CPU and memory." }
+    else if n.starts_with("running pods are qos") { "The new pods appear after the rollout — check the QOS class of the running pods." }
+    else if n.starts_with("2 or more replicas") { "One pod is a single point of failure." }
+    else if n.starts_with("hpa targets") { "Is there an HPA — and does it point at a Deployment that really exists?" }
+    else if n.starts_with("hpa has scaled") { "An HPA only scales when CPU is measured and there is load. Check TARGETS, then run the k6 test." }
+    else if n.starts_with("pdb protects") { "Nothing limits how many NusaMart pods a drain may evict at once." }
+    else if n.starts_with("pdb allows") { "Your budget leaves no room for even one eviction — a drain would wait forever." }
+    else if n.starts_with("pods run on 2") { "All your pods sit on one node. What happens when it is drained?" }
+    else if n.starts_with("no node left") { "A drained node stays unschedulable until you bring it back." }
+    else if n.starts_with("hpa minreplicas") { "Warm capacity: the autoscaler should never go below 3 pods during the sale." }
+    else if n.starts_with("3 or more replicas") { "Are all 3 pods Ready — or is one stuck Pending?" }
+    else if n.starts_with("spread rule") { "The spread rule must use a label that every node really has." }
+    else if n.starts_with("pods spread over 3") { "Three nodes, three pods — one on each. Look at the NODE column." }
+    else if n.starts_with("flash sale probe") { "Too slow or errors under the burst: check resources, replicas and the HPA." }
+    else { "Check the mission goal again." }
+}
 
 pub fn load(path: &str) -> RaceData {
     std::fs::read_to_string(path).ok().and_then(|s| serde_json::from_str(&s).ok()).unwrap_or_default()
@@ -59,13 +108,15 @@ pub fn ranked(d: &RaceData, ms: &[(String, u64)]) -> Vec<(String, u64)> {
 /// Leaderboard: misi terbanyak, lalu waktu (detik sejak start) misi terakhir yang lulus, lalu nama.
 pub fn board(d: &RaceData) -> Vec<serde_json::Value> {
     let start = d.start.unwrap_or(0);
-    let mut rows: Vec<(usize, u64, String, Vec<(String, u64)>)> = d.done.values()
-        .map(|(name, all)| { let ms = ranked(d, all); (ms.len(), ms.iter().map(|m| m.1).max().unwrap_or(0).saturating_sub(start), name.clone(), ms) })
+    let pen = hint_penalty();
+    let mut rows: Vec<(usize, u64, String, Vec<(String, u64)>, usize)> = d.done.iter()
+        .map(|(email, (name, all))| { let ms = ranked(d, all); let h = d.hints.get(email).map(|v| v.len()).unwrap_or(0);
+            (ms.len(), ms.iter().map(|m| m.1).max().unwrap_or(0).saturating_sub(start) + h as u64 * pen, name.clone(), ms, h) })
         .filter(|r| r.0 > 0)
         .collect();
     rows.sort_by(|a, b| b.0.cmp(&a.0).then(a.1.cmp(&b.1)).then(a.2.cmp(&b.2)));
-    rows.into_iter().enumerate().map(|(i, (n, t, name, ms))| serde_json::json!({
-        "rank": i + 1, "name": short_name(&name), "missions": n, "elapsed": t,
+    rows.into_iter().enumerate().map(|(i, (n, t, name, ms, h))| serde_json::json!({
+        "rank": i + 1, "name": short_name(&name), "missions": n, "elapsed": t, "hints": h, "score": (n as i64) * 100 - (h as i64) * 10,
         "finished": n == MISSIONS.len(),
         "times": ms.iter().map(|(m, at)| (m.clone(), at.saturating_sub(start))).collect::<HashMap<_, _>>()
     })).collect()
@@ -119,6 +170,10 @@ fn items<'a>(list: &'a serde_json::Value, kind: &str) -> Vec<&'a serde_json::Val
     list["items"].as_array().map(|a| a.iter().filter(|i| i["kind"] == kind).collect()).unwrap_or_default()
 }
 fn q_eq(a: &serde_json::Value, b: &serde_json::Value) -> bool { !a.is_null() && a == b }
+fn ctr_spread(dep: &serde_json::Value) -> bool {
+    dep["spec"]["template"]["spec"]["topologySpreadConstraints"].as_array().map(|a| a.iter().any(|t|
+        t["topologyKey"] == "kubernetes.io/hostname" && t["whenUnsatisfiable"] == "DoNotSchedule")).unwrap_or(false)
+}
 
 /// Keadaan cluster peserta yang dibutuhkan untuk menilai misi. Diambil Launchpad lewat kubeconfig,
 /// atau dilaporkan Mission Agent yang berjalan di cluster peserta (akses baca-saja).
@@ -170,6 +225,8 @@ pub async fn evaluate(snap: &Snapshot, mission: &str) -> Vec<Check> {
     c.push(ck("Original NusaMart image and RECO_WORK", image_ok && reco_ok, "Do not change the image or RECO_WORK — re-apply k8s/overlays/before."));
     c.push(ck("At least 1 pod ready", ready_rep >= 1, "Wait for the pod to be Running and 1/1 READY (kubectl get pods -n nusamart)."));
     let svc = items(list, "Service").into_iter().find(|s| s["metadata"]["name"] == SVC).cloned();
+    let sel_ok = svc.as_ref().map(|s| s["spec"]["selector"]["app"] == APP).unwrap_or(false);
+    c.push(ck("Service selector matches the NusaMart pods", sel_ok, "Set the Service selector to app: ecommerce-rust (k8s/base/service.yaml, then kubectl apply -k k8s/overlays/before)."));
     let ip = svc.as_ref().and_then(|s| s["status"]["loadBalancer"]["ingress"][0]["ip"].as_str().map(String::from));
     c.push(ck("Load balancer has an External IP", ip.is_some(), "kubectl get svc ecommerce-rust-svc -n nusamart -w — wait for EXTERNAL-IP (1–2 min)."));
     let health = match &ip { Some(ip) => matches!(http_get(ip, "/health").await, Ok((200, _))), None => false };
@@ -205,9 +262,46 @@ pub async fn evaluate(snap: &Snapshot, mission: &str) -> Vec<Check> {
 
     c.push(ck("HPA minReplicas ≥ 3 (warm capacity)", min >= 3, "kubectl delete hpa ecommerce-rust -n nusamart, then: kubectl autoscale deploy ecommerce-rust -n nusamart --cpu-percent=60 --min=3 --max=8"));
     c.push(ck("3 or more replicas ready", ready_rep >= 3, "Wait until 3 pods are Ready."));
+    let spread_ok = ctr_spread(&dep);
+    c.push(ck("Spread rule on kubernetes.io/hostname (DoNotSchedule)", spread_ok, "Use topologyKey: kubernetes.io/hostname with whenUnsatisfiable: DoNotSchedule in k8s/missions/final-spread.yaml."));
     c.push(ck("Pods spread over 3 nodes", on_nodes.len() >= 3, "Add topologySpreadConstraints on kubernetes.io/hostname with whenUnsatisfiable: DoNotSchedule (ScheduleAnyway is only a preference) — see bonus B2, then wait for the rollout."));
     let (failed, p95) = match &ip { Some(ip) => burst(ip).await, None => (120, 0) };
     let limit: u128 = std::env::var("RACE_P95_MS").ok().and_then(|v| v.parse().ok()).unwrap_or(1500);
     c.push(ck(&format!("Flash sale probe: 120 requests, {failed} failed, p95 {p95} ms (limit {limit} ms)"), failed == 0 && p95 <= limit, "Too slow or errors under burst: check resources, replicas and HPA."));
     c
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    fn snap(sel: &str, hpa_target: &str, pdb_min_allowed: u64, key: &str) -> Snapshot {
+        let node = |n: &str| serde_json::json!({"metadata":{"name":n},"spec":{},"status":{"conditions":[{"type":"Ready","status":"True"}]}});
+        let pod = |n: &str, node: &str| serde_json::json!({"kind":"Pod","metadata":{"name":n,"labels":{"app":"ecommerce-rust"}},"spec":{"nodeName":node},"status":{"phase":"Running","qosClass":"Guaranteed"}});
+        let res = serde_json::json!({"requests":{"cpu":"500m","memory":"128Mi"},"limits":{"cpu":"500m","memory":"128Mi"}});
+        Snapshot {
+            nodes: serde_json::json!({"items":[node("a"),node("b"),node("c")]}),
+            ns: Ok(serde_json::json!({"items":[
+                {"kind":"Deployment","metadata":{"name":"ecommerce-rust"},"status":{"readyReplicas":3},"spec":{"template":{"spec":{
+                    "topologySpreadConstraints":[{"topologyKey":key,"whenUnsatisfiable":"DoNotSchedule"}],
+                    "containers":[{"image":"ghcr.io/dev-cer/ecommerce-app:1","env":[{"name":"RECO_WORK","value":"100000"}],"resources":res}]}}}},
+                {"kind":"Service","metadata":{"name":"ecommerce-rust-svc"},"spec":{"selector":{"app":sel}},"status":{"loadBalancer":{}}},
+                {"kind":"HorizontalPodAutoscaler","metadata":{"name":"ecommerce-rust"},"spec":{"scaleTargetRef":{"name":hpa_target},"minReplicas":3,"maxReplicas":8},"status":{"lastScaleTime":"x"}},
+                {"kind":"PodDisruptionBudget","metadata":{"name":"ecommerce-rust"},"spec":{"selector":{"matchLabels":{"app":"ecommerce-rust"}}},"status":{"disruptionsAllowed":pdb_min_allowed}},
+                pod("p1","a"),pod("p2","b"),pod("p3","c")]})),
+        }
+    }
+    fn failing(s: &Snapshot, m: &str) -> Vec<String> {
+        let rt = tokio::runtime::Builder::new_current_thread().enable_all().build().unwrap();
+        rt.block_on(evaluate(s, m)).into_iter().filter(|c| !c.ok).map(|c| { assert!(!c.clue.is_empty()); c.name }).collect()
+    }
+    #[test]
+    fn planted_bugs_are_caught_with_a_clue() {
+        assert!(failing(&snap("ecommerce", "ecommerce-rust", 1, "kubernetes.io/hostname"), "M1").iter().any(|n| n.starts_with("Service selector")));
+        assert!(failing(&snap("ecommerce-rust", "ecommerce-rust-app", 1, "kubernetes.io/hostname"), "M3").iter().any(|n| n.starts_with("HPA targets")));
+        assert!(failing(&snap("ecommerce-rust", "ecommerce-rust", 0, "kubernetes.io/hostname"), "M4").iter().any(|n| n.starts_with("PDB allows")));
+        assert!(failing(&snap("ecommerce-rust", "ecommerce-rust", 1, "kubernetes.io/host"), "Final").iter().any(|n| n.starts_with("Spread rule")));
+        let ok = failing(&snap("ecommerce-rust", "ecommerce-rust", 1, "kubernetes.io/hostname"), "M4");
+        assert!(!ok.iter().any(|n| n.starts_with("Service selector") || n.starts_with("HPA targets") || n.starts_with("PDB")), "{ok:?}");
+        for m in MISSIONS { assert!(!mission_hint(m).is_empty()); }
+    }
 }

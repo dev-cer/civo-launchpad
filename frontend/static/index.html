@@ -630,6 +630,11 @@ body.big .lb h1{font-size:96px}body.big .lb table{font-size:26px}
 .mbadge.ok{background:var(--green,#00ff6f);color:#000}.mbadge.lk{background:#2a2d2a;color:#b8bdb4}.mbadge.go{background:#003d1c;color:var(--green,#00ff6f);border:1px solid var(--green,#00ff6f);animation:pulseb 2s infinite}
 @keyframes pulseb{50%{box-shadow:0 0 0 6px rgba(0,255,111,.15)}}
 .two-steps{display:flex;flex-wrap:wrap;gap:10px}
+.note.bug{background:#2a1e05;border-left:3px solid #f5c542;color:#f3e3b8}
+.event .ms .labs button.hintb{background:transparent;border:1px dashed #6b5a1e;color:#f5c542;font-weight:700}
+.event .ms .labs button.hintb.used{border-style:solid}
+.event .ms .hinttxt{font-size:12.5px;line-height:1.5;background:#2a1e05;border-left:3px solid #f5c542;color:#f3e3b8;padding:8px 10px;border-radius:0 8px 8px 0}
+.event .ms .rc .h.hint{color:#f3e3b8}
 </style>
 </head>
 <body>
@@ -1044,6 +1049,49 @@ resource "civo_kubernetes_cluster" "lab" {
   ],
   quiz:{ q:'Does deleting a cluster automatically delete Civo Volumes from PVCs with a Retain reclaim policy?', o:['Yes, always','No — Retain volumes are kept and billed until you delete them','Only in some regions','Volumes are never billed'], a:1, why:'Volumes with <code>Retain</code> are intentionally kept. Check <code>civo volume ls</code> after cleanup.' } },
 ];
+/* ---------- Workshop 26 Nov: bug hunt. Each mission from M1 hides one planted bug in the repo. ---------- */
+if (EDITION==='workshop') {
+  const BUG = (what) => `<div class="note bug">🐞 <b>Bug hunt.</b> ${what} Find and fix it in <b>your real shell</b>, then press <b>Check on my cluster</b>. The check tells you <i>what</i> fails, with a free clue. Stuck? Open the hint on the mission card — it costs <b>10 points and +2 minutes</b> on Mission Control.</div>`;
+  const W = {
+    kustomize: { intro:`The workshop app is <b>NusaMart</b>, the Indonesian e-commerce shop now preparing for the <b>12.12 flash sale</b>. One Rust binary serves the storefront and the API; we run it in <b>lite</b> mode (in-memory catalogue) so every cluster is ready in minutes.
+      <pre class="yaml">beyond-the-container/
+├── k8s/base/              # namespace nusamart · Deployment ecommerce-rust · Service (LoadBalancer)
+├── k8s/overlays/before/   # 1 replica, tiny CPU limit  ← you start here
+├── k8s/missions/          # m3-hpa.yaml · m4-pdb.yaml · final-spread.yaml
+└── k6/                    # the in-cluster flash-sale load test</pre>
+      <div class="note">From M1 on, every mission hides <b>one planted bug</b>. Reading the manifests before applying them is part of the race.</div>` },
+    exposing: { intro:`The NusaMart Service is of type <b>LoadBalancer</b>, so Civo creates a load balancer with a public IP. Traffic flows <b>load balancer → Service → pods</b>, and the Service picks its pods by <b>label selector</b>.` + BUG('The load balancer gets an IP, but the shop does not answer.'),
+      tasks:[
+        { t:'Wait for the External IP', cmd:'kubectl get svc ecommerce-rust-svc -n nusamart', re:/^kubectl get (svc|service) ecommerce-rust-svc -n nusamart( -w)?$/, need:'sample', fx:()=>{S.res.lb=true}, out:'NAME                 TYPE           CLUSTER-IP     EXTERNAL-IP     PORT(S)        AGE\necommerce-rust-svc   LoadBalancer   10.43.18.112   212.2.244.91    80:31480/TCP   92s' },
+        { t:'Try the shop', cmd:'curl -s -m 5 http://212.2.244.91/health', re:/^curl .*\/health$/, need:'sample', out:'curl: (28) Operation timed out after 5001 milliseconds\n<span class="err">✗ The IP exists but nothing answers — something between the load balancer and the pods is wrong.</span>' },
+        { t:'Investigate', d:'Which pods does the Service send traffic to? Compare what it selects with the labels the pods really have.', cmd:'kubectl describe svc ecommerce-rust-svc -n nusamart', re:/^kubectl describe (svc|service) ecommerce-rust-svc -n nusamart$/, need:'sample', out:'Name:                     ecommerce-rust-svc\nNamespace:                nusamart\nSelector:                 app=ecommerce\nType:                     LoadBalancer\nLoadBalancer Ingress:     212.2.244.91\nPort:                     http  80/TCP\nEndpoints:                <span class="err">&lt;none&gt;</span>' },
+      ] },
+    hpa: { intro:`metrics-server is installed by default on Civo. The HPA computes <code>desired = ceil(current × usage / target)</code>, where usage is a percentage of the CPU <b>request</b> — that is why you right-sized first. The repo ships a ready-made HPA in <code>k8s/missions/m3-hpa.yaml</code>.` + BUG('The HPA from the repo never scales.'),
+      tasks:[
+        { t:'Apply the HPA from the repo', cmd:'kubectl apply -f k8s/missions/m3-hpa.yaml', re:/^kubectl apply -f k8s\/missions\/m3-hpa\.ya?ml$/, need:'sample', fx:()=>{S.res.hpa=true}, out:'horizontalpodautoscaler.autoscaling/ecommerce-rust created' },
+        { t:'Look at it', cmd:'kubectl get hpa -n nusamart', re:/^kubectl get hpa -n nusamart( -w)?$/, need:'sample', out:'NAME             REFERENCE                       TARGETS              MINPODS   MAXPODS   REPLICAS   AGE\necommerce-rust   Deployment/ecommerce-rust-app   <span class="err">&lt;unknown&gt;/60%</span>   2         8         0          40s' },
+        { t:'Investigate', d:'The Events tell you what the autoscaler is unhappy about.', cmd:'kubectl describe hpa ecommerce-rust -n nusamart', re:/^kubectl describe hpa( ecommerce-rust)? -n nusamart$/, need:'sample', out:'Conditions:\n  Type         Status  Reason          Message\n  AbleToScale  <span class="err">False</span>   FailedGetScale  the HPA controller was unable to get the target\'s current scale: <span class="err">deployments/scale.apps "ecommerce-rust-app" not found</span>' },
+        { t:'After your fix: generate load', cmd:'kubectl delete job k6-flash-sale -n loadtest --ignore-not-found; kubectl apply -k k6', re:/kubectl apply -k k6\/?$/, need:'sample', fx:()=>{S.res.load=true}, out:'job.batch "k6-flash-sale" deleted\njob.batch/k6-flash-sale created\n<span class="ok">Now watch: kubectl get hpa -n nusamart -w — REPLICAS should climb.</span>' },
+      ] },
+    harden: { intro:`Upgrades and maintenance <b>drain</b> nodes. A <b>PodDisruptionBudget</b> caps how many NusaMart pods a voluntary disruption may take at once. The repo ships one in <code>k8s/missions/m4-pdb.yaml</code>.` + BUG('With this PDB, a node drain never finishes.'),
+      tasks:[
+        { t:'Apply the PDB from the repo', cmd:'kubectl apply -f k8s/missions/m4-pdb.yaml', re:/^kubectl apply -f k8s\/missions\/m4-pdb\.ya?ml$/, need:'sample', fx:()=>{S.res.pdb=true}, out:'poddisruptionbudget.policy/ecommerce-rust created' },
+        { t:'Read the budget', cmd:'kubectl get pdb -n nusamart', re:/^kubectl get (pdb|poddisruptionbudget) -n nusamart$/, need:'sample', out:'NAME             MIN AVAILABLE   MAX UNAVAILABLE   ALLOWED DISRUPTIONS   AGE\necommerce-rust   100%            N/A               <span class="err">0</span>                     12s' },
+        { t:'See where the pods run', d:'After your fix: drain the node that holds two pods, then uncordon it.', cmd:'kubectl get pods -n nusamart -o wide', re:/^kubectl get (pods|po) -n nusamart -o wide$/, need:'sample', out:'NAME                              READY   STATUS    NODE\necommerce-rust-6c9f7d8b5-x2kqp    1/1     Running   k3s-civo-k8s-lab-node-01\necommerce-rust-6c9f7d8b5-m8wzt    1/1     Running   k3s-civo-k8s-lab-node-01' },
+      ] },
+  };
+  for (const [id,o] of Object.entries(W)) { const l=LABS.find(x=>x.id===id); if (l) Object.assign(l,o) }
+  const fs = LABS.find(x=>x.id==='flashsale');
+  if (fs) {
+    fs.intro = fs.intro + BUG('The spread rule in <code>k8s/missions/final-spread.yaml</code> leaves a pod stuck.');
+    fs.tasks = [fs.tasks[0],
+      { t:'Apply the spread rule from the repo', d:'A merge patch replaces the whole list of spread rules.', cmd:'kubectl patch deploy ecommerce-rust -n nusamart --type merge --patch-file k8s/missions/final-spread.yaml', re:/^kubectl patch (deploy|deployment) ecommerce-rust -n nusamart .*final-spread\.ya?ml$/, need:'sample', out:'deployment.apps/ecommerce-rust patched' },
+      { t:'Watch the rollout', cmd:'kubectl get pods -n nusamart -o wide', re:/^kubectl get (pods|po) -n nusamart -o wide$/, need:'sample', out:'NAME                              READY   STATUS    NODE\necommerce-rust-6c9f7d8b5-x2kqp    1/1     Running   k3s-civo-k8s-lab-node-01\necommerce-rust-6c9f7d8b5-m8wzt    1/1     Running   k3s-civo-k8s-lab-node-02\necommerce-rust-7d4c9b6f8-q4lzn    0/1     <span class="err">Pending</span>   &lt;none&gt;' },
+      { t:'Investigate', d:'Why can the scheduler not place the new pod?', cmd:'kubectl describe pod -n nusamart -l app=ecommerce-rust | grep -A3 Events', re:/^kubectl describe (pod|pods|po)/, need:'sample', out:'Events:\n  Warning  FailedScheduling  default-scheduler  0/3 nodes are available: <span class="err">3 node(s) didn\'t match pod topology spread constraints (missing required label)</span>.' },
+      ...fs.tasks.slice(1)];
+  }
+}
+
 
 const EKS_MAP = [
   ['Amazon EKS (control plane)','Civo Kubernetes (K3s / Talos)','Clusters active in ~1–2 minutes; managed control plane'],
@@ -1072,7 +1120,7 @@ function updateProgress(){
   const total = LABS.length, done = LABS.filter(labDone).length, pct = Math.round(done/total*100);
   $('#pwheel').innerHTML = wheelSVG(30);
   let raced=null; try{ raced=RACE.mine }catch(e){}
-  if (EDITION==='workshop' && raced){ const n=MISSIONS.filter(m=>raced[m.id]!=null).length; $('#ptext').textContent = `🏁 ${n}/${MISSIONS.length} missions · ${n*100} pts`; return }
+  if (EDITION==='workshop' && raced){ const n=MISSIONS.filter(m=>raced[m.id]!=null).length; let h=0; try{ h=Object.keys(HINTS).length }catch(e){}; $('#ptext').textContent = `🏁 ${n}/${MISSIONS.length} missions · ${n*100-h*10} pts`; return }
   $('#ptext').textContent = `${done}/${total} labs · ${pct}%`;
 }
 function nodesOut(labels){
@@ -2206,7 +2254,7 @@ async function raceCheck(mid){
     else {
       if (j.passed){ if (j.elapsed!=null) RACE.mine[mid]=j.elapsed; else if (RACE.mine[mid]==null) RACE.mine[mid]=0; saveRace() }
       out.innerHTML = j.already ? '<div>✅ Already passed — on to the next mission!</div>'
-        : (j.checks||[]).map(c=>`<div>${c.ok?'✅':'❌'} <span>${esc(c.name)}</span></div>${c.ok?'':`<div class="h">${esc(c.hint)}</div>`}`).join('')
+        : (j.checks||[]).map(c=>`<div>${c.ok?'✅':'❌'} <span>${esc(c.name)}</span></div>${c.ok?'':`<div class="h">🔎 ${esc(c.clue||'')}</div>${c.hint?`<div class="h hint">💡 ${esc(c.hint)}</div>`:''}`}`).join('')
           + (j.passed?`<div><b>🏁 ${mid} passed${j.elapsed!=null?' at +'+fmtT(j.elapsed):''}</b>${j.late?' · after the race board closed at 11:20':''}</div>`:'')
           + '';
       if (j.passed){ confetti&&confetti(); btn.textContent='✓ Passed · check again'; updateProgress(); const ni=MISSIONS.findIndex(m=>m.id===mid)+1; if (ni<MISSIONS.length && !j.already) { toast(`+100 pts · ${MISSIONS[ni].id} unlocked`); setTimeout(()=>{ if ((location.hash||'').includes('beyond-scaling')) renderEvent() }, 2200) } }
@@ -2220,7 +2268,19 @@ function missionState(i){
   for (let j=0;j<i;j++) if (RACE.mine[MISSIONS[j].id]==null) return 'locked';
   return 'active';
 }
-function raceScore(){ return MISSIONS.filter(m=>RACE.mine[m.id]!=null).length*100 }
+const HINTS = (()=>{ try{ return JSON.parse(localStorage.getItem('hs-hints-'+EDITION)||'{}') }catch(e){ return {} } })();
+function saveHints(){ try{ localStorage.setItem('hs-hints-'+EDITION, JSON.stringify(HINTS)) }catch(e){} }
+function raceScore(){ return MISSIONS.filter(m=>RACE.mine[m.id]!=null).length*100 - Object.keys(HINTS).length*10 }
+async function openHint(mid, btn){
+  if (HINTS[mid]){ const b=$('#hint-'+mid); if (b) b.hidden=!b.hidden; return }
+  if (!btn.dataset.sure){ btn.dataset.sure='1'; btn.textContent='Tap again: −10 pts and +2 min on the board'; setTimeout(()=>{ if(btn.isConnected){ delete btn.dataset.sure; btn.textContent='💡 Hint · −10 pts' } }, 5000); return }
+  btn.disabled=true;
+  try{ const r=await fetch('/api/race/hint',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:S.reg.email,access_code:S.reg.code||'',token:S.reg.token||'',mission:mid})});
+    const j=await r.json().catch(()=>({}));
+    if (!r.ok){ toast(j.message||'Hint not available'); btn.disabled=false; return }
+    HINTS[mid]=j.hint; saveHints(); updateProgress(); renderEvent();
+  }catch(e){ toast('Could not reach Launchpad'); btn.disabled=false }
+}
 function missionPct(m){ const ls=m.labs.map(id=>LABS.find(l=>l.id===id)).filter(Boolean); return ls.filter(labDone).length/ls.length }
 function renderEvent(){
   CUR=null; S.ctx='beyond-scaling'; save(); markNav('event'); clearInterval(TICK); updateProgress();
@@ -2237,7 +2297,8 @@ function renderEvent(){
 
       ${EDITION==='workshop' ? (st==='locked' ? `<button class="chk" disabled>🔒 Pass ${prev} to unlock</button>`
           : needLink ? `<button class="chk warn" onclick="openConnect()">🔗 Connect your cluster first</button><div class="won" style="color:var(--amber)">Checks run on your real cluster — connect it in M0 (Terminal tab).</div>`
-          : `<button class="chk" id="rb-${m.id}" onclick="raceCheck('${m.id}')">${st==='passed'?'✓ Passed · check again':'✓ Check on my cluster'}</button>`)+`${RACE.mine[m.id]!=null?`<div class="won">Passed at +${fmtT(RACE.mine[m.id])}</div>`:''}<div class="rc" id="rc-${m.id}"></div>`
+          : `<button class="chk" id="rb-${m.id}" onclick="raceCheck('${m.id}')">${st==='passed'?'✓ Passed · check again':'✓ Check on my cluster'}</button>`
+            + (st!=='passed' ? `<button class="hintb ${HINTS[m.id]?'used':''}" onclick="openHint('${m.id}',this)">${HINTS[m.id]?'💡 Your hint (opened)':'💡 Hint · −10 pts'}</button>${HINTS[m.id]?`<div class="hinttxt" id="hint-${m.id}">${esc(HINTS[m.id])}</div>`:''}` : (HINTS[m.id]?'<div class="won" style="color:var(--muted)">hint used · −10 pts</div>':'')))+`${RACE.mine[m.id]!=null?`<div class="won">Passed at +${fmtT(RACE.mine[m.id])}</div>`:''}<div class="rc" id="rc-${m.id}"></div>`
         : (i>0?`<button class="skip" onclick="openSkip(${i})">Behind? Skip to ${m.id}</button>`:'')}</div></div>` }).join('');
   const core=new Set(MISSIONS.flatMap(m=>m.labs).concat(['getting-started']));
   const take=LABS.filter(l=>!core.has(l.id));
@@ -2549,10 +2610,10 @@ async function loadRaceBoard(){
   const demo=!j; const rows=demo?[{name:'Rina S.',missions:6,elapsed:2710,times:{M0:95,M1:540,M2:1100,M3:1620,M4:2150,Final:2710}},{name:'Bagus P.',missions:6,elapsed:2894,times:{M0:120,M1:610,M2:1180,M3:1760,M4:2300,Final:2894}},{name:'Dewi A.',missions:4,elapsed:2005,times:{M0:80,M1:700,M2:1350,M3:2005}}].map((r,i)=>({...r,rank:i+1})):j.players;
   const me=S.reg?shortName(S.reg.name):null;
   el.innerHTML = rows.length ? rows.map(t=>`<tr class="${!demo&&t.name===me?'me':''}"><td>${t.rank}</td><td>${esc(t.name)}${!demo&&t.name===me?'<span class="of you">you</span>':''}${t.missions===MISSIONS.length?' 🏁':''}</td>
-      <td class="m">${MISSIONS.map(m=>`<span class="dot ${t.times&&t.times[m.id]!=null?'y':''}" title="${m.id}">${t.times&&t.times[m.id]!=null?fmtT(t.times[m.id]):m.id}</span>`).join('')}</td><td>${t.missions}/${MISSIONS.length}</td><td class="mono">${fmtT(t.elapsed)}</td></tr>`).join('')
+      <td class="m">${MISSIONS.map(m=>`<span class="dot ${t.times&&t.times[m.id]!=null?'y':''}" title="${m.id}">${t.times&&t.times[m.id]!=null?fmtT(t.times[m.id]):m.id}</span>`).join('')}</td><td>${t.missions}/${MISSIONS.length}${t.hints?` <span title="hints opened" style="color:#a8860f">💡${t.hints}</span>`:''}</td><td class="mono">${fmtT(t.elapsed)}</td></tr>`).join('')
     : '<tr><td>–</td><td colspan="4">No missions passed yet.</td></tr>';
   const st={waiting:'Waiting for the start signal',scheduled:'Starting soon',running:'Race running · live, refreshes every 5 seconds',finished:'Race over · final standings'}[RACE.state]||'';
-  $('#lbdemo').textContent = demo ? 'Demo data — the live race board appears when Launchpad runs on the workshop server.' : st+' · ranked by missions passed, then by the time of your last passed mission';
+  $('#lbdemo').textContent = demo ? 'Demo data — the live race board appears when Launchpad runs on the workshop server.' : st+' · ranked by missions passed, then by time (each 💡 hint adds 2 minutes)';
 }
 function renderLeaderboard(){
   CUR=null; S.ctx='beyond-scaling'; save(); markNav('leaderboard'); clearInterval(TICK);

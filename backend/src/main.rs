@@ -427,6 +427,7 @@ async fn main() {
         .route("/api/race", get(get_race))
         .route("/api/race/check", post(race_check))
         .route("/api/race/me", post(race_me))
+        .route("/api/race/hint", post(race_hint))
         .route("/api/race/export", get(race_export))
         .route("/api/admin/race", post(admin_race))
         .route("/api/cluster/connect", post(connect_cluster))
@@ -554,6 +555,29 @@ async fn race_check(State(state): State<Arc<AppState>>, Json(req): Json<RaceChec
     finish_check(&state, &email, &name, mission, checks).await
 }
 
+/// Open the paid hint of a mission: costs HINT_PENALTY_S seconds on the board (and 10 points). Idempotent.
+async fn race_hint(State(state): State<Arc<AppState>>, Json(req): Json<RaceCheckRequest>) -> impl IntoResponse {
+    let email = clean(&req.email, 120).to_lowercase();
+    let Some(midx) = race::MISSIONS.iter().position(|m| m.eq_ignore_ascii_case(&clean(&req.mission, 10))) else { return err(StatusCode::BAD_REQUEST, "Unknown mission."); };
+    let mission = race::MISSIONS[midx];
+    if !participant_ok(&state, &email, &clean(&req.token, 64)).await { return err(StatusCode::FORBIDDEN, "Sign in to Launchpad again with your registration details."); }
+    let mut d = state.race.lock().await;
+    if d.start.is_none() { return err(StatusCode::CONFLICT, "Hints open when the race starts."); }
+    let done: Vec<String> = d.done.get(&email).map(|(_, v)| v.iter().map(|x| x.0.clone()).collect()).unwrap_or_default();
+    if let Some(prev) = race::MISSIONS[..midx].iter().find(|m| !done.iter().any(|x| x == *m)) {
+        return err(StatusCode::CONFLICT, &format!("Hints unlock with the mission — finish {prev} first."));
+    }
+    let name = state.regs.lock().await.iter().find(|r| r.email == email).map(|r| r.name.clone()).unwrap_or_default();
+    let list = d.hints.entry(email.clone()).or_default();
+    let new = !list.iter().any(|m| m == mission);
+    if new { list.push(mission.to_string()); }
+    let used = list.len();
+    d.done.entry(email.clone()).or_insert((name, vec![]));
+    race::save(&state.race_file, &d);
+    (StatusCode::OK, Json(serde_json::json!({ "status": "success", "mission": mission, "hint": race::mission_hint(mission), "new": new,
+        "hints_used": used, "penalty_s": race::hint_penalty() })))
+}
+
 async fn finish_check(state: &AppState, email: &str, name: &str, mission: &'static str, checks: Vec<race::Check>) -> (StatusCode, Json<serde_json::Value>) {
     let email = email.to_string(); let name = name.to_string();
     let passed = checks.iter().all(|c| c.ok);
@@ -568,7 +592,13 @@ async fn finish_check(state: &AppState, email: &str, name: &str, mission: &'stat
         race::save(&state.race_file, &d);
     }
     let mine = d.done.get(&email).map(|(_, v)| v.clone()).unwrap_or_default();
+    // Paid hints: the exact fix stays hidden until the participant opens this mission's hint.
+    let opened = d.hints.get(&email).map(|v| v.iter().any(|m| m == mission)).unwrap_or(false);
+    let mut checks = checks;
+    if !opened { for c in checks.iter_mut() { c.hint.clear(); } }
+    let hints_used = d.hints.get(&email).map(|v| v.len()).unwrap_or(0);
     (StatusCode::OK, Json(serde_json::json!({ "status": "success", "passed": passed, "mission": mission, "elapsed": if late { None } else { at }, "late": late,
+        "hint_open": opened, "hints_used": hints_used, "hint": if opened { race::mission_hint(mission) } else { "" },
         "checks": checks, "players": race::board(&d), "certificate": race::certificate(&mine), "passed_missions": mine.iter().map(|m| m.0.clone()).collect::<Vec<_>>() })))
 }
 
@@ -586,7 +616,7 @@ async fn agent_checks(state: &AppState, email: &str, mission: &str, kc_fallback:
         tokio::time::sleep(std::time::Duration::from_millis(250)).await;
         let a = state.agents.lock().await.get(email).cloned();
         if let Some(a) = a.filter(|a| a.at_ms > t0) {
-            if !a.error.is_empty() { return Some(Ok(vec![race::Check { name: "Reach your cluster".into(), ok: false, hint: format!("Mission Agent could not read your cluster: {}", a.error) }])); }
+            if !a.error.is_empty() { return Some(Ok(vec![race::Check { name: "Reach your cluster".into(), ok: false, clue: format!("Mission Agent could not read your cluster: {}", a.error), hint: String::new() }])); }
             return Some(Ok(race::evaluate(&a.snap, mission).await));
         }
     }
