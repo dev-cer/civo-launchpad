@@ -127,11 +127,40 @@ label.f input:focus,label.f select:focus{outline:none;border-color:var(--ink);bo
 .done{text-align:center} .done .seat{display:inline-block;font:900 64px/1 'Hanken Grotesk',sans-serif;background:var(--ink);color:var(--g);padding:14px 26px;border-radius:18px;margin:10px 0 14px;letter-spacing:-.02em}
 .done ol{text-align:left;line-height:1.7;font-size:16px;margin:16px 0 20px;padding-left:22px}
 .done .acts{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
+
+/* ===== container race: hero background loop ===== */
+.bgrace{position:absolute;left:0;right:0;bottom:56px;height:300px;pointer-events:none;opacity:.42;-webkit-mask-image:linear-gradient(90deg,transparent 0,rgba(0,0,0,.3) 45%,#000 68%);mask-image:linear-gradient(90deg,transparent 0,rgba(0,0,0,.3) 45%,#000 68%)}
+.bgrace .lane{position:absolute;left:0;right:0;height:2px;background:repeating-linear-gradient(90deg,rgba(255,255,255,.22) 0 40px,transparent 40px 80px)}
+.bgrace svg.rc{position:absolute;left:-220px;width:150px;height:62px;animation:drive linear infinite;will-change:transform}
+@keyframes drive{from{transform:translateX(0)}to{transform:translateX(calc(100vw + 440px))}}
+.hero .grid{z-index:2}
+/* ===== container race: scroll scene ===== */
+.racefx{position:relative;height:340vh;background:var(--asphalt);color:#fff}
+.racefx .stick{position:sticky;top:64px;height:calc(100vh - 64px);display:flex;flex-direction:column;justify-content:center;overflow:hidden}
+.racefx .cap{text-align:center;padding:0 24px;min-height:120px}
+.racefx .cap .eyebrow{color:var(--g)}
+.racefx .cap h2{color:#fff;margin:0 auto 6px;max-width:900px;transition:opacity .3s}
+.racefx .cap p{color:#a9ada6;margin:0;font-size:17px}
+.racefx svg#scene{width:100%;height:auto;max-height:calc(100vh - 230px);display:block}
+.racefx .bar2{height:6px;background:#222;margin:10px auto 0;width:min(560px,80vw);border-radius:9px;overflow:hidden}
+.racefx .bar2 i{display:block;height:100%;width:0;background:var(--g)}
+.racefx .hint{text-align:center;font:700 12px 'JetBrains Mono',monospace;letter-spacing:.14em;color:#6f746c;margin-top:10px}
+@media (prefers-reduced-motion:reduce){.bgrace svg.rc{animation:none;display:none}.racefx{height:auto}.racefx .stick{position:relative;height:auto;padding:60px 0}}
 @media (prefers-reduced-motion:reduce){.ticker span,.lights i{animation:none}}
 </style>
 </head>
 <body>
 
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <symbol id="racer" viewBox="0 0 170 70">
+    <g class="speed" stroke="var(--body,#00ff6f)" stroke-width="3" stroke-linecap="round" opacity=".7"><path d="M2 20H26"/><path d="M10 32H30"/><path d="M0 44H24"/></g>
+    <rect x="30" y="6" width="128" height="44" rx="6" fill="var(--body,#00ff6f)"/>
+    <g stroke="rgba(0,0,0,.28)" stroke-width="2"><path d="M44 12V44M56 12V44M68 12V44M80 12V44M92 12V44M104 12V44M116 12V44M128 12V44M140 12V44"/></g>
+    <rect x="30" y="6" width="128" height="8" rx="4" fill="rgba(255,255,255,.35)"/>
+    <path d="M158 14 L168 28 L158 42 Z" fill="var(--nose,#0b0b0b)"/>
+    <circle cx="60" cy="56" r="10" fill="#0b0b0b" stroke="#6b6f69" stroke-width="3"/><circle cx="132" cy="56" r="10" fill="#0b0b0b" stroke="#6b6f69" stroke-width="3"/>
+  </symbol>
+</defs></svg>
 <header class="bar"><div class="wrap">
   <a class="brand" href="#top" aria-label="Civo">{{ logo|safe }}<span>Mission Race</span></a>
   <span class="mid">Beyond the Container · Thu 26 Nov 2026 · Jakarta</span>
@@ -140,6 +169,7 @@ label.f input:focus,label.f select:focus{outline:none;border-color:var(--ink);bo
 </div></header>
 
 <section class="hero" id="top">
+  <div class="bgrace" aria-hidden="true"><div class="lane" style="top:0px"></div><div class="lane" style="top:82px"></div><div class="lane" style="top:164px"></div><div class="lane" style="top:246px"></div><svg class="rc" style="top:-20px;--body:#00ff6f;animation-duration:7.5s;animation-delay:0s"><use href="#racer"/></svg><svg class="rc" style="top:-20px;--body:#ffffff;animation-duration:10s;animation-delay:-3.2s"><use href="#racer"/></svg><svg class="rc" style="top:62px;--body:#1d211d;--nose:#00ff6f;animation-duration:8.6s;animation-delay:-1.4s"><use href="#racer"/></svg><svg class="rc" style="top:62px;--body:#00ff6f;animation-duration:12s;animation-delay:-6.5s"><use href="#racer"/></svg><svg class="rc" style="top:144px;--body:#ffffff;animation-duration:9.2s;animation-delay:-4.4s"><use href="#racer"/></svg><svg class="rc" style="top:144px;--body:#00b84f;animation-duration:6.8s;animation-delay:-0.6s"><use href="#racer"/></svg><svg class="rc" style="top:226px;--body:#00ff6f;animation-duration:11s;animation-delay:-8s"><use href="#racer"/></svg></div>
   <div class="wrap grid">
     <div>
       <div class="lights" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><b>RACE STARTS 26.11 · 10:20 WIB</b></div>
@@ -181,6 +211,43 @@ label.f input:focus,label.f select:focus{outline:none;border-color:var(--ink);bo
   <div class="finish" aria-hidden="true"></div>
 </section>
 <div class="ticker" aria-hidden="true"><span>Lights out at 10:20 · 6 missions · 60 minutes · your own cluster · live leaderboard · top 3 podium · pizza on us · $250 credits · Lights out at 10:20 · 6 missions · 60 minutes · your own cluster · live leaderboard · top 3 podium · pizza on us · $250 credits ·</span></div>
+
+
+<section class="racefx" id="race" aria-label="Animation: containers race to a Kubernetes cluster">
+  <div class="stick">
+    <div class="cap"><p class="eyebrow" id="capE">Scroll to start the race</p><h2 id="capH">Six containers. One cluster. Lights out.</h2><p id="capP">Every mission is a container racing for a place on your Civo cluster.</p></div>
+    <svg id="scene" viewBox="0 0 1200 600" role="img" aria-label="Containers racing along six lanes into a three-node Kubernetes cluster">
+      <defs>
+        <pattern id="fin" width="20" height="20" patternUnits="userSpaceOnUse"><rect width="20" height="20" fill="#fff"/><rect width="10" height="10" fill="#0b0b0b"/><rect x="10" y="10" width="10" height="10" fill="#0b0b0b"/></pattern>
+        <radialGradient id="glow"><stop offset="0" stop-color="#00ff6f" stop-opacity=".35"/><stop offset="1" stop-color="#00ff6f" stop-opacity="0"/></radialGradient>
+      </defs>
+      <g id="world">
+        <g id="track">
+          <rect x="0" y="92" width="900" height="472" fill="#181b18"/>
+          <g stroke="rgba(255,255,255,.18)" stroke-width="2" stroke-dasharray="26 22">
+            <path d="M0 170H900"/><path d="M0 248H900"/><path d="M0 326H900"/><path d="M0 404H900"/><path d="M0 482H900"/>
+          </g>
+          <path d="M0 92H900M0 564H900" stroke="#00ff6f" stroke-width="3" opacity=".5"/>
+          <rect x="96" y="92" width="20" height="472" fill="url(#fin)" opacity=".9"/>
+          <text x="128" y="84" fill="#6f746c" font-family="JetBrains Mono, monospace" font-size="13" font-weight="700">START · registry</text>
+          <rect x="868" y="92" width="20" height="472" fill="url(#fin)"/>
+          <g id="lights" transform="translate(30 30)"><rect x="-10" y="-16" width="190" height="32" rx="16" fill="#000" stroke="#2b2b2b"/>
+            <circle cx="12" cy="0" r="9"/><circle cx="46" cy="0" r="9"/><circle cx="80" cy="0" r="9"/><circle cx="114" cy="0" r="9"/><circle cx="148" cy="0" r="9"/></g>
+        </g>
+        <g id="cluster">
+          <circle cx="1045" cy="330" r="260" fill="url(#glow)" id="halo" opacity="0"/>
+          <rect x="920" y="70" width="252" height="500" rx="26" fill="#0b0b0b" stroke="#00ff6f" stroke-width="3"/>
+          <text x="944" y="108" fill="#00ff6f" font-family="JetBrains Mono, monospace" font-size="14" font-weight="700">civo k8s · JKT1</text>
+          <text x="944" y="130" fill="#8a8f86" font-family="JetBrains Mono, monospace" font-size="12">3 nodes · ready</text>
+          <g id="nodes"></g>
+        </g>
+        <g id="racers"></g>
+      </g>
+    </svg>
+    <div class="bar2"><i id="prog"></i></div>
+    <div class="hint" id="hint">↓ SCROLL TO RACE</div>
+  </div>
+</section>
 
 <section class="s story">
   <div class="wrap panel">
@@ -320,6 +387,75 @@ label.f input:focus,label.f select:focus{outline:none;border-color:var(--ink);bo
   var p = new URLSearchParams(location.search), src = ['utm_source','utm_medium','utm_campaign'].map(function(k){ return p.get(k) }).filter(Boolean).join('/') || 'register-page';
   document.body.addEventListener('htmx:configRequest', function(e){ if (e.detail.path.indexOf('/register/form') === 0 && !e.detail.parameters.source) e.detail.parameters.source = src; });
   if (location.hash === '#register-now') document.querySelector('[hx-get="/register/form"]') && setTimeout(function(){ htmx.trigger(document.querySelector('.cta [hx-get]'), 'click') }, 300);
+})();
+</script>
+
+<script>
+(function(){
+  var NS='http://www.w3.org/2000/svg', sec=document.getElementById('race'); if(!sec) return;
+  var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function el(t,a,p){var e=document.createElementNS(NS,t);for(var k in a)e.setAttribute(k,a[k]);if(p)p.appendChild(e);return e}
+  var R=[ // name, colour, finish fraction (lower = faster), curve
+    {n:'nusamart-web',c:'#00ff6f',f:.80,a:1.15},{n:'cart-api',c:'#ffffff',f:.92,a:.85},{n:'redis',c:'#00b84f',f:.74,a:1.35},
+    {n:'checkout',c:'#ffffff',f:1.0,a:1.0},{n:'search',c:'#00ff6f',f:.86,a:.9},{n:'k6-rush',c:'#2a2e2a',f:.96,a:1.25}];
+  var nodes=document.getElementById('nodes'), racers=document.getElementById('racers'), slots=[];
+  for(var i=0;i<3;i++){var y=150+i*136;
+    el('rect',{x:940,y:y,width:212,height:120,rx:16,fill:'#141714',stroke:'#2f342f'},nodes);
+    var t=el('text',{x:956,y:y+22,fill:'#8a8f86','font-family':'JetBrains Mono, monospace','font-size':12},nodes); t.textContent='node-'+(i+1);
+    for(var j=0;j<2;j++){var sx=956+j*100, sy=y+34; slots.push({x:sx+42,y:sy+36,r:el('rect',{x:sx,y:sy,width:84,height:72,rx:10,fill:'none',stroke:'#3a3f3a','stroke-dasharray':'6 5'},nodes)})}
+  }
+  var lanesY=[131,209,287,365,443,521];
+  R.forEach(function(r,i){
+    var g=el('g',{},racers); r.g=g;
+    var u=el('use',{href:'#racer',x:-80,y:-33,width:160,height:66},g); u.style.setProperty('--body',r.c); if(r.c==='#2a2e2a')u.style.setProperty('--nose','#00ff6f');
+    var tx=el('text',{x:-4,y:-40,'text-anchor':'middle',fill:'#d6dad2','font-family':'JetBrains Mono, monospace','font-size':13,'font-weight':700},g); tx.textContent=r.n;
+    var pl=el('text',{x:-18,y:6,'text-anchor':'middle',fill:r.c==='#2a2e2a'?'#00ff6f':'#0b0b0b','font-family':'Hanken Grotesk, sans-serif','font-size':18,'font-weight':900},g); r.pl=pl;
+    r.y=lanesY[i]; r.slot=slots[i];
+  });
+  var lights=[].slice.call(document.querySelectorAll('#lights circle')), world=document.getElementById('world'), halo=document.getElementById('halo'), track=document.getElementById('track');
+  var capE=document.getElementById('capE'),capH=document.getElementById('capH'),capP=document.getElementById('capP'),prog=document.getElementById('prog'),hint=document.getElementById('hint');
+  var X0=150,X1=850, last=-1, lastCap='';
+  function cl(v){return v<0?0:v>1?1:v} function ease(t){return t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2}
+  function cap(e,h,p){var k=e+h; if(k===lastCap)return; lastCap=k; capE.textContent=e; capH.textContent=h; capP.textContent=p}
+  function draw(p){
+    // lights: red one by one, then all green at lights out
+    lights.forEach(function(c,i){ var on=p>i*.012; c.setAttribute('fill', p>=.06?'#00ff6f':(on?'#ff3b30':'#3a0d0d')) });
+    var race=cl((p-.06)/.56), order=[];
+    R.forEach(function(r,i){
+      var u=cl(race/r.f), x=X0+(X1-X0)*Math.pow(u,r.a) + Math.sin(u*Math.PI*2+i)*14*u*(1-u)*4;
+      var arrive=.06+.56*r.f, d=ease(cl((p-arrive)/.12)), y=r.y, s=1;
+      if(d>0){ x=x+(r.slot.x-x)*d; y=r.y+(r.slot.y-r.y)*d; s=1-.5*d }
+      r.g.setAttribute('transform','translate('+x.toFixed(1)+' '+y.toFixed(1)+') scale('+s.toFixed(3)+')');
+      r.docked = d>0; r.g.querySelector('use').style.opacity = d>=1 ? 0 : 1;
+      r.slot.r.setAttribute('fill', d>=1?'#00ff6f':'none'); r.slot.r.setAttribute('stroke', d>=1?'#00ff6f':'#3a3f3a');
+      r.slot.r.setAttribute('stroke-dasharray', d>=1?'0':'6 5');
+      r.g.querySelector('text').setAttribute('fill', d>=1?'#0b0b0b':'#d6dad2');
+      r.g.querySelector('text').setAttribute('y', d>=1? 6 : -40); r.g.querySelector('text').setAttribute('font-size', d>=1? 19 : 13);
+      order.push({r:r,k:u>=1? -1+r.f : -u});
+    });
+    order.sort(function(a,b){return a.k-b.k}).forEach(function(o,i){ o.r.pl.textContent = p>.06 && !o.r.docked ? 'P'+(i+1) : '' });
+    // zoom into the cluster at the end
+    var zf=ease(cl((p-.8)/.18)), z=window.innerWidth<720?0:zf, sc=1+.14*z, cx=1046, cy=320;
+    world.setAttribute('transform','translate('+(600-cx*sc - (600-cx)*(1-z)).toFixed(1)+' '+(300-cy*sc-(300-cy)*(1-z)).toFixed(1)+') scale('+sc.toFixed(3)+')');
+    track.style.opacity = 1-.85*zf; halo.setAttribute('opacity', (cl((p-.68)/.1)).toFixed(2));
+    // Phones: a camera that follows the pack from the start line to the cluster.
+    var scene=document.getElementById('scene');
+    if (window.innerWidth < 720) { var vx = 580*ease(cl((p-.04)/.66)); scene.setAttribute('viewBox', vx.toFixed(1)+' 56 620 530'); }
+    else if (scene.getAttribute('viewBox') !== '0 0 1200 600') scene.setAttribute('viewBox','0 0 1200 600');
+    prog.style.width=(p*100).toFixed(1)+'%'; hint.style.opacity = p>.03 ? 0 : 1;
+    if(p<.06) cap('Scroll to start the race','Six containers. One cluster. Lights out…','Every mission is a container racing for a place on your Civo cluster.');
+    else if(p<.62) cap('Lap 1 · the 12.12 rush','Containers race from the registry to your cluster','Pull, start, pass the probes — the fastest builders overtake.');
+    else if(p<.8) cap('Pit stop · kube-scheduler','Every container lands on a node as a pod','Spread across three nodes so one failure never stops the shop.');
+    else cap('Chequered flag 🏁','All pods Running. Flash sale ready.','That is what you build on 26 Nov — on your own cluster, in two hours.');
+  }
+  if(reduce){ draw(1); return }
+  function tick(){
+    var r=sec.getBoundingClientRect(), total=sec.offsetHeight-window.innerHeight, p=cl(-r.top/Math.max(total,1));
+    if(Math.abs(p-last)>.0005){ last=p; draw(p) }
+    requestAnimationFrame(tick);
+  }
+  window.addEventListener('resize', function(){ last=-1 });
+  draw(0); requestAnimationFrame(tick);
 })();
 </script>
 </body>
