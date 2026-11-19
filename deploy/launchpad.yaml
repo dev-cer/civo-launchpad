@@ -70,6 +70,8 @@ spec:
             - { name: HOME, value: /tmp }          # kubectl cache (root filesystem is read-only)
             - { name: REGISTRATIONS_FILE, value: /data/registrations.jsonl }
             - { name: SEATS_DB, value: /data/register.db }
+            - { name: REGISTER_LIMIT, value: "__REGISTER_LIMIT__" }
+            - { name: PUBLIC_URL, value: "https://__HOST__" }
             - { name: RACE_FILE, value: /data/race.json }
             - { name: OWN_KUBECONFIG_DIR, value: /data/own-kubeconfigs }
             - { name: KUBECONFIG_DIR, value: /kubeconfigs }
