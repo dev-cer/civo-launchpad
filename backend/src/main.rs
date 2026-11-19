@@ -33,6 +33,7 @@ mod certifier;
 mod agent;
 mod kube;
 mod shell;
+mod seats;
 use axum::{
     extract::{Path, Query, State},
     http::{header, HeaderMap, StatusCode},
@@ -433,7 +434,6 @@ async fn main() {
         .route("/api/agent/status", post(agent_status))
         .route("/api/agent/report", post(agent_report))
         .route("/join/:file", get(join_manifest))
-        .route("/api/register/stats", get(register_stats))
         .route("/api/shell/start", post(shell_start))
         .route("/api/shell/status", post(shell_status))
         .route("/api/shell/kubeconfig", post(shell_kubeconfig))
@@ -446,7 +446,9 @@ async fn main() {
         .route("/verify/:id", get(verify_page))
         .fallback_service(ServeDir::new(static_dir))
         .layer(CorsLayer::permissive())
-        .with_state(state);
+        .with_state(state.clone())
+        // Workshop landing + seat reservation (Askama + HTMX, SQLite): /register, /admin/registrations
+        .merge(seats::router(seats::SeatState::from_env(state.admin_token.clone(), state.window)));
 
     let addr = format!("0.0.0.0:{port}");
     println!("🚀 Workshop server listening on http://{addr}");
@@ -600,18 +602,6 @@ async fn agent_join(State(state): State<Arc<AppState>>, headers: HeaderMap, Json
     let url = format!("{}/join/{agent_token}.yaml", base_url(&headers));
     (StatusCode::OK, Json(serde_json::json!({ "status": "success", "url": url, "command": format!("kubectl apply -f {url}"),
         "remove": "kubectl delete ns civo-launchpad && kubectl delete clusterrole,clusterrolebinding civo-launchpad-read" })))
-}
-
-fn workshop_registered(regs: &[Registration]) -> usize {
-    let mut seen = std::collections::HashSet::new();
-    regs.iter().filter(|r| !r.event.to_lowercase().contains("academy") && r.event != "rehearsal").filter(|r| seen.insert(r.email.clone())).count()
-}
-
-/// Untuk landing page: jumlah pendaftar workshop dan batas kursi (0 = tanpa batas).
-async fn register_stats(State(state): State<Arc<AppState>>) -> impl IntoResponse {
-    let n = workshop_registered(&state.regs.lock().await);
-    let limit: usize = env::var("REGISTER_LIMIT").ok().and_then(|v| v.parse().ok()).unwrap_or(0);
-    Json(serde_json::json!({ "status": "success", "registered": n, "limit": limit, "window": window_state(state.window) }))
 }
 
 async fn participant_ok(state: &AppState, email: &str, tok: &str) -> bool {
@@ -1077,13 +1067,6 @@ async fn register(State(state): State<Arc<AppState>>, headers: HeaderMap, Json(r
             "cluster": acc.map(|a| a.cluster.clone()).unwrap_or_default(),
             "account_id": r.account_id, "seat": r.seat, "name": r.name
         })));
-    }
-    // Kursi terbatas (opsional): REGISTER_LIMIT peserta workshop baru, di luar academy dan rehearsal.
-    if !academy && req.event != "rehearsal" {
-        let limit: usize = env::var("REGISTER_LIMIT").ok().and_then(|v| v.parse().ok()).unwrap_or(0);
-        if limit > 0 && workshop_registered(&regs) >= limit {
-            return err(StatusCode::CONFLICT, "Seats are full for 26 Nov. Follow Civo Indonesia for the next workshop.");
-        }
     }
     // OWN_ACCOUNTS=1 (workshop "Beyond the Container"): peserta memakai akun Civo sendiri,
     // backend hanya mencatat registrasi (lead) tanpa membagikan API key dari pool.

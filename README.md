@@ -194,13 +194,16 @@ against the External IP, so they cannot be faked from inside the cluster.
 Remove: `kubectl delete ns civo-launchpad && kubectl delete clusterrole,clusterrolebinding civo-launchpad-read`.
 Env: `AGENT_IMAGE` (default `ghcr.io/dev-cer/civo-launchpad:agent-latest`), `AGENT_STALE_MS` (default 90000).
 
-## Workshop register page (`/register/`)
+## Workshop register page (`/register`) — Rust + Axum + Askama + HTMX + SQLite
 
-A workshop-only landing and registration page, separate from the Launchpad app.
-Source: `frontend/static/register.html`; `tools/build_editions.py` writes it to `dist/workshop/register/index.html`.
+A workshop-only landing page that keeps seats for 26 Nov, separate from the Launchpad app.
 
-- Registration is accepted before the event window opens (pre-registration).
-- `GET /api/register/stats` returns `{registered, limit, window}`. The page shows the counter only from 20 registrations, or always when a limit is set.
-- Optional `REGISTER_LIMIT=<n>` env on the Launchpad deployment closes registration at n unique workshop emails (HTTP 409 with a friendly message).
-- After a successful sign-up the browser stores the seat in `civo-hackspace-workshop`, so `/#ev/beyond-scaling` opens already signed in.
-- Share with UTM tags, e.g. `/register/?utm_source=linkedin&utm_campaign=btc26`. They are saved as the registration `source`.
+- Templates: `backend/templates/register/` (Askama, compiled into the binary). Module: `backend/src/seats.rs`.
+- "Register" buttons load the form into a sheet with HTMX (`GET /register/form`); submitting (`POST /register/form`)
+  returns either the form with errors or the "seat kept" card with the seat number. htmx 2 is vendored and served at `/register/htmx.min.js`.
+- Every registration is stored in SQLite: `SEATS_DB` (default `/data/register.db` on the PVC). Same email again keeps the seat number and refreshes the details.
+- Admin: `/admin/registrations` (browser login: user `admin`, password = Launchpad admin token) with live search and **Download CSV**.
+  To open the database itself: `kubectl -n civo-workshop cp <launchpad-pod>:/data/register.db ./register.db`, then DB Browser for SQLite.
+- `REGISTER_LIMIT=<n>` caps seats (0 = no limit). `GET /api/register/stats` returns `{registered, limit, window}`.
+- Reservations close when the event window closes (`EVENT_CLOSE`). On race day participants sign in to Launchpad with the same email.
+- Share with UTM tags, e.g. `/register?utm_source=linkedin&utm_campaign=btc26`; they are saved as `source`.

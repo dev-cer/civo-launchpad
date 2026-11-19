@@ -4,6 +4,7 @@ FROM rust:1-bookworm AS builder
 WORKDIR /usr/src/app
 COPY backend/Cargo.toml backend/Cargo.lock ./
 COPY backend/src ./src
+COPY backend/templates ./templates
 RUN cargo build --release --locked
 
 FROM gcr.io/distroless/cc-debian12:nonroot

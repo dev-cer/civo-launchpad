@@ -1,0 +1,2 @@
+{% for r in rows %}<tr><td class="n">#{{ r.seat }}</td><td>{{ r.created }}</td><td><b>{{ r.name }}</b></td><td>{{ r.email }}</td><td>{{ r.phone }}</td><td>{{ r.company }}</td><td>{{ r.role }}</td><td>{{ r.experience }}</td><td>{{ r.civo_account }}</td><td class="src">{{ r.source }}</td></tr>{% endfor %}
+{% if rows.is_empty() %}<tr><td colspan="10" style="text-align:center;color:#777;padding:30px">No registrations match.</td></tr>{% endif %}

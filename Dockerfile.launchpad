@@ -4,6 +4,7 @@ FROM rust:1-bookworm AS builder
 WORKDIR /usr/src/app
 COPY backend/Cargo.toml backend/Cargo.lock ./
 COPY backend/src ./src
+COPY backend/templates ./templates
 RUN cargo build --release --locked
 ARG KUBECTL_VERSION=v1.31.4
 RUN curl -fsSLo /usr/local/bin/kubectl https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl \

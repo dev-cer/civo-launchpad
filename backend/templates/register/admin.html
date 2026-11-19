@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex">
+<title>Registrations · Beyond the Container · Launchpad admin</title>
+<script src="/register/htmx.min.js" defer></script>
+<style>
+body{margin:0;font-family:system-ui,-apple-system,'Segoe UI',sans-serif;background:#f6f7f2;color:#0b0b0b}
+header{background:#0b0b0b;color:#fff;padding:14px 24px;display:flex;align-items:center;gap:16px}
+header svg{height:28px;width:auto} header svg path,header svg polygon,header svg rect{fill:#fff}
+header .t{font-weight:800;letter-spacing:.04em} .flag{height:12px;background:conic-gradient(#0b0b0b 25%,#fff 0 50%,#0b0b0b 0 75%,#fff 0) 0 0/12px 12px}
+main{padding:22px 24px}
+.top{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-bottom:16px}
+.stat{background:#0b0b0b;color:#fff;border-radius:999px;padding:8px 16px;font-weight:700} .stat b{color:#00ff6f}
+input[type=search]{flex:1;min-width:240px;font:inherit;padding:10px 14px;border:1.5px solid #cfd4c8;border-radius:10px}
+a.btn{background:#00ff6f;color:#0b0b0b;text-decoration:none;font-weight:800;padding:10px 16px;border-radius:999px}
+.wrap{overflow:auto;background:#fff;border:1px solid #e2e5dc;border-radius:14px}
+table{border-collapse:collapse;width:100%;font-size:14px} th,td{padding:10px 12px;border-bottom:1px solid #eef0ea;text-align:left;white-space:nowrap}
+th{position:sticky;top:0;background:#f1f3ec;font-size:12px;text-transform:uppercase;letter-spacing:.06em} td.n{font-family:ui-monospace,monospace;font-weight:700;color:#00a347} td.src{color:#666}
+.htmx-request{opacity:.6}
+</style></head><body>
+<header>{{ logo|safe }}<span class="t">Launchpad admin · Registrations · Beyond the Container 26 Nov</span></header>
+<div class="flag"></div>
+<main>
+  <div class="top">
+    <span class="stat"><b>{{ total }}</b> seats kept{% if limit > 0 %} of {{ limit }}{% endif %}</span>
+    <input type="search" name="q" value="{{ q }}" placeholder="Search name, email, company, source…" hx-get="/admin/registrations/rows" hx-trigger="input changed delay:250ms, search" hx-target="#rows">
+    <a class="btn" href="/admin/registrations.csv">Download CSV</a>
+  </div>
+  <div class="wrap"><table>
+    <thead><tr><th>Seat</th><th>Registered (WIB)</th><th>Name</th><th>Email</th><th>WhatsApp</th><th>Company</th><th>Role</th><th>K8s</th><th>Civo account</th><th>Source</th></tr></thead>
+    <tbody id="rows">{% include "register/admin_rows.html" %}</tbody>
+  </table></div>
+</main>
+</body></html>

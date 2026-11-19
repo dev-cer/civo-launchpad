@@ -1,0 +1,19 @@
+<div class="done">
+  {% if seat > 0 %}
+  <h3>{% if returning %}Welcome back{% else %}You're on the grid{% endif %}, {{ name }} 🏁</h3>
+  <p class="note" style="margin:0">{% if returning %}You already have a seat — we've updated your details.{% else %}Your seat for Beyond the Container is kept.{% endif %}</p>
+  <div class="seat">#{{ seat }}</div>
+  <p class="note" style="margin:0">Saved under <b>{{ email }}</b> — use this email on race day.</p>
+  <ol>
+    <li><b>Before race day:</b> create a free account at <a href="https://dashboard.civo.com/signup" target="_blank" rel="noopener">dashboard.civo.com</a> with this email (verify email &amp; phone, add a credit/debit card) so your $250 credit is ready.</li>
+    <li><b>26 Nov, 09:30 WIB:</b> check in with your laptop — nothing to install.</li>
+    <li><b>10:20:</b> lights out. Open Civo Launchpad and sign in with this email.</li>
+  </ol>
+  <div class="acts">
+    <a class="btn g" href="/register/calendar.ics">Add to calendar</a>
+    <a class="btn" href="https://dashboard.civo.com/signup" target="_blank" rel="noopener">Create Civo account →</a>
+  </div>
+  {% else %}
+  <h3>Thanks, {{ name }}!</h3>
+  {% endif %}
+</div>

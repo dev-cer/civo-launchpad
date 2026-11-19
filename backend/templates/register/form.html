@@ -1,0 +1,23 @@
+<h3>Keep your seat 🏁</h3>
+<p class="note">Thursday 26 Nov 2026 · 10:00–12:00 WIB · Jakarta. One minute, and your spot on the grid is yours.</p>
+{% if !errors.is_empty() %}<div class="errs" role="alert"><ul>{% for e in errors %}<li>{{ e }}</li>{% endfor %}</ul></div>{% endif %}
+<form hx-post="/register/form" hx-target="#sheet-body" hx-disabled-elt="find button[type=submit]" novalidate>
+  <div class="row">
+    <label class="f">Full name<input name="name" value="{{ v.name }}" required autocomplete="name" placeholder="Rina Saputri"></label>
+    <label class="f">Email<input name="email" type="email" value="{{ v.email }}" required autocomplete="email" placeholder="rina@company.co.id"></label>
+  </div>
+  <div class="row">
+    <label class="f">Company / campus<input name="company" value="{{ v.company }}" required autocomplete="organization" placeholder="PT Contoh Digital"></label>
+    <label class="f">WhatsApp <span class="opt">(optional, for reminders)</span><input name="phone" type="tel" value="{{ v.phone }}" autocomplete="tel" placeholder="08xx xxxx xxxx"></label>
+  </div>
+  <div class="row">
+    <label class="f">Role<select name="role"><option value="">Choose…</option>{% for o in roles %}<option value="{{ o.value }}"{% if o.selected %} selected{% endif %}>{{ o.label }}</option>{% endfor %}</select></label>
+    <label class="f">Kubernetes experience<select name="experience"><option value="">Choose…</option>{% for o in exps %}<option value="{{ o.value }}"{% if o.selected %} selected{% endif %}>{{ o.label }}</option>{% endfor %}</select></label>
+  </div>
+  <label class="f">Civo account <span class="opt">(optional — email or username, if you already have one)</span><input name="civo" value="{{ v.civo }}" autocomplete="off" placeholder="leave empty if you don't have one yet"></label>
+  <div class="hp" aria-hidden="true"><label>Website<input name="website" tabindex="-1" autocomplete="off"></label></div>
+  <input type="hidden" name="source" value="{{ v.source }}">
+  <label class="chk"><input type="checkbox" name="consent" value="yes"{% if !v.consent.is_empty() %} checked{% endif %}> I agree that Civo Indonesia (PT Arupa Cloud Nusantara) uses my details to run this workshop, send reminders and my certificate.</label>
+  <button class="btn g lg" type="submit" style="width:100%">Keep my seat <span class="spin" aria-hidden="true"></span></button>
+  {% if full %}<p class="note" style="margin:12px 0 0;text-align:center">Seats are limited and kept in order of registration.</p>{% endif %}
+</form>

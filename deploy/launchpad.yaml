@@ -69,6 +69,7 @@ spec:
             - { name: PORT, value: "8080" }
             - { name: HOME, value: /tmp }          # kubectl cache (root filesystem is read-only)
             - { name: REGISTRATIONS_FILE, value: /data/registrations.jsonl }
+            - { name: SEATS_DB, value: /data/register.db }
             - { name: RACE_FILE, value: /data/race.json }
             - { name: OWN_KUBECONFIG_DIR, value: /data/own-kubeconfigs }
             - { name: KUBECONFIG_DIR, value: /kubeconfigs }
