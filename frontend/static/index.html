@@ -2222,7 +2222,7 @@ function renderEnter(){
       <p class="lead">${ENTER_COPY[EDITION].lead}</p>
       <div class="chips">${ENTER_COPY[EDITION].chips.map((c,i)=>`<div class="chip ${i===0?'on':''}"><b>${c[0]}</b><span>${c[1]}</span></div>`).join('')}</div>
       <div class="helmrow">${helm}<div class="bub">${ENTER_COPY[EDITION].bub}</div></div></div>
-    <div class="r">${done}${EDITION==='academy'?'<p class="alt">Academy access for Civo partners &amp; customers · PT Arupa Cloud Nusantara</p>':`<p class="alt">Not registered yet? <a href="${REG_FORM}" target="_blank" rel="noopener">Register here →</a></p>`}</div>
+    <div class="r">${done}${EDITION==='academy'?'<p class="alt">Academy access for Civo partners &amp; customers · PT Arupa Cloud Nusantara</p>':`<p class="alt">No Civo account yet? <a href="https://www.civo.com/signup" target="_blank" rel="noopener">Sign up at civo.com/signup →</a></p>`}</div>
   </section>`;
 }
 async function submitEnter(e){
