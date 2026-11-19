@@ -193,3 +193,14 @@ against the External IP, so they cannot be faked from inside the cluster.
 (still available under "Upload a kubeconfig instead"). After `EVENT_CLOSE` agents are told to stop.
 Remove: `kubectl delete ns civo-launchpad && kubectl delete clusterrole,clusterrolebinding civo-launchpad-read`.
 Env: `AGENT_IMAGE` (default `ghcr.io/dev-cer/civo-launchpad:agent-latest`), `AGENT_STALE_MS` (default 90000).
+
+## Workshop register page (`/register/`)
+
+A workshop-only landing and registration page, separate from the Launchpad app.
+Source: `frontend/static/register.html`; `tools/build_editions.py` writes it to `dist/workshop/register/index.html`.
+
+- Registration is accepted before the event window opens (pre-registration).
+- `GET /api/register/stats` returns `{registered, limit, window}`. The page shows the counter only from 20 registrations, or always when a limit is set.
+- Optional `REGISTER_LIMIT=<n>` env on the Launchpad deployment closes registration at n unique workshop emails (HTTP 409 with a friendly message).
+- After a successful sign-up the browser stores the seat in `civo-hackspace-workshop`, so `/#ev/beyond-scaling` opens already signed in.
+- Share with UTM tags, e.g. `/register/?utm_source=linkedin&utm_campaign=btc26`. They are saved as the registration `source`.
