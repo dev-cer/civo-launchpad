@@ -110,7 +110,7 @@ pub async fn host_mw(State(st): State<Arc<SiteState>>, req: Request, next: Next)
         if st.home == "company" { return home(&st); }
         // Workshop domain: "/" is the Mission Race register landing page. Rendered here, because
         // Router::layer middleware runs after routing (rewriting the URI would hit the static fallback).
-        let closed = matches!(st.window, Some((_, c)) if now() > c);
+        let closed = now() > crate::register_close();
         return crate::seats::landing(closed);
     }
     next.run(req).await

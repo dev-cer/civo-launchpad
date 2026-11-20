@@ -178,6 +178,16 @@ fn parse_ts(v: &str) -> Option<u64> {
     u64::try_from(secs).ok()
 }
 
+/// Workshop seat registration closes at REGISTER_CLOSE (RFC3339), independent of the event window,
+/// so redeploying in simulation mode or changing EVENT_OPEN/EVENT_CLOSE never closes registration early.
+/// Default: 25 Nov 2026 23:59:59 WIB (the day before the 26 Nov workshop).
+pub fn register_close() -> u64 {
+    const DEFAULT: &str = "2026-11-25T23:59:59+07:00";
+    env::var("REGISTER_CLOSE").ok().and_then(|v| parse_ts(&v))
+        .or_else(|| parse_ts(DEFAULT))
+        .unwrap_or(u64::MAX)
+}
+
 fn window_state(w: Option<(u64, u64)>) -> &'static str {
     match w { None => "open", Some((o, c)) => { let n = now(); if n < o { "before" } else if n > c { "closed" } else { "open" } } }
 }
@@ -378,6 +388,7 @@ async fn main() {
         },
     });
     if let Some((o, c)) = state.window { println!("Event window: {o} .. {c} (unix)"); }
+    println!("Registration closes at: {} (unix)", register_close());
     match &state.certifier { Some(c) => println!("Certifier: on ({})", c.api), None => println!("Certifier: off (built-in certificates at /cert/<ID>)") }
     if state.shells.enabled() {
         println!("Launchpad Shell: on (namespace {}, max {}, image {})", state.shells.ns, state.shells.max, state.shells.image);

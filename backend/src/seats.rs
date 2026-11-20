@@ -13,7 +13,8 @@
 //!   GET  /admin/registrations.csv   -> CSV export (same auth)
 //!
 //! Env: SEATS_DB (default /data/register.db), REGISTER_LIMIT (0 = no limit), ADMIN_TOKEN,
-//!      EVENT_OPEN / EVENT_CLOSE (reservations close when the event window closes).
+//!      REGISTER_CLOSE (RFC3339, default 2026-11-25T23:59:59+07:00): reservations close then,
+//!      independent of EVENT_OPEN / EVENT_CLOSE.
 //!
 //! The reservation only keeps a seat. On race day participants open Launchpad and sign in with the
 //! same email; the Launchpad registration (Civo account, Mission Agent token) happens there.
@@ -55,7 +56,7 @@ impl SeatState {
         let limit = env::var("REGISTER_LIMIT").ok().and_then(|v| v.parse().ok()).unwrap_or(0);
         Arc::new(SeatState { db, admin_token, window, limit })
     }
-    fn closed(&self) -> bool { matches!(self.window, Some((_, c)) if now() > c) }
+    fn closed(&self) -> bool { now() > crate::register_close() }
     fn count(&self) -> i64 {
         self.db.as_ref().and_then(|d| d.lock().ok().and_then(|c| c.query_row("SELECT COUNT(*) FROM seats", [], |r| r.get(0)).ok())).unwrap_or(0)
     }
@@ -252,7 +253,7 @@ async fn seats_fragment(State(st): State<Arc<SeatState>>) -> Response {
 }
 
 async fn stats(State(st): State<Arc<SeatState>>) -> impl IntoResponse {
-    let w = match st.window { None => "open", Some((o, c)) => { let n = now(); if n < o { "before" } else if n > c { "closed" } else { "open" } } };
+    let w = if st.closed() { "closed" } else { "open" };
     Json(serde_json::json!({ "status": "success", "registered": st.count(), "limit": st.limit, "window": w }))
 }
 
