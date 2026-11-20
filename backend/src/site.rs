@@ -87,6 +87,8 @@ pub fn router(st: Arc<SiteState>) -> Router {
         .route("/site/contact", get(contact_get).post(contact_post))
         .route("/brand/arupa-logo.png", get(|| async { png(include_bytes!("assets/arupa-logo.png")) }))
         .route("/brand/arupa-logo-white.png", get(|| async { png(include_bytes!("assets/arupa-logo-white.png")) }))
+        .route("/brand/civo-logo.png", get(|| async { png(include_bytes!("assets/civo-logo.png")) }))
+        .route("/brand/banner-workshop-26nov.jpg", get(|| async { ([(header::CONTENT_TYPE, "image/jpeg"), (header::CACHE_CONTROL, "public, max-age=86400")], &include_bytes!("assets/banner-workshop-26nov.jpg")[..]).into_response() }))
         .route("/admin/leads", get(admin_leads))
         .route("/admin/leads.csv", get(admin_leads_csv))
         .with_state(st)
